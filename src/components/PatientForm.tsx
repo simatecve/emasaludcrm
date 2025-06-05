@@ -29,7 +29,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       telefono: '',
       email: '',
       direccion: '',
-      obra_social_id: '',
+      obra_social_id: undefined,
       numero_afiliado: '',
       consultas_maximas: 2,
       observaciones: '',
@@ -45,7 +45,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       setValue('telefono', patient.telefono || '');
       setValue('email', patient.email || '');
       setValue('direccion', patient.direccion || '');
-      setValue('obra_social_id', patient.obra_social_id || '');
+      setValue('obra_social_id', patient.obra_social_id);
       setValue('numero_afiliado', patient.numero_afiliado || '');
       setValue('consultas_maximas', patient.consultas_maximas);
       setValue('observaciones', patient.observaciones || '');
@@ -135,13 +135,13 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="obra_social_id">Obra Social</Label>
-              <Select value={selectedObraSocial} onValueChange={(value) => setValue('obra_social_id', value)}>
+              <Select value={selectedObraSocial?.toString()} onValueChange={(value) => setValue('obra_social_id', value ? parseInt(value) : undefined)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar obra social" />
                 </SelectTrigger>
                 <SelectContent>
                   {!loadingObrasSociales && obrasSociales?.map((obra) => (
-                    <SelectItem key={obra.id} value={obra.id}>
+                    <SelectItem key={obra.id} value={obra.id.toString()}>
                       {obra.nombre}
                     </SelectItem>
                   ))}

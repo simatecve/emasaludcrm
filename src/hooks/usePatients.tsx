@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Patient {
-  id: string;
+  id: number;
   nombre: string;
   apellido: string;
   dni: string;
@@ -12,7 +12,7 @@ export interface Patient {
   telefono?: string;
   email?: string;
   direccion?: string;
-  obra_social_id?: string;
+  obra_social_id?: number;
   numero_afiliado?: string;
   consultas_mes_actual: number;
   consultas_maximas: number;
@@ -32,7 +32,7 @@ export interface PatientFormData {
   telefono?: string;
   email?: string;
   direccion?: string;
-  obra_social_id?: string;
+  obra_social_id?: number;
   numero_afiliado?: string;
   consultas_maximas: number;
   observaciones?: string;
@@ -94,7 +94,7 @@ export const useUpdatePatient = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<PatientFormData> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<PatientFormData> }) => {
       const { error } = await supabase
         .from('pacientes')
         .update(data)
@@ -124,7 +124,7 @@ export const useDeletePatient = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (patientId: string) => {
+    mutationFn: async (patientId: number) => {
       const { error } = await supabase
         .from('pacientes')
         .update({ activo: false })

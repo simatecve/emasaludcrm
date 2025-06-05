@@ -14,11 +14,11 @@ export type Database = {
           created_at: string | null
           diagnostico: string | null
           fecha_consulta: string | null
-          id: string
+          id: number
           medico: string | null
           motivo: string | null
           observaciones: string | null
-          paciente_id: string | null
+          paciente_id: number | null
           precio: number | null
           tratamiento: string | null
         }
@@ -26,11 +26,11 @@ export type Database = {
           created_at?: string | null
           diagnostico?: string | null
           fecha_consulta?: string | null
-          id?: string
+          id?: number
           medico?: string | null
           motivo?: string | null
           observaciones?: string | null
-          paciente_id?: string | null
+          paciente_id?: number | null
           precio?: number | null
           tratamiento?: string | null
         }
@@ -38,11 +38,11 @@ export type Database = {
           created_at?: string | null
           diagnostico?: string | null
           fecha_consulta?: string | null
-          id?: string
+          id?: number
           medico?: string | null
           motivo?: string | null
           observaciones?: string | null
-          paciente_id?: string | null
+          paciente_id?: number | null
           precio?: number | null
           tratamiento?: string | null
         }
@@ -63,7 +63,7 @@ export type Database = {
           created_at: string | null
           direccion: string | null
           email: string | null
-          id: string
+          id: number
           nombre: string
           telefono: string | null
           updated_at: string | null
@@ -74,7 +74,7 @@ export type Database = {
           created_at?: string | null
           direccion?: string | null
           email?: string | null
-          id?: string
+          id?: number
           nombre: string
           telefono?: string | null
           updated_at?: string | null
@@ -85,7 +85,7 @@ export type Database = {
           created_at?: string | null
           direccion?: string | null
           email?: string | null
-          id?: string
+          id?: number
           nombre?: string
           telefono?: string | null
           updated_at?: string | null
@@ -103,10 +103,10 @@ export type Database = {
           dni: string
           email: string | null
           fecha_nacimiento: string
-          id: string
+          id: number
           nombre: string
           numero_afiliado: string | null
-          obra_social_id: string | null
+          obra_social_id: number | null
           observaciones: string | null
           telefono: string | null
           ultima_visita: string | null
@@ -122,10 +122,10 @@ export type Database = {
           dni: string
           email?: string | null
           fecha_nacimiento: string
-          id?: string
+          id?: number
           nombre: string
           numero_afiliado?: string | null
-          obra_social_id?: string | null
+          obra_social_id?: number | null
           observaciones?: string | null
           telefono?: string | null
           ultima_visita?: string | null
@@ -141,10 +141,10 @@ export type Database = {
           dni?: string
           email?: string | null
           fecha_nacimiento?: string
-          id?: string
+          id?: number
           nombre?: string
           numero_afiliado?: string | null
-          obra_social_id?: string | null
+          obra_social_id?: number | null
           observaciones?: string | null
           telefono?: string | null
           ultima_visita?: string | null

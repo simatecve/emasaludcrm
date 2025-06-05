@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface ObraSocial {
-  id: string;
+  id: number;
   nombre: string;
   codigo?: string;
   telefono?: string;
