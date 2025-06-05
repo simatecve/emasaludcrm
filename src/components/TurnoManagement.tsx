@@ -5,26 +5,46 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
+import { useEspecialidades } from '@/hooks/useEspecialidades';
 import TurnoForm from './TurnoForm';
-import { Plus, Search, Edit, Trash2, Calendar, Clock } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar as CalendarIcon, Clock, Filter } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const TurnoManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTurno, setEditingTurno] = useState<Turno | undefined>();
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedEspecialidad, setSelectedEspecialidad] = useState<string>('');
+  const [selectedEstado, setSelectedEstado] = useState<string>('');
 
   const { data: turnos, isLoading } = useTurnos();
+  const { data: especialidades, isLoading: loadingEspecialidades } = useEspecialidades();
   const deleteMutation = useDeleteTurno();
 
-  const filteredTurnos = turnos?.filter(turno =>
-    turno.pacientes?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    turno.pacientes?.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    turno.pacientes?.dni.includes(searchTerm) ||
-    turno.medicos?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    turno.medicos?.apellido.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredTurnos = turnos?.filter(turno => {
+    const matchesSearch = turno.pacientes?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      turno.pacientes?.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      turno.pacientes?.dni.includes(searchTerm) ||
+      turno.medicos?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      turno.medicos?.apellido.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesDate = !selectedDate || 
+      new Date(turno.fecha).toDateString() === selectedDate.toDateString();
+
+    const matchesEspecialidad = !selectedEspecialidad || 
+      turno.medicos?.especialidad?.nombre === selectedEspecialidad;
+
+    const matchesEstado = !selectedEstado || turno.estado === selectedEstado;
+
+    return matchesSearch && matchesDate && matchesEspecialidad && matchesEstado;
+  }) || [];
 
   const handleEdit = (turno: Turno) => {
     setEditingTurno(turno);
@@ -38,6 +58,13 @@ const TurnoManagement = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingTurno(undefined);
+  };
+
+  const clearFilters = () => {
+    setSelectedDate(undefined);
+    setSelectedEspecialidad('');
+    setSelectedEstado('');
+    setSearchTerm('');
   };
 
   const getEstadoBadge = (estado: string) => {
@@ -81,23 +108,92 @@ const TurnoManagement = () => {
         </Dialog>
       </div>
 
-      <div className="flex gap-4 items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Buscar por paciente, médico o DNI..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Búsqueda */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Buscar paciente, médico o DNI..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
+            {/* Calendario */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="justify-start">
+                  <CalendarIcon className="h-4 w-4 mr-2" />
+                  {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            {/* Filtro de Especialidad */}
+            <Select value={selectedEspecialidad} onValueChange={setSelectedEspecialidad}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas las especialidades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas las especialidades</SelectItem>
+                {loadingEspecialidades ? (
+                  <SelectItem value="loading" disabled>Cargando...</SelectItem>
+                ) : (
+                  especialidades?.map((especialidad) => (
+                    <SelectItem key={especialidad.id} value={especialidad.nombre}>
+                      {especialidad.nombre}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+
+            {/* Filtro de Estado */}
+            <Select value={selectedEstado} onValueChange={setSelectedEstado}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos los estados" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos los estados</SelectItem>
+                <SelectItem value="programado">Programado</SelectItem>
+                <SelectItem value="confirmado">Confirmado</SelectItem>
+                <SelectItem value="cancelado">Cancelado</SelectItem>
+                <SelectItem value="completado">Completado</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Limpiar filtros */}
+            <Button variant="outline" onClick={clearFilters}>
+              Limpiar filtros
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Lista de turnos */}
       <div className="grid gap-4">
         {filteredTurnos.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-gray-500">
-              No se encontraron turnos
+              No se encontraron turnos con los filtros aplicados
             </CardContent>
           </Card>
         ) : (
@@ -116,10 +212,13 @@ const TurnoManagement = () => {
                     <div>
                       <p className="font-medium">Dr. {turno.medicos?.nombre} {turno.medicos?.apellido}</p>
                       <p className="text-sm text-gray-600">Mat: {turno.medicos?.matricula}</p>
+                      {turno.medicos?.especialidad && (
+                        <p className="text-sm text-blue-600">{turno.medicos.especialidad.nombre}</p>
+                      )}
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <CalendarIcon className="h-4 w-4 text-gray-400" />
                       <span>{new Date(turno.fecha).toLocaleDateString()}</span>
                       <Clock className="h-4 w-4 text-gray-400 ml-2" />
                       <span>{turno.hora}</span>

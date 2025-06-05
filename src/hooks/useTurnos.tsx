@@ -24,6 +24,9 @@ export interface Turno {
     nombre: string;
     apellido: string;
     matricula: string;
+    especialidad?: {
+      nombre: string;
+    };
   };
 }
 
@@ -46,7 +49,12 @@ export const useTurnos = () => {
         .select(`
           *,
           pacientes!inner(nombre, apellido, dni),
-          medicos!inner(nombre, apellido, matricula)
+          medicos!inner(
+            nombre, 
+            apellido, 
+            matricula,
+            especialidad:especialidades(nombre)
+          )
         `)
         .order('fecha', { ascending: true })
         .order('hora', { ascending: true });
