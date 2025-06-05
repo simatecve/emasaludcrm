@@ -56,6 +56,86 @@ export type Database = {
           },
         ]
       }
+      especialidades: {
+        Row: {
+          activa: boolean | null
+          created_at: string | null
+          descripcion: string | null
+          id: number
+          nombre: string
+          updated_at: string | null
+        }
+        Insert: {
+          activa?: boolean | null
+          created_at?: string | null
+          descripcion?: string | null
+          id?: number
+          nombre: string
+          updated_at?: string | null
+        }
+        Update: {
+          activa?: boolean | null
+          created_at?: string | null
+          descripcion?: string | null
+          id?: number
+          nombre?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      medicos: {
+        Row: {
+          activo: boolean | null
+          apellido: string
+          created_at: string | null
+          direccion: string | null
+          dni: string
+          email: string | null
+          especialidad_id: number | null
+          id: number
+          matricula: string
+          nombre: string
+          telefono: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          apellido: string
+          created_at?: string | null
+          direccion?: string | null
+          dni: string
+          email?: string | null
+          especialidad_id?: number | null
+          id?: number
+          matricula: string
+          nombre: string
+          telefono?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          apellido?: string
+          created_at?: string | null
+          direccion?: string | null
+          dni?: string
+          email?: string | null
+          especialidad_id?: number | null
+          id?: number
+          matricula?: string
+          nombre?: string
+          telefono?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medicos_especialidad_id_fkey"
+            columns: ["especialidad_id"]
+            isOneToOne: false
+            referencedRelation: "especialidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras_sociales: {
         Row: {
           activa: boolean | null

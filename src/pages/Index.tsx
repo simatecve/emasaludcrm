@@ -5,6 +5,9 @@ import Sidebar from '@/components/Sidebar';
 import Dashboard from '@/components/Dashboard';
 import PatientManagement from '@/components/PatientManagement';
 import AppointmentScheduler from '@/components/AppointmentScheduler';
+import MedicoManagement from '@/components/MedicoManagement';
+import EspecialidadManagement from '@/components/EspecialidadManagement';
+import ObraSocialManagement from '@/components/ObraSocialManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -33,6 +36,12 @@ const Index = () => {
         return <PatientManagement />;
       case 'appointments':
         return <AppointmentScheduler />;
+      case 'medicos':
+        return <MedicoManagement />;
+      case 'especialidades':
+        return <EspecialidadManagement />;
+      case 'obras-sociales':
+        return <ObraSocialManagement />;
       case 'reports':
         return (
           <div className="p-6">

@@ -1,9 +1,10 @@
 
 import React from 'react';
-import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Button } from '@/components/ui/button';
 
 interface SidebarProps {
@@ -16,11 +17,15 @@ interface SidebarProps {
 const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse }: SidebarProps) => {
   const { signOut } = useAuth();
   const { data: systemConfig } = useSystemConfig();
+  const { data: currentUser } = useCurrentUser();
 
   const menuItems = [
     { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
     { id: 'patients', label: 'Pacientes', icon: Users },
     { id: 'appointments', label: 'Turnos', icon: Calendar },
+    { id: 'medicos', label: 'Médicos', icon: UserCog },
+    { id: 'especialidades', label: 'Especialidades', icon: Stethoscope },
+    { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
     { id: 'reports', label: 'Informes', icon: FileText },
     { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
     { id: 'settings', label: 'Configuración', icon: Settings },
@@ -82,10 +87,11 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         "mt-8 pt-4 border-t border-slate-700",
         isCollapsed && "text-center"
       )}>
-        {!isCollapsed && (
+        {!isCollapsed && currentUser && (
           <div className="text-sm text-slate-400 mb-4">
-            <p>Usuario: Recepcionista</p>
-            <p>Sesión activa</p>
+            <p className="font-medium text-white">{currentUser.full_name}</p>
+            <p>{currentUser.email}</p>
+            <p className="capitalize">{currentUser.role}</p>
           </div>
         )}
         <Button

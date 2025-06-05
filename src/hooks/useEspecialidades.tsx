@@ -3,49 +3,43 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface ObraSocial {
+export interface Especialidad {
   id: number;
   nombre: string;
-  codigo?: string;
-  telefono?: string;
-  email?: string;
-  direccion?: string;
+  descripcion?: string;
   activa: boolean;
 }
 
-export interface ObraSocialFormData {
+export interface EspecialidadFormData {
   nombre: string;
-  codigo?: string;
-  telefono?: string;
-  email?: string;
-  direccion?: string;
+  descripcion?: string;
 }
 
-export const useObrasSociales = () => {
+export const useEspecialidades = () => {
   return useQuery({
-    queryKey: ['obras-sociales'],
+    queryKey: ['especialidades'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('obras_sociales')
+        .from('especialidades')
         .select('*')
         .eq('activa', true)
         .order('nombre');
 
       if (error) throw error;
-      return data as ObraSocial[];
+      return data as Especialidad[];
     },
   });
 };
 
-export const useCreateObraSocial = () => {
+export const useCreateEspecialidad = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (obraSocialData: ObraSocialFormData) => {
+    mutationFn: async (especialidadData: EspecialidadFormData) => {
       const { data, error } = await supabase
-        .from('obras_sociales')
-        .insert([obraSocialData])
+        .from('especialidades')
+        .insert([especialidadData])
         .select()
         .single();
 
@@ -53,76 +47,76 @@ export const useCreateObraSocial = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['obras-sociales'] });
+      queryClient.invalidateQueries({ queryKey: ['especialidades'] });
       toast({
-        title: "Obra Social creada",
-        description: "La obra social se ha creado exitosamente.",
+        title: "Especialidad creada",
+        description: "La especialidad se ha creado exitosamente.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Error al crear obra social: ${error.message}`,
+        description: `Error al crear especialidad: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 };
 
-export const useUpdateObraSocial = () => {
+export const useUpdateEspecialidad = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<ObraSocialFormData> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<EspecialidadFormData> }) => {
       const { error } = await supabase
-        .from('obras_sociales')
+        .from('especialidades')
         .update(data)
         .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['obras-sociales'] });
+      queryClient.invalidateQueries({ queryKey: ['especialidades'] });
       toast({
-        title: "Obra Social actualizada",
-        description: "Los datos de la obra social se han actualizado exitosamente.",
+        title: "Especialidad actualizada",
+        description: "Los datos de la especialidad se han actualizado exitosamente.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Error al actualizar obra social: ${error.message}`,
+        description: `Error al actualizar especialidad: ${error.message}`,
         variant: "destructive",
       });
     },
   });
 };
 
-export const useDeleteObraSocial = () => {
+export const useDeleteEspecialidad = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (obraSocialId: number) => {
+    mutationFn: async (especialidadId: number) => {
       const { error } = await supabase
-        .from('obras_sociales')
+        .from('especialidades')
         .update({ activa: false })
-        .eq('id', obraSocialId);
+        .eq('id', especialidadId);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['obras-sociales'] });
+      queryClient.invalidateQueries({ queryKey: ['especialidades'] });
       toast({
-        title: "Obra Social eliminada",
-        description: "La obra social se ha eliminado exitosamente.",
+        title: "Especialidad eliminada",
+        description: "La especialidad se ha eliminado exitosamente.",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: `Error al eliminar obra social: ${error.message}`,
+        description: `Error al eliminar especialidad: ${error.message}`,
         variant: "destructive",
       });
     },
