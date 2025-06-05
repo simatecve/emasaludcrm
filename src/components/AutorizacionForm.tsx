@@ -117,14 +117,14 @@ const AutorizacionForm = ({ autorizacion, onClose }: AutorizacionFormProps) => {
             <div className="space-y-2">
               <Label htmlFor="medico_id">Médico</Label>
               <Select
-                value={formData.medico_id?.toString() || ""}
-                onValueChange={(value) => setFormData({ ...formData, medico_id: value ? parseInt(value) : undefined })}
+                value={formData.medico_id?.toString() || "sin-medico"}
+                onValueChange={(value) => setFormData({ ...formData, medico_id: value === "sin-medico" ? undefined : parseInt(value) })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar médico" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin médico asignado</SelectItem>
+                  <SelectItem value="sin-medico">Sin médico asignado</SelectItem>
                   {loadingMedicos ? (
                     <SelectItem value="loading" disabled>Cargando...</SelectItem>
                   ) : (
@@ -141,14 +141,14 @@ const AutorizacionForm = ({ autorizacion, onClose }: AutorizacionFormProps) => {
             <div className="space-y-2">
               <Label htmlFor="obra_social_id">Obra Social</Label>
               <Select
-                value={formData.obra_social_id?.toString() || ""}
-                onValueChange={(value) => setFormData({ ...formData, obra_social_id: value ? parseInt(value) : undefined })}
+                value={formData.obra_social_id?.toString() || "sin-obra-social"}
+                onValueChange={(value) => setFormData({ ...formData, obra_social_id: value === "sin-obra-social" ? undefined : parseInt(value) })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar obra social" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Sin obra social</SelectItem>
+                  <SelectItem value="sin-obra-social">Sin obra social</SelectItem>
                   {loadingObrasSociales ? (
                     <SelectItem value="loading" disabled>Cargando...</SelectItem>
                   ) : (
