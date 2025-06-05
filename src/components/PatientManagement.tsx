@@ -1,61 +1,103 @@
 
 import React, { useState } from 'react';
-import { Search, Plus, Upload, FileText, User, Phone, Calendar } from 'lucide-react';
+import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { usePatients, useCreatePatient, useUpdatePatient, useDeletePatient, Patient, PatientFormData } from '@/hooks/usePatients';
+import PatientForm from './PatientForm';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
-  const patients = [
-    {
-      id: 1,
-      name: 'María González',
-      surname: 'González',
-      dni: '12345678',
-      birthdate: '1985-03-15',
-      phone: '+54 11 1234-5678',
-      email: 'maria.gonzalez@email.com',
-      obraSocial: 'OSDE',
-      consultationsThisMonth: 1,
-      maxConsultations: 2,
-      lastVisit: '2024-05-20'
-    },
-    {
-      id: 2,
-      name: 'Juan Pérez',
-      surname: 'Pérez',
-      dni: '23456789',
-      birthdate: '1978-07-22',
-      phone: '+54 11 2345-6789',
-      email: 'juan.perez@email.com',
-      obraSocial: 'Swiss Medical',
-      consultationsThisMonth: 2,
-      maxConsultations: 2,
-      lastVisit: '2024-05-18'
-    },
-    {
-      id: 3,
-      name: 'Ana Rodríguez',
-      surname: 'Rodríguez',
-      dni: '34567890',
-      birthdate: '1992-11-08',
-      phone: '+54 11 3456-7890',
-      email: 'ana.rodriguez@email.com',
-      obraSocial: 'Galeno',
-      consultationsThisMonth: 0,
-      maxConsultations: 3,
-      lastVisit: '2024-04-30'
-    },
-  ];
+  const { data: patients, isLoading, error } = usePatients();
+  const createPatient = useCreatePatient();
+  const updatePatient = useUpdatePatient();
+  const deletePatient = useDeletePatient();
 
-  const filteredPatients = patients.filter(patient =>
+  const filteredPatients = patients?.filter(patient =>
     patient.dni.includes(searchTerm) ||
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.surname.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.apellido.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const handleCreatePatient = (data: PatientFormData) => {
+    createPatient.mutate(data, {
+      onSuccess: () => {
+        setShowForm(false);
+      }
+    });
+  };
+
+  const handleUpdatePatient = (data: PatientFormData) => {
+    if (editingPatient) {
+      updatePatient.mutate({ id: editingPatient.id, data }, {
+        onSuccess: () => {
+          setEditingPatient(null);
+          setShowForm(false);
+          if (selectedPatient?.id === editingPatient.id) {
+            setSelectedPatient(null);
+          }
+        }
+      });
+    }
+  };
+
+  const handleDeletePatient = (patient: Patient) => {
+    if (confirm(`¿Está seguro que desea eliminar al paciente ${patient.nombre} ${patient.apellido}?`)) {
+      deletePatient.mutate(patient.id, {
+        onSuccess: () => {
+          if (selectedPatient?.id === patient.id) {
+            setSelectedPatient(null);
+          }
+        }
+      });
+    }
+  };
+
+  const handleEditPatient = (patient: Patient) => {
+    setEditingPatient(patient);
+    setShowForm(true);
+  };
+
+  const handleNewPatient = () => {
+    setEditingPatient(null);
+    setShowForm(true);
+  };
+
+  const handleCancelForm = () => {
+    setShowForm(false);
+    setEditingPatient(null);
+  };
+
+  if (showForm) {
+    return (
+      <div className="p-6">
+        <PatientForm
+          patient={editingPatient || undefined}
+          onSubmit={editingPatient ? handleUpdatePatient : handleCreatePatient}
+          onCancel={handleCancelForm}
+          isLoading={createPatient.isPending || updatePatient.isPending}
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error al cargar los pacientes: {error.message}
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -69,7 +111,7 @@ const PatientManagement = () => {
             <Upload className="h-4 w-4" />
             Importar Excel
           </Button>
-          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleNewPatient} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4" />
             Nuevo Paciente
           </Button>
@@ -94,42 +136,50 @@ const PatientManagement = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {filteredPatients.map((patient) => (
-                  <div
-                    key={patient.id}
-                    onClick={() => setSelectedPatient(patient)}
-                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <User className="h-5 w-5 text-blue-600" />
+              {isLoading ? (
+                <div className="text-center py-4">Cargando pacientes...</div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredPatients.map((patient) => (
+                    <div
+                      key={patient.id}
+                      onClick={() => setSelectedPatient(patient)}
+                      className={`p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
+                        selectedPatient?.id === patient.id ? 'bg-blue-50 border-blue-200' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <User className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {patient.nombre} {patient.apellido}
+                            </h3>
+                            <p className="text-sm text-gray-500">DNI: {patient.dni}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-medium text-gray-900">
-                            {patient.name} {patient.surname}
-                          </h3>
-                          <p className="text-sm text-gray-500">DNI: {patient.dni}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{patient.obraSocial}</p>
-                        <div className="flex items-center gap-1">
-                          <span className={`inline-block w-2 h-2 rounded-full ${
-                            patient.consultationsThisMonth >= patient.maxConsultations 
-                              ? 'bg-red-500' 
-                              : 'bg-green-500'
-                          }`}></span>
-                          <span className="text-xs text-gray-500">
-                            {patient.consultationsThisMonth}/{patient.maxConsultations} consultas
-                          </span>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-900">
+                            {patient.obra_social?.nombre || 'Sin obra social'}
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <span className={`inline-block w-2 h-2 rounded-full ${
+                              patient.consultas_mes_actual >= patient.consultas_maximas 
+                                ? 'bg-red-500' 
+                                : 'bg-green-500'
+                            }`}></span>
+                            <span className="text-xs text-gray-500">
+                              {patient.consultas_mes_actual}/{patient.consultas_maximas} consultas
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -147,7 +197,7 @@ const PatientManagement = () => {
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="font-bold text-lg text-gray-900">
-                    {selectedPatient.name} {selectedPatient.surname}
+                    {selectedPatient.nombre} {selectedPatient.apellido}
                   </h3>
                   <p className="text-gray-600">DNI: {selectedPatient.dni}</p>
                 </div>
@@ -156,50 +206,77 @@ const PatientManagement = () => {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <span className="text-sm">
-                      Nacimiento: {new Date(selectedPatient.birthdate).toLocaleDateString('es-AR')}
+                      Nacimiento: {new Date(selectedPatient.fecha_nacimiento).toLocaleDateString('es-AR')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{selectedPatient.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm">{selectedPatient.email}</span>
-                  </div>
+                  {selectedPatient.telefono && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{selectedPatient.telefono}</span>
+                    </div>
+                  )}
+                  {selectedPatient.email && (
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{selectedPatient.email}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">Obra Social</h4>
-                  <p className="text-blue-600 font-medium">{selectedPatient.obraSocial}</p>
+                  <p className="text-blue-600 font-medium">
+                    {selectedPatient.obra_social?.nombre || 'Sin obra social'}
+                  </p>
+                  {selectedPatient.numero_afiliado && (
+                    <p className="text-sm text-gray-600">
+                      Nº Afiliado: {selectedPatient.numero_afiliado}
+                    </p>
+                  )}
                 </div>
 
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">Consultas Este Mes</h4>
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-blue-600">
-                      {selectedPatient.consultationsThisMonth}
+                      {selectedPatient.consultas_mes_actual}
                     </span>
                     <span className="text-sm text-gray-600">
-                      de {selectedPatient.maxConsultations} permitidas
+                      de {selectedPatient.consultas_maximas} permitidas
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full" 
                       style={{ 
-                        width: `${(selectedPatient.consultationsThisMonth / selectedPatient.maxConsultations) * 100}%` 
+                        width: `${(selectedPatient.consultas_mes_actual / selectedPatient.consultas_maximas) * 100}%` 
                       }}
                     ></div>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Button 
+                    onClick={() => handleEditPatient(selectedPatient)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
                     Editar Paciente
                   </Button>
-                  <Button variant="outline" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {}}
+                  >
                     Ver Historial
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full flex items-center gap-2"
+                    onClick={() => handleDeletePatient(selectedPatient)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar Paciente
                   </Button>
                 </div>
               </CardContent>

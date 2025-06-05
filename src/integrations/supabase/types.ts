@@ -9,6 +9,157 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      consultas: {
+        Row: {
+          created_at: string | null
+          diagnostico: string | null
+          fecha_consulta: string | null
+          id: string
+          medico: string | null
+          motivo: string | null
+          observaciones: string | null
+          paciente_id: string | null
+          precio: number | null
+          tratamiento: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          diagnostico?: string | null
+          fecha_consulta?: string | null
+          id?: string
+          medico?: string | null
+          motivo?: string | null
+          observaciones?: string | null
+          paciente_id?: string | null
+          precio?: number | null
+          tratamiento?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          diagnostico?: string | null
+          fecha_consulta?: string | null
+          id?: string
+          medico?: string | null
+          motivo?: string | null
+          observaciones?: string | null
+          paciente_id?: string | null
+          precio?: number | null
+          tratamiento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultas_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obras_sociales: {
+        Row: {
+          activa: boolean | null
+          codigo: string | null
+          created_at: string | null
+          direccion: string | null
+          email: string | null
+          id: string
+          nombre: string
+          telefono: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activa?: boolean | null
+          codigo?: string | null
+          created_at?: string | null
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          nombre: string
+          telefono?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activa?: boolean | null
+          codigo?: string | null
+          created_at?: string | null
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          nombre?: string
+          telefono?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pacientes: {
+        Row: {
+          activo: boolean | null
+          apellido: string
+          consultas_maximas: number | null
+          consultas_mes_actual: number | null
+          created_at: string | null
+          direccion: string | null
+          dni: string
+          email: string | null
+          fecha_nacimiento: string
+          id: string
+          nombre: string
+          numero_afiliado: string | null
+          obra_social_id: string | null
+          observaciones: string | null
+          telefono: string | null
+          ultima_visita: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          apellido: string
+          consultas_maximas?: number | null
+          consultas_mes_actual?: number | null
+          created_at?: string | null
+          direccion?: string | null
+          dni: string
+          email?: string | null
+          fecha_nacimiento: string
+          id?: string
+          nombre: string
+          numero_afiliado?: string | null
+          obra_social_id?: string | null
+          observaciones?: string | null
+          telefono?: string | null
+          ultima_visita?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          apellido?: string
+          consultas_maximas?: number | null
+          consultas_mes_actual?: number | null
+          created_at?: string | null
+          direccion?: string | null
+          dni?: string
+          email?: string | null
+          fecha_nacimiento?: string
+          id?: string
+          nombre?: string
+          numero_afiliado?: string | null
+          obra_social_id?: string | null
+          observaciones?: string | null
+          telefono?: string | null
+          ultima_visita?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pacientes_obra_social_id_fkey"
+            columns: ["obra_social_id"]
+            isOneToOne: false
+            referencedRelation: "obras_sociales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_config: {
         Row: {
           copyright: string
