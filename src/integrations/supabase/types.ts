@@ -346,6 +346,60 @@ export type Database = {
         }
         Relationships: []
       }
+      turnos: {
+        Row: {
+          created_at: string | null
+          estado: string
+          fecha: string
+          hora: string
+          id: number
+          medico_id: number
+          motivo: string | null
+          observaciones: string | null
+          paciente_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          estado?: string
+          fecha: string
+          hora: string
+          id?: number
+          medico_id: number
+          motivo?: string | null
+          observaciones?: string | null
+          paciente_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          estado?: string
+          fecha?: string
+          hora?: string
+          id?: number
+          medico_id?: number
+          motivo?: string | null
+          observaciones?: string | null
+          paciente_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "turnos_medico_id_fkey"
+            columns: ["medico_id"]
+            isOneToOne: false
+            referencedRelation: "medicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "turnos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string | null
