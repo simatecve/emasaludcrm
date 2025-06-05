@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -46,7 +45,7 @@ const TurnoManagement = () => {
       new Date(turno.fecha).toDateString() === selectedDate.toDateString();
 
     const matchesEspecialidad = !selectedEspecialidad || 
-      turno.medicos?.especialidad?.nombre === selectedEspecialidad;
+      turno.medicos?.especialidades?.nombre === selectedEspecialidad;
 
     const matchesEstado = !selectedEstado || turno.estado === selectedEstado;
 
@@ -233,8 +232,8 @@ const TurnoManagement = () => {
                     <div>
                       <p className="font-medium">Dr. {turno.medicos?.nombre || 'N/A'} {turno.medicos?.apellido || 'N/A'}</p>
                       <p className="text-sm text-gray-600">Mat: {turno.medicos?.matricula || 'N/A'}</p>
-                      {turno.medicos?.especialidad && (
-                        <p className="text-sm text-blue-600">{turno.medicos.especialidad.nombre}</p>
+                      {turno.medicos?.especialidades && (
+                        <p className="text-sm text-blue-600">{turno.medicos.especialidades.nombre}</p>
                       )}
                     </div>
                     
