@@ -1,12 +1,29 @@
 
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from '@/components/Sidebar';
 import Dashboard from '@/components/Dashboard';
 import PatientManagement from '@/components/PatientManagement';
 import AppointmentScheduler from '@/components/AppointmentScheduler';
+import Login from './Login';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
+  const { user, loading } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -44,7 +61,12 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <Sidebar 
+        activeSection={activeSection} 
+        onSectionChange={setActiveSection}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
       <div className="flex-1 overflow-auto">
         {renderActiveSection()}
       </div>
