@@ -24,9 +24,16 @@ const TurnoManagement = () => {
   const [selectedEspecialidad, setSelectedEspecialidad] = useState<string>('');
   const [selectedEstado, setSelectedEstado] = useState<string>('');
 
-  const { data: turnos, isLoading } = useTurnos();
+  const { data: turnos, isLoading, error } = useTurnos();
   const { data: especialidades, isLoading: loadingEspecialidades } = useEspecialidades();
   const deleteMutation = useDeleteTurno();
+
+  console.log('TurnoManagement render:', { turnos, isLoading, error });
+
+  // Debug info
+  if (error) {
+    console.error('Error in TurnoManagement:', error);
+  }
 
   const filteredTurnos = turnos?.filter(turno => {
     const matchesSearch = turno.pacientes?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -86,6 +93,15 @@ const TurnoManagement = () => {
     return <div className="p-6">Cargando turnos...</div>;
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="text-red-600">Error cargando turnos: {error.message}</div>
+        <div className="mt-2 text-sm text-gray-500">Ver consola para más detalles</div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -106,6 +122,11 @@ const TurnoManagement = () => {
             <TurnoForm turno={editingTurno} onClose={handleCloseDialog} />
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Debug info */}
+      <div className="bg-gray-100 p-4 rounded text-sm">
+        <strong>Debug:</strong> {turnos?.length || 0} turnos encontrados
       </div>
 
       {/* Filtros */}
@@ -193,7 +214,7 @@ const TurnoManagement = () => {
         {filteredTurnos.length === 0 ? (
           <Card>
             <CardContent className="p-6 text-center text-gray-500">
-              No se encontraron turnos con los filtros aplicados
+              {turnos?.length === 0 ? 'No hay turnos registrados' : 'No se encontraron turnos con los filtros aplicados'}
             </CardContent>
           </Card>
         ) : (
@@ -204,14 +225,14 @@ const TurnoManagement = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
                     <div>
                       <h3 className="font-semibold text-lg">
-                        {turno.pacientes?.nombre} {turno.pacientes?.apellido}
+                        {turno.pacientes?.nombre || 'N/A'} {turno.pacientes?.apellido || 'N/A'}
                       </h3>
-                      <p className="text-sm text-gray-600">DNI: {turno.pacientes?.dni}</p>
+                      <p className="text-sm text-gray-600">DNI: {turno.pacientes?.dni || 'N/A'}</p>
                     </div>
                     
                     <div>
-                      <p className="font-medium">Dr. {turno.medicos?.nombre} {turno.medicos?.apellido}</p>
-                      <p className="text-sm text-gray-600">Mat: {turno.medicos?.matricula}</p>
+                      <p className="font-medium">Dr. {turno.medicos?.nombre || 'N/A'} {turno.medicos?.apellido || 'N/A'}</p>
+                      <p className="text-sm text-gray-600">Mat: {turno.medicos?.matricula || 'N/A'}</p>
                       {turno.medicos?.especialidad && (
                         <p className="text-sm text-blue-600">{turno.medicos.especialidad.nombre}</p>
                       )}

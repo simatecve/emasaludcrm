@@ -44,22 +44,45 @@ export const useTurnos = () => {
   return useQuery({
     queryKey: ['turnos'],
     queryFn: async () => {
+      console.log('Fetching turnos...');
+      
+      // Primero intentamos una query simple
+      const { data: simpleData, error: simpleError } = await supabase
+        .from('turnos')
+        .select('*')
+        .order('fecha', { ascending: true })
+        .order('hora', { ascending: true });
+
+      if (simpleError) {
+        console.error('Error in simple query:', simpleError);
+        throw simpleError;
+      }
+
+      console.log('Simple turnos data:', simpleData);
+
+      // Ahora intentamos con las relaciones
       const { data, error } = await supabase
         .from('turnos')
         .select(`
           *,
-          pacientes!inner(nombre, apellido, dni),
-          medicos!inner(
+          pacientes(nombre, apellido, dni),
+          medicos(
             nombre, 
             apellido, 
             matricula,
-            especialidad:especialidades(nombre)
+            especialidades(nombre)
           )
         `)
         .order('fecha', { ascending: true })
         .order('hora', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching turnos with relations:', error);
+        // Si falla con relaciones, devolvemos los datos simples
+        return simpleData as Turno[];
+      }
+
+      console.log('Turnos with relations:', data);
       return data as Turno[];
     },
   });
