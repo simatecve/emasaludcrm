@@ -9,6 +9,82 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      autorizaciones: {
+        Row: {
+          activa: boolean | null
+          created_at: string | null
+          descripcion: string | null
+          documento_url: string | null
+          estado: string | null
+          fecha_solicitud: string | null
+          fecha_vencimiento: string | null
+          id: number
+          medico_id: number | null
+          numero_autorizacion: string | null
+          obra_social_id: number | null
+          observaciones: string | null
+          paciente_id: number
+          tipo_autorizacion: string
+          updated_at: string | null
+        }
+        Insert: {
+          activa?: boolean | null
+          created_at?: string | null
+          descripcion?: string | null
+          documento_url?: string | null
+          estado?: string | null
+          fecha_solicitud?: string | null
+          fecha_vencimiento?: string | null
+          id?: number
+          medico_id?: number | null
+          numero_autorizacion?: string | null
+          obra_social_id?: number | null
+          observaciones?: string | null
+          paciente_id: number
+          tipo_autorizacion: string
+          updated_at?: string | null
+        }
+        Update: {
+          activa?: boolean | null
+          created_at?: string | null
+          descripcion?: string | null
+          documento_url?: string | null
+          estado?: string | null
+          fecha_solicitud?: string | null
+          fecha_vencimiento?: string | null
+          id?: number
+          medico_id?: number | null
+          numero_autorizacion?: string | null
+          obra_social_id?: number | null
+          observaciones?: string | null
+          paciente_id?: number
+          tipo_autorizacion?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autorizaciones_medico_id_fkey"
+            columns: ["medico_id"]
+            isOneToOne: false
+            referencedRelation: "medicos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autorizaciones_obra_social_id_fkey"
+            columns: ["obra_social_id"]
+            isOneToOne: false
+            referencedRelation: "obras_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "autorizaciones_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       consultas: {
         Row: {
           created_at: string | null

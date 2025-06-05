@@ -8,6 +8,7 @@ import AppointmentScheduler from '@/components/AppointmentScheduler';
 import MedicoManagement from '@/components/MedicoManagement';
 import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
+import AutorizacionManagement from '@/components/AutorizacionManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -42,18 +43,13 @@ const Index = () => {
         return <EspecialidadManagement />;
       case 'obras-sociales':
         return <ObraSocialManagement />;
+      case 'authorizations':
+        return <AutorizacionManagement />;
       case 'reports':
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-4">Informes</h1>
             <p className="text-gray-600">Sección de informes y reportes en desarrollo...</p>
-          </div>
-        );
-      case 'authorizations':
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Autorizaciones</h1>
-            <p className="text-gray-600">Gestión de autorizaciones médicas en desarrollo...</p>
           </div>
         );
       case 'settings':
