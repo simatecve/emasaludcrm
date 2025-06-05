@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -24,7 +23,7 @@ export interface Turno {
     nombre: string;
     apellido: string;
     matricula: string;
-    especialidad?: {
+    especialidades?: {
       nombre: string;
     };
   };
@@ -46,21 +45,6 @@ export const useTurnos = () => {
     queryFn: async () => {
       console.log('Fetching turnos...');
       
-      // Primero intentamos una query simple
-      const { data: simpleData, error: simpleError } = await supabase
-        .from('turnos')
-        .select('*')
-        .order('fecha', { ascending: true })
-        .order('hora', { ascending: true });
-
-      if (simpleError) {
-        console.error('Error in simple query:', simpleError);
-        throw simpleError;
-      }
-
-      console.log('Simple turnos data:', simpleData);
-
-      // Ahora intentamos con las relaciones
       const { data, error } = await supabase
         .from('turnos')
         .select(`
@@ -77,12 +61,11 @@ export const useTurnos = () => {
         .order('hora', { ascending: true });
 
       if (error) {
-        console.error('Error fetching turnos with relations:', error);
-        // Si falla con relaciones, devolvemos los datos simples
-        return simpleData as Turno[];
+        console.error('Error fetching turnos:', error);
+        throw error;
       }
 
-      console.log('Turnos with relations:', data);
+      console.log('Turnos data:', data);
       return data as Turno[];
     },
   });
