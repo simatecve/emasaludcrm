@@ -13,8 +13,6 @@ const TurnoCalendarView = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(startOfToday());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTurno, setEditingTurno] = useState<Turno | undefined>();
-  const [newTurnoDate, setNewTurnoDate] = useState<Date | null>(null);
-  const [newTurnoTime, setNewTurnoTime] = useState<string>('');
   
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,30 +37,22 @@ const TurnoCalendarView = () => {
 
   const handleNewAppointment = () => {
     setEditingTurno(undefined);
-    setNewTurnoDate(null);
-    setNewTurnoTime('');
     setIsDialogOpen(true);
   };
 
   const handleEditTurno = (turno: Turno) => {
     setEditingTurno(turno);
-    setNewTurnoDate(null);
-    setNewTurnoTime('');
     setIsDialogOpen(true);
   };
 
   const handleCreateTurno = (date: Date, time: string) => {
     setEditingTurno(undefined);
-    setNewTurnoDate(date);
-    setNewTurnoTime(time);
     setIsDialogOpen(true);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingTurno(undefined);
-    setNewTurnoDate(null);
-    setNewTurnoTime('');
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -130,8 +120,6 @@ const TurnoCalendarView = () => {
           <TurnoForm 
             turno={editingTurno} 
             onClose={handleCloseDialog}
-            initialDate={newTurnoDate}
-            initialTime={newTurnoTime}
           />
         </DialogContent>
       </Dialog>

@@ -14,7 +14,8 @@ export interface Medico {
   direccion?: string;
   especialidad_id?: number;
   activo: boolean;
-  especialidad?: {
+  especialidades?: {
+    id: number;
     nombre: string;
   };
 }
