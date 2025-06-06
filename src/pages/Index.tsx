@@ -9,7 +9,7 @@ import MedicoManagement from '@/components/MedicoManagement';
 import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
-import ReportsManagement from '@/components/ReportsManagement';
+import ReportsSection from '@/components/ReportsSection';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -47,7 +47,7 @@ const Index = () => {
       case 'authorizations':
         return <AutorizacionManagement />;
       case 'reports':
-        return <ReportsManagement />;
+        return <ReportsSection />;
       case 'settings':
         return (
           <div className="p-6">
