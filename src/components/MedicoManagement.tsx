@@ -83,7 +83,7 @@ const MedicoManagement = () => {
                   </TableCell>
                   <TableCell>{medico.dni}</TableCell>
                   <TableCell>{medico.matricula}</TableCell>
-                  <TableCell>{medico.especialidad?.nombre || '-'}</TableCell>
+                  <TableCell>{medico.especialidades?.nombre || '-'}</TableCell>
                   <TableCell>{medico.telefono || '-'}</TableCell>
                   <TableCell>{medico.email || '-'}</TableCell>
                   <TableCell className="text-right">
