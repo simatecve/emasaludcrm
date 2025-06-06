@@ -9,6 +9,7 @@ import MedicoManagement from '@/components/MedicoManagement';
 import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
+import ReportsManagement from '@/components/ReportsManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
