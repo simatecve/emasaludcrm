@@ -47,12 +47,7 @@ const Index = () => {
       case 'authorizations':
         return <AutorizacionManagement />;
       case 'reports':
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Informes</h1>
-            <p className="text-gray-600">Sección de informes y reportes en desarrollo...</p>
-          </div>
-        );
+        return <ReportsManagement />;
       case 'settings':
         return (
           <div className="p-6">
