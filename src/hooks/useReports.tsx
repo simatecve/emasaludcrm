@@ -48,8 +48,6 @@ export const useConsultasReport = (filters: ReportFilters) => {
   return useQuery({
     queryKey: ['consultas-report', filters],
     queryFn: async () => {
-      console.log('Fetching consultas report with filters:', filters);
-      
       let query = supabase
         .from('consultas')
         .select(`
@@ -59,12 +57,7 @@ export const useConsultasReport = (filters: ReportFilters) => {
           diagnostico,
           precio,
           medico,
-          pacientes:paciente_id(
-            nombre, 
-            apellido, 
-            dni, 
-            obras_sociales:obra_social_id(nombre)
-          )
+          pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre))
         `)
         .order('fecha_consulta', { ascending: false });
 
@@ -85,15 +78,13 @@ export const useConsultasReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      console.log('Raw consultas data:', data);
-
       const report: ConsultaReport[] = data?.map(consulta => ({
         id: consulta.id,
         fecha_consulta: consulta.fecha_consulta,
-        motivo: consulta.motivo || 'Sin motivo especificado',
-        diagnostico: consulta.diagnostico || 'Sin diagnóstico',
+        motivo: consulta.motivo || '',
+        diagnostico: consulta.diagnostico || '',
         precio: consulta.precio || 0,
-        medico: consulta.medico || 'Sin médico asignado',
+        medico: consulta.medico || '',
         paciente: {
           nombre: consulta.pacientes?.nombre || '',
           apellido: consulta.pacientes?.apellido || '',
@@ -102,7 +93,7 @@ export const useConsultasReport = (filters: ReportFilters) => {
         obra_social: consulta.pacientes?.obras_sociales?.nombre || 'Sin obra social'
       })) || [];
 
-      console.log('Processed consultas report:', report);
+      console.log('Consultas report:', report);
       return report;
     },
   });
@@ -112,8 +103,6 @@ export const useTurnosReport = (filters: ReportFilters) => {
   return useQuery({
     queryKey: ['turnos-report', filters],
     queryFn: async () => {
-      console.log('Fetching turnos report with filters:', filters);
-      
       let query = supabase
         .from('turnos')
         .select(`
@@ -123,11 +112,7 @@ export const useTurnosReport = (filters: ReportFilters) => {
           estado,
           motivo,
           pacientes:paciente_id(nombre, apellido, dni),
-          medicos:medico_id(
-            nombre, 
-            apellido, 
-            especialidades:especialidad_id(nombre)
-          )
+          medicos:medico_id(nombre, apellido, especialidades:especialidad_id(nombre))
         `)
         .order('fecha', { ascending: false })
         .order('hora', { ascending: false });
@@ -152,14 +137,12 @@ export const useTurnosReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      console.log('Raw turnos data:', data);
-
       const report: TurnoReport[] = data?.map(turno => ({
         id: turno.id,
         fecha: turno.fecha,
         hora: turno.hora,
         estado: turno.estado,
-        motivo: turno.motivo || 'Sin motivo especificado',
+        motivo: turno.motivo || '',
         paciente: {
           nombre: turno.pacientes?.nombre || '',
           apellido: turno.pacientes?.apellido || '',
@@ -172,7 +155,7 @@ export const useTurnosReport = (filters: ReportFilters) => {
         especialidad: turno.medicos?.especialidades?.nombre || 'Sin especialidad'
       })) || [];
 
-      console.log('Processed turnos report:', report);
+      console.log('Turnos report:', report);
       return report;
     },
   });
@@ -182,8 +165,6 @@ export const useRevenueReport = (filters: ReportFilters) => {
   return useQuery({
     queryKey: ['revenue-report', filters],
     queryFn: async () => {
-      console.log('Fetching revenue report with filters:', filters);
-      
       let query = supabase
         .from('consultas')
         .select(`
@@ -209,8 +190,6 @@ export const useRevenueReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      console.log('Raw revenue data:', data);
-
       const totalRevenue = data?.reduce((sum, consulta) => sum + (consulta.precio || 0), 0) || 0;
       const consultasCount = data?.length || 0;
       const averagePrice = consultasCount > 0 ? totalRevenue / consultasCount : 0;
@@ -226,115 +205,13 @@ export const useRevenueReport = (filters: ReportFilters) => {
         return acc;
       }, {} as Record<string, { total: number; count: number }>) || {};
 
-      const result = {
+      console.log('Revenue report:', { totalRevenue, consultasCount, averagePrice, revenueByObraSocial });
+      
+      return {
         totalRevenue,
         consultasCount,
         averagePrice,
         revenueByObraSocial
-      };
-
-      console.log('Processed revenue report:', result);
-      return result;
-    },
-  });
-};
-
-export const usePeriodStats = (filters: ReportFilters) => {
-  return useQuery({
-    queryKey: ['period-stats', filters],
-    queryFn: async () => {
-      console.log('Fetching period stats with filters:', filters);
-      
-      const startDate = filters.fechaInicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-      const endDate = filters.fechaFin || new Date().toISOString().split('T')[0];
-
-      // Consultas del período
-      const { data: consultas } = await supabase
-        .from('consultas')
-        .select('id, precio, fecha_consulta')
-        .gte('fecha_consulta', startDate)
-        .lte('fecha_consulta', endDate);
-
-      // Turnos del período
-      const { data: turnos } = await supabase
-        .from('turnos')
-        .select('id, estado, fecha')
-        .gte('fecha', startDate)
-        .lte('fecha', endDate);
-
-      // Nuevos pacientes del período
-      const { data: nuevosPacientes } = await supabase
-        .from('pacientes')
-        .select('id')
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
-        .eq('activo', true);
-
-      const stats = {
-        totalConsultas: consultas?.length || 0,
-        totalTurnos: turnos?.length || 0,
-        turnosCompletados: turnos?.filter(t => t.estado === 'completado').length || 0,
-        turnosCancelados: turnos?.filter(t => t.estado === 'cancelado').length || 0,
-        nuevosPacientes: nuevosPacientes?.length || 0,
-        ingresosTotales: consultas?.reduce((sum, c) => sum + (c.precio || 0), 0) || 0
-      };
-
-      console.log('Period stats:', stats);
-      return stats;
-    },
-  });
-};
-
-export const useChartsData = (filters: ReportFilters) => {
-  return useQuery({
-    queryKey: ['charts-data', filters],
-    queryFn: async () => {
-      console.log('Fetching charts data with filters:', filters);
-      
-      const startDate = filters.fechaInicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-      const endDate = filters.fechaFin || new Date().toISOString().split('T')[0];
-
-      // Consultas por día
-      const { data: consultasDiarias } = await supabase
-        .from('consultas')
-        .select('fecha_consulta, precio')
-        .gte('fecha_consulta', startDate)
-        .lte('fecha_consulta', endDate)
-        .order('fecha_consulta');
-
-      // Turnos por estado
-      const { data: turnosEstado } = await supabase
-        .from('turnos')
-        .select('estado')
-        .gte('fecha', startDate)
-        .lte('fecha', endDate);
-
-      // Agrupar consultas por día
-      const consultasPorDia = consultasDiarias?.reduce((acc, consulta) => {
-        const fecha = new Date(consulta.fecha_consulta).toLocaleDateString('es-AR');
-        if (!acc[fecha]) {
-          acc[fecha] = { fecha, consultas: 0, ingresos: 0 };
-        }
-        acc[fecha].consultas += 1;
-        acc[fecha].ingresos += consulta.precio || 0;
-        return acc;
-      }, {} as Record<string, { fecha: string; consultas: number; ingresos: number }>) || {};
-
-      // Agrupar turnos por estado
-      const turnosPorEstado = turnosEstado?.reduce((acc, turno) => {
-        if (!acc[turno.estado]) {
-          acc[turno.estado] = 0;
-        }
-        acc[turno.estado] += 1;
-        return acc;
-      }, {} as Record<string, number>) || {};
-
-      return {
-        consultasPorDia: Object.values(consultasPorDia),
-        turnosPorEstado: Object.entries(turnosPorEstado).map(([estado, count]) => ({
-          estado,
-          count
-        }))
       };
     },
   });
