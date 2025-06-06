@@ -1,56 +1,43 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
 import { useEspecialidades } from '@/hooks/useEspecialidades';
 import TurnoForm from './TurnoForm';
-import { Plus, Search, Edit, Trash2, Calendar as CalendarIcon, Clock, Filter } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import TurnoFilters from './turnos/TurnoFilters';
+import TurnoList from './turnos/TurnoList';
+import { useTurnoFilters } from './turnos/useTurnoFilters';
+import { Plus } from 'lucide-react';
 
 const TurnoManagement = () => {
-  const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTurno, setEditingTurno] = useState<Turno | undefined>();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedEspecialidad, setSelectedEspecialidad] = useState<string>('');
-  const [selectedEstado, setSelectedEstado] = useState<string>('');
 
   const { data: turnos, isLoading, error } = useTurnos();
   const { data: especialidades, isLoading: loadingEspecialidades } = useEspecialidades();
   const deleteMutation = useDeleteTurno();
 
+  const {
+    searchTerm,
+    setSearchTerm,
+    selectedDate,
+    setSelectedDate,
+    selectedEspecialidad,
+    setSelectedEspecialidad,
+    selectedEstado,
+    setSelectedEstado,
+    clearFilters,
+    filterTurnos
+  } = useTurnoFilters();
+
   console.log('TurnoManagement render:', { turnos, isLoading, error });
 
-  // Debug info
   if (error) {
     console.error('Error in TurnoManagement:', error);
   }
 
-  const filteredTurnos = turnos?.filter(turno => {
-    const matchesSearch = turno.pacientes?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      turno.pacientes?.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      turno.pacientes?.dni.includes(searchTerm) ||
-      turno.medicos?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      turno.medicos?.apellido.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesDate = !selectedDate || 
-      new Date(turno.fecha).toDateString() === selectedDate.toDateString();
-
-    const matchesEspecialidad = !selectedEspecialidad || 
-      turno.medicos?.especialidades?.nombre === selectedEspecialidad;
-
-    const matchesEstado = !selectedEstado || turno.estado === selectedEstado;
-
-    return matchesSearch && matchesDate && matchesEspecialidad && matchesEstado;
-  }) || [];
+  const filteredTurnos = filterTurnos(turnos);
 
   const handleEdit = (turno: Turno) => {
     setEditingTurno(turno);
@@ -64,28 +51,6 @@ const TurnoManagement = () => {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingTurno(undefined);
-  };
-
-  const clearFilters = () => {
-    setSelectedDate(undefined);
-    setSelectedEspecialidad('');
-    setSelectedEstado('');
-    setSearchTerm('');
-  };
-
-  const getEstadoBadge = (estado: string) => {
-    const variants = {
-      programado: 'default',
-      confirmado: 'secondary',
-      cancelado: 'destructive',
-      completado: 'outline'
-    } as const;
-
-    return (
-      <Badge variant={variants[estado as keyof typeof variants] || 'default'}>
-        {estado.charAt(0).toUpperCase() + estado.slice(1)}
-      </Badge>
-    );
   };
 
   if (isLoading) {
@@ -129,177 +94,27 @@ const TurnoManagement = () => {
       </div>
 
       {/* Filtros */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Búsqueda */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar paciente, médico o DNI..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
-            {/* Calendario */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="justify-start">
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  {selectedDate ? format(selectedDate, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fecha'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-
-            {/* Filtro de Especialidad */}
-            <Select value={selectedEspecialidad} onValueChange={setSelectedEspecialidad}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas las especialidades" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todas las especialidades</SelectItem>
-                {loadingEspecialidades ? (
-                  <SelectItem value="loading" disabled>Cargando...</SelectItem>
-                ) : (
-                  especialidades?.map((especialidad) => (
-                    <SelectItem key={especialidad.id} value={especialidad.nombre}>
-                      {especialidad.nombre}
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-
-            {/* Filtro de Estado */}
-            <Select value={selectedEstado} onValueChange={setSelectedEstado}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos los estados" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">Todos los estados</SelectItem>
-                <SelectItem value="programado">Programado</SelectItem>
-                <SelectItem value="confirmado">Confirmado</SelectItem>
-                <SelectItem value="cancelado">Cancelado</SelectItem>
-                <SelectItem value="completado">Completado</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Limpiar filtros */}
-            <Button variant="outline" onClick={clearFilters}>
-              Limpiar filtros
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <TurnoFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        selectedEspecialidad={selectedEspecialidad}
+        setSelectedEspecialidad={setSelectedEspecialidad}
+        selectedEstado={selectedEstado}
+        setSelectedEstado={setSelectedEstado}
+        especialidades={especialidades}
+        loadingEspecialidades={loadingEspecialidades}
+        clearFilters={clearFilters}
+      />
 
       {/* Lista de turnos */}
-      <div className="grid gap-4">
-        {filteredTurnos.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-gray-500">
-              {turnos?.length === 0 ? 'No hay turnos registrados' : 'No se encontraron turnos con los filtros aplicados'}
-            </CardContent>
-          </Card>
-        ) : (
-          filteredTurnos.map((turno) => (
-            <Card key={turno.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-1">
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        {turno.pacientes?.nombre || 'N/A'} {turno.pacientes?.apellido || 'N/A'}
-                      </h3>
-                      <p className="text-sm text-gray-600">DNI: {turno.pacientes?.dni || 'N/A'}</p>
-                    </div>
-                    
-                    <div>
-                      <p className="font-medium">Dr. {turno.medicos?.nombre || 'N/A'} {turno.medicos?.apellido || 'N/A'}</p>
-                      <p className="text-sm text-gray-600">Mat: {turno.medicos?.matricula || 'N/A'}</p>
-                      {turno.medicos?.especialidades && (
-                        <p className="text-sm text-blue-600">{turno.medicos.especialidades.nombre}</p>
-                      )}
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4 text-gray-400" />
-                      <span>{new Date(turno.fecha).toLocaleDateString()}</span>
-                      <Clock className="h-4 w-4 text-gray-400 ml-2" />
-                      <span>{turno.hora}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      {getEstadoBadge(turno.estado)}
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(turno)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>¿Eliminar turno?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta acción no se puede deshacer. Se eliminará permanentemente el turno.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDelete(turno.id)}
-                            className="bg-red-600 hover:bg-red-700"
-                          >
-                            Eliminar
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </div>
-                
-                {turno.motivo && (
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm"><strong>Motivo:</strong> {turno.motivo}</p>
-                  </div>
-                )}
-                
-                {turno.observaciones && (
-                  <div className="mt-2">
-                    <p className="text-sm"><strong>Observaciones:</strong> {turno.observaciones}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+      <TurnoList
+        turnos={filteredTurnos}
+        totalTurnos={turnos?.length || 0}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 };
