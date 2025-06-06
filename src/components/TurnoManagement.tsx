@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
 import TurnoForm from './TurnoForm';
 import TurnoCalendarView from './turnos/TurnoCalendarView';
