@@ -1,11 +1,9 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
 import TurnoForm from './TurnoForm';
-import TurnoList from './turnos/TurnoList';
-import { Plus } from 'lucide-react';
+import TurnoCalendarView from './turnos/TurnoCalendarView';
 
 const TurnoManagement = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -34,6 +32,11 @@ const TurnoManagement = () => {
     setEditingTurno(undefined);
   };
 
+  const handleNewTurno = () => {
+    setEditingTurno(undefined);
+    setIsDialogOpen(true);
+  };
+
   if (isLoading) {
     return <div className="p-6">Cargando turnos...</div>;
   }
@@ -48,38 +51,29 @@ const TurnoManagement = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Gestión de Turnos</h1>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setEditingTurno(undefined)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Turno
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editingTurno ? 'Editar Turno' : 'Nuevo Turno'}
-              </DialogTitle>
-            </DialogHeader>
-            <TurnoForm turno={editingTurno} onClose={handleCloseDialog} />
-          </DialogContent>
-        </Dialog>
+    <div className="p-6 h-full">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Turnos</h1>
+          <p className="text-gray-600">Programa y administra las citas médicas</p>
+        </div>
       </div>
 
-      {/* Debug info */}
-      <div className="bg-gray-100 p-4 rounded text-sm">
-        <strong>Debug:</strong> {turnos?.length || 0} turnos encontrados
-      </div>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTurno ? 'Editar Turno' : 'Nuevo Turno'}
+            </DialogTitle>
+          </DialogHeader>
+          <TurnoForm turno={editingTurno} onClose={handleCloseDialog} />
+        </DialogContent>
+      </Dialog>
 
-      {/* Lista de turnos */}
-      <TurnoList
+      <TurnoCalendarView
         turnos={turnos || []}
-        totalTurnos={turnos?.length || 0}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onNewTurno={handleNewTurno}
       />
     </div>
   );
