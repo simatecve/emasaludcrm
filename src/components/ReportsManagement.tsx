@@ -1,17 +1,34 @@
 
 import React, { useState } from 'react';
-import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, BarChart } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useConsultasReport, useTurnosReport, useRevenueReport, type ReportFilters } from '@/hooks/useReports';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart as RechartsBarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useConsultasReport, useTurnosReport, useRevenueReport, useChartData, type ReportFilters } from '@/hooks/useReports';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useEspecialidades } from '@/hooks/useEspecialidades';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { usePatients } from '@/hooks/usePatients';
+
+const chartConfig = {
+  consultas: {
+    label: "Consultas",
+    color: "hsl(var(--chart-1))",
+  },
+  turnos: {
+    label: "Turnos",
+    color: "hsl(var(--chart-2))",
+  },
+  ingresos: {
+    label: "Ingresos",
+    color: "hsl(var(--chart-3))",
+  },
+};
 
 const ReportsManagement = () => {
   const [filters, setFilters] = useState<ReportFilters>({
@@ -27,6 +44,7 @@ const ReportsManagement = () => {
   const { data: consultasReport, isLoading: consultasLoading } = useConsultasReport(filters);
   const { data: turnosReport, isLoading: turnosLoading } = useTurnosReport(filters);
   const { data: revenueReport, isLoading: revenueLoading } = useRevenueReport(filters);
+  const { data: chartData, isLoading: chartLoading } = useChartData(filters);
 
   const updateFilter = (key: keyof ReportFilters, value: string | number | undefined) => {
     setFilters(prev => ({
@@ -56,10 +74,21 @@ const ReportsManagement = () => {
     document.body.removeChild(link);
   };
 
+  const clearFilters = () => {
+    setFilters({
+      fechaInicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
+      fechaFin: new Date().toISOString().split('T')[0],
+    });
+  };
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Informes y Reportes</h1>
+        <Button onClick={clearFilters} variant="outline">
+          <Filter className="h-4 w-4 mr-2" />
+          Limpiar Filtros
+        </Button>
       </div>
 
       {/* Filtros */}
@@ -124,8 +153,8 @@ const ReportsManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Resumen de estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Estadísticas Resumen */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -167,9 +196,85 @@ const ReportsManagement = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Precio Promedio</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {revenueLoading ? '...' : `$${revenueReport?.averagePrice?.toFixed(2) || '0.00'}`}
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Tabs de reportes */}
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart className="h-5 w-5" />
+              Consultas por Mes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {chartLoading ? (
+              <div className="h-64 flex items-center justify-center">Cargando gráfico...</div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RechartsBarChart data={chartData?.consultasPorMes || []}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Bar dataKey="value" fill="var(--color-consultas)" />
+                  </RechartsBarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart className="h-5 w-5" />
+              Turnos por Estado
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {chartLoading ? (
+              <div className="h-64 flex items-center justify-center">Cargando gráfico...</div>
+            ) : (
+              <ChartContainer config={chartConfig} className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData?.turnosPorEstado || []}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      dataKey="value"
+                    >
+                      {chartData?.turnosPorEstado?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs de reportes detallados */}
       <Tabs defaultValue="consultas" className="space-y-4">
         <TabsList>
           <TabsTrigger value="consultas">Consultas</TabsTrigger>
@@ -191,7 +296,7 @@ const ReportsManagement = () => {
             <CardContent>
               {consultasLoading ? (
                 <div className="text-center py-8">Cargando consultas...</div>
-              ) : (
+              ) : consultasReport && consultasReport.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -205,7 +310,7 @@ const ReportsManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {consultasReport?.map((consulta) => (
+                    {consultasReport.map((consulta) => (
                       <TableRow key={consulta.id}>
                         <TableCell>{new Date(consulta.fecha_consulta).toLocaleDateString('es-AR')}</TableCell>
                         <TableCell>{consulta.paciente.nombre} {consulta.paciente.apellido}</TableCell>
@@ -218,6 +323,10 @@ const ReportsManagement = () => {
                     ))}
                   </TableBody>
                 </Table>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No se encontraron consultas para los filtros seleccionados
+                </div>
               )}
             </CardContent>
           </Card>
@@ -237,7 +346,7 @@ const ReportsManagement = () => {
             <CardContent>
               {turnosLoading ? (
                 <div className="text-center py-8">Cargando turnos...</div>
-              ) : (
+              ) : turnosReport && turnosReport.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -251,7 +360,7 @@ const ReportsManagement = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {turnosReport?.map((turno) => (
+                    {turnosReport.map((turno) => (
                       <TableRow key={turno.id}>
                         <TableCell>{new Date(turno.fecha).toLocaleDateString('es-AR')}</TableCell>
                         <TableCell>{turno.hora}</TableCell>
@@ -272,6 +381,10 @@ const ReportsManagement = () => {
                     ))}
                   </TableBody>
                 </Table>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  No se encontraron turnos para los filtros seleccionados
+                </div>
               )}
             </CardContent>
           </Card>
@@ -302,29 +415,35 @@ const ReportsManagement = () => {
                     </div>
                   </div>
 
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Ingresos por Obra Social</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Obra Social</TableHead>
-                          <TableHead>Consultas</TableHead>
-                          <TableHead>Ingresos Totales</TableHead>
-                          <TableHead>Promedio por Consulta</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Object.entries(revenueReport?.revenueByObraSocial || {}).map(([obraSocial, data]) => (
-                          <TableRow key={obraSocial}>
-                            <TableCell>{obraSocial}</TableCell>
-                            <TableCell>{data.count}</TableCell>
-                            <TableCell>${data.total.toFixed(2)}</TableCell>
-                            <TableCell>${(data.total / data.count).toFixed(2)}</TableCell>
+                  {revenueReport?.revenueByObraSocial && Object.keys(revenueReport.revenueByObraSocial).length > 0 ? (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4">Ingresos por Obra Social</h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Obra Social</TableHead>
+                            <TableHead>Consultas</TableHead>
+                            <TableHead>Ingresos Totales</TableHead>
+                            <TableHead>Promedio por Consulta</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {Object.entries(revenueReport.revenueByObraSocial).map(([obraSocial, data]) => (
+                            <TableRow key={obraSocial}>
+                              <TableCell>{obraSocial}</TableCell>
+                              <TableCell>{data.count}</TableCell>
+                              <TableCell>${data.total.toFixed(2)}</TableCell>
+                              <TableCell>${(data.total / data.count).toFixed(2)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No se encontraron datos de ingresos para los filtros seleccionados
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

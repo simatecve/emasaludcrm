@@ -44,6 +44,12 @@ export interface TurnoReport {
   especialidad?: string;
 }
 
+export interface ChartData {
+  name: string;
+  value: number;
+  fill?: string;
+}
+
 export const useConsultasReport = (filters: ReportFilters) => {
   return useQuery({
     queryKey: ['consultas-report', filters],
@@ -212,6 +218,59 @@ export const useRevenueReport = (filters: ReportFilters) => {
         consultasCount,
         averagePrice,
         revenueByObraSocial
+      };
+    },
+  });
+};
+
+export const useChartData = (filters: ReportFilters) => {
+  return useQuery({
+    queryKey: ['chart-data', filters],
+    queryFn: async () => {
+      // Datos para gráfico de turnos por estado
+      const { data: turnosData } = await supabase
+        .from('turnos')
+        .select('estado')
+        .gte('fecha', filters.fechaInicio || '2024-01-01')
+        .lte('fecha', filters.fechaFin || new Date().toISOString().split('T')[0]);
+
+      const turnosPorEstado: ChartData[] = (turnosData || []).reduce((acc, turno) => {
+        const existing = acc.find(item => item.name === turno.estado);
+        if (existing) {
+          existing.value += 1;
+        } else {
+          acc.push({
+            name: turno.estado,
+            value: 1,
+            fill: turno.estado === 'completado' ? '#10b981' : 
+                  turno.estado === 'programado' ? '#f59e0b' : '#ef4444'
+          });
+        }
+        return acc;
+      }, [] as ChartData[]);
+
+      // Datos para gráfico de consultas por mes
+      const { data: consultasData } = await supabase
+        .from('consultas')
+        .select('fecha_consulta, precio')
+        .gte('fecha_consulta', filters.fechaInicio || '2024-01-01')
+        .lte('fecha_consulta', filters.fechaFin || new Date().toISOString());
+
+      const consultasPorMes: ChartData[] = (consultasData || []).reduce((acc, consulta) => {
+        const fecha = new Date(consulta.fecha_consulta);
+        const mes = fecha.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+        const existing = acc.find(item => item.name === mes);
+        if (existing) {
+          existing.value += 1;
+        } else {
+          acc.push({ name: mes, value: 1 });
+        }
+        return acc;
+      }, [] as ChartData[]);
+
+      return {
+        turnosPorEstado,
+        consultasPorMes
       };
     },
   });
