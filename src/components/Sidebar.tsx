@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,7 +25,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
     { id: 'medicos', label: 'Médicos', icon: UserCog },
     { id: 'especialidades', label: 'Especialidades', icon: Stethoscope },
     { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
-    { id: 'reports', label: 'Informes', icon: FileText },
+    { id: 'reports', label: 'Reportes', icon: FileText },
     { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
     { id: 'settings', label: 'Configuración', icon: Settings },
   ];
