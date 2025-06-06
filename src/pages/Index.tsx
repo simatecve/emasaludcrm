@@ -10,7 +10,6 @@ import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
 import ReportsManagement from '@/components/ReportsManagement';
-import UserSettingsForm from '@/components/UserSettingsForm';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -53,7 +52,7 @@ const Index = () => {
         return (
           <div className="p-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Configuración</h1>
-            <UserSettingsForm />
+            <p className="text-gray-600">Configuración del sistema</p>
           </div>
         );
       default:
