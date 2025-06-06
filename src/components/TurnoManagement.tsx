@@ -3,11 +3,8 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
-import { useEspecialidades } from '@/hooks/useEspecialidades';
 import TurnoForm from './TurnoForm';
-import TurnoFilters from './turnos/TurnoFilters';
 import TurnoList from './turnos/TurnoList';
-import { useTurnoFilters } from './turnos/useTurnoFilters';
 import { Plus } from 'lucide-react';
 
 const TurnoManagement = () => {
@@ -15,29 +12,13 @@ const TurnoManagement = () => {
   const [editingTurno, setEditingTurno] = useState<Turno | undefined>();
 
   const { data: turnos, isLoading, error } = useTurnos();
-  const { data: especialidades, isLoading: loadingEspecialidades } = useEspecialidades();
   const deleteMutation = useDeleteTurno();
-
-  const {
-    searchTerm,
-    setSearchTerm,
-    selectedDate,
-    setSelectedDate,
-    selectedEspecialidad,
-    setSelectedEspecialidad,
-    selectedEstado,
-    setSelectedEstado,
-    clearFilters,
-    filterTurnos
-  } = useTurnoFilters();
 
   console.log('TurnoManagement render:', { turnos, isLoading, error });
 
   if (error) {
     console.error('Error in TurnoManagement:', error);
   }
-
-  const filteredTurnos = filterTurnos(turnos);
 
   const handleEdit = (turno: Turno) => {
     setEditingTurno(turno);
@@ -93,24 +74,9 @@ const TurnoManagement = () => {
         <strong>Debug:</strong> {turnos?.length || 0} turnos encontrados
       </div>
 
-      {/* Filtros */}
-      <TurnoFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        selectedEspecialidad={selectedEspecialidad}
-        setSelectedEspecialidad={setSelectedEspecialidad}
-        selectedEstado={selectedEstado}
-        setSelectedEstado={setSelectedEstado}
-        especialidades={especialidades}
-        loadingEspecialidades={loadingEspecialidades}
-        clearFilters={clearFilters}
-      />
-
       {/* Lista de turnos */}
       <TurnoList
-        turnos={filteredTurnos}
+        turnos={turnos || []}
         totalTurnos={turnos?.length || 0}
         onEdit={handleEdit}
         onDelete={handleDelete}
