@@ -10,6 +10,7 @@ import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
 import ReportsManagement from '@/components/ReportsManagement';
+import UserSettingsForm from '@/components/UserSettingsForm';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -51,8 +52,8 @@ const Index = () => {
       case 'settings':
         return (
           <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Configuración</h1>
-            <p className="text-gray-600">Configuración del sistema en desarrollo...</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Configuración</h1>
+            <UserSettingsForm />
           </div>
         );
       default:
