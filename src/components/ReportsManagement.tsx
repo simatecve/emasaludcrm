@@ -1,17 +1,21 @@
 
 import React, { useState } from 'react';
-import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, BarChart3 } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, BarChart3, ChartBar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useConsultasReport, useTurnosReport, useRevenueReport, usePeriodStats, type ReportFilters } from '@/hooks/useReports';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from 'recharts';
+import { useConsultasReport, useTurnosReport, useRevenueReport, usePeriodStats, useChartsData, type ReportFilters } from '@/hooks/useReports';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useEspecialidades } from '@/hooks/useEspecialidades';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { usePatients } from '@/hooks/usePatients';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
 const ReportsManagement = () => {
   const [filters, setFilters] = useState<ReportFilters>({
@@ -28,6 +32,7 @@ const ReportsManagement = () => {
   const { data: turnosReport, isLoading: turnosLoading } = useTurnosReport(filters);
   const { data: revenueReport, isLoading: revenueLoading } = useRevenueReport(filters);
   const { data: periodStats, isLoading: periodStatsLoading } = usePeriodStats(filters);
+  const { data: chartsData, isLoading: chartsLoading } = useChartsData(filters);
 
   const updateFilter = (key: keyof ReportFilters, value: string | number | undefined) => {
     setFilters(prev => ({
@@ -93,7 +98,7 @@ const ReportsManagement = () => {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Informes y Reportes</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Reportes del Sistema</h1>
           <p className="text-gray-600 mt-1">Análisis completo de la gestión clínica</p>
         </div>
         <Button onClick={clearFilters} variant="outline">
@@ -256,13 +261,112 @@ const ReportsManagement = () => {
       </div>
 
       {/* Tabs de reportes */}
-      <Tabs defaultValue="consultas" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="overview">Resumen</TabsTrigger>
           <TabsTrigger value="consultas">Consultas</TabsTrigger>
           <TabsTrigger value="turnos">Turnos</TabsTrigger>
           <TabsTrigger value="ingresos">Ingresos</TabsTrigger>
-          <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+          <TabsTrigger value="graficos">Gráficos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Resumen del Período
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {periodStatsLoading ? (
+                  <div className="text-center py-8">Cargando estadísticas...</div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Total de Consultas:</span>
+                      <span className="font-semibold">{periodStats?.totalConsultas || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total de Turnos:</span>
+                      <span className="font-semibold">{periodStats?.totalTurnos || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Turnos Completados:</span>
+                      <span className="font-semibold text-green-600">{periodStats?.turnosCompletados || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Turnos Cancelados:</span>
+                      <span className="font-semibold text-red-600">{periodStats?.turnosCancelados || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Nuevos Pacientes:</span>
+                      <span className="font-semibold text-blue-600">{periodStats?.nuevosPacientes || 0}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span>Ingresos Totales:</span>
+                      <span className="font-semibold text-purple-600">${periodStats?.ingresosTotales?.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Métricas de Eficiencia
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {periodStatsLoading ? (
+                  <div className="text-center py-8">Cargando métricas...</div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span>Tasa de Completitud:</span>
+                      <span className="font-semibold">
+                        {periodStats?.totalTurnos ? 
+                          `${((periodStats.turnosCompletados / periodStats.totalTurnos) * 100).toFixed(1)}%` : 
+                          '0%'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Tasa de Cancelación:</span>
+                      <span className="font-semibold">
+                        {periodStats?.totalTurnos ? 
+                          `${((periodStats.turnosCancelados / periodStats.totalTurnos) * 100).toFixed(1)}%` : 
+                          '0%'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Ingreso por Consulta:</span>
+                      <span className="font-semibold">
+                        {periodStats?.totalConsultas ? 
+                          `$${(periodStats.ingresosTotales / periodStats.totalConsultas).toFixed(2)}` : 
+                          '$0.00'
+                        }
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Consultas por Paciente:</span>
+                      <span className="font-semibold">
+                        {periodStats?.nuevosPacientes ? 
+                          `${(periodStats.totalConsultas / periodStats.nuevosPacientes).toFixed(1)}` : 
+                          '0'
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent value="consultas">
           <Card>
@@ -438,45 +542,36 @@ const ReportsManagement = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="estadisticas">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <TabsContent value="graficos">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Resumen del Período
+                  <ChartBar className="h-5 w-5" />
+                  Consultas por Día
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {periodStatsLoading ? (
-                  <div className="text-center py-8">Cargando estadísticas...</div>
+                {chartsLoading ? (
+                  <div className="text-center py-8">Cargando gráficos...</div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span>Total de Consultas:</span>
-                      <span className="font-semibold">{periodStats?.totalConsultas || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Total de Turnos:</span>
-                      <span className="font-semibold">{periodStats?.totalTurnos || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Turnos Completados:</span>
-                      <span className="font-semibold text-green-600">{periodStats?.turnosCompletados || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Turnos Cancelados:</span>
-                      <span className="font-semibold text-red-600">{periodStats?.turnosCancelados || 0}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Nuevos Pacientes:</span>
-                      <span className="font-semibold text-blue-600">{periodStats?.nuevosPacientes || 0}</span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2">
-                      <span>Ingresos Totales:</span>
-                      <span className="font-semibold text-purple-600">${periodStats?.ingresosTotales?.toFixed(2) || '0.00'}</span>
-                    </div>
-                  </div>
+                  <ChartContainer
+                    config={{
+                      consultas: {
+                        label: "Consultas",
+                        color: "#2563eb",
+                      },
+                    }}
+                    className="h-[300px]"
+                  >
+                    <BarChart data={chartsData?.consultasPorDia || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="fecha" />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar dataKey="consultas" fill="var(--color-consultas)" />
+                    </BarChart>
+                  </ChartContainer>
                 )}
               </CardContent>
             </Card>
@@ -484,52 +579,73 @@ const ReportsManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5" />
-                  Métricas de Eficiencia
+                  <ChartBar className="h-5 w-5" />
+                  Turnos por Estado
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {periodStatsLoading ? (
-                  <div className="text-center py-8">Cargando métricas...</div>
+                {chartsLoading ? (
+                  <div className="text-center py-8">Cargando gráficos...</div>
                 ) : (
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span>Tasa de Completitud:</span>
-                      <span className="font-semibold">
-                        {periodStats?.totalTurnos ? 
-                          `${((periodStats.turnosCompletados / periodStats.totalTurnos) * 100).toFixed(1)}%` : 
-                          '0%'
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Tasa de Cancelación:</span>
-                      <span className="font-semibold">
-                        {periodStats?.totalTurnos ? 
-                          `${((periodStats.turnosCancelados / periodStats.totalTurnos) * 100).toFixed(1)}%` : 
-                          '0%'
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Ingreso por Consulta:</span>
-                      <span className="font-semibold">
-                        {periodStats?.totalConsultas ? 
-                          `$${(periodStats.ingresosTotales / periodStats.totalConsultas).toFixed(2)}` : 
-                          '$0.00'
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Consultas por Paciente:</span>
-                      <span className="font-semibold">
-                        {periodStats?.nuevosPacientes ? 
-                          `${(periodStats.totalConsultas / periodStats.nuevosPacientes).toFixed(1)}` : 
-                          '0'
-                        }
-                      </span>
-                    </div>
-                  </div>
+                  <ChartContainer
+                    config={{
+                      count: {
+                        label: "Cantidad",
+                        color: "#059669",
+                      },
+                    }}
+                    className="h-[300px]"
+                  >
+                    <PieChart>
+                      <Pie
+                        data={chartsData?.turnosPorEstado || []}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ estado, count }) => `${estado}: ${count}`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="count"
+                      >
+                        {chartsData?.turnosPorEstado?.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                    </PieChart>
+                  </ChartContainer>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Ingresos por Día
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {chartsLoading ? (
+                  <div className="text-center py-8">Cargando gráficos...</div>
+                ) : (
+                  <ChartContainer
+                    config={{
+                      ingresos: {
+                        label: "Ingresos",
+                        color: "#dc2626",
+                      },
+                    }}
+                    className="h-[300px]"
+                  >
+                    <LineChart data={chartsData?.consultasPorDia || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="fecha" />
+                      <YAxis />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Line type="monotone" dataKey="ingresos" stroke="var(--color-ingresos)" strokeWidth={2} />
+                    </LineChart>
+                  </ChartContainer>
                 )}
               </CardContent>
             </Card>

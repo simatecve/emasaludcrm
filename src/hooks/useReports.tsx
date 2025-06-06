@@ -239,7 +239,6 @@ export const useRevenueReport = (filters: ReportFilters) => {
   });
 };
 
-// Hook adicional para estadísticas del período
 export const usePeriodStats = (filters: ReportFilters) => {
   return useQuery({
     queryKey: ['period-stats', filters],
@@ -282,6 +281,61 @@ export const usePeriodStats = (filters: ReportFilters) => {
 
       console.log('Period stats:', stats);
       return stats;
+    },
+  });
+};
+
+export const useChartsData = (filters: ReportFilters) => {
+  return useQuery({
+    queryKey: ['charts-data', filters],
+    queryFn: async () => {
+      console.log('Fetching charts data with filters:', filters);
+      
+      const startDate = filters.fechaInicio || new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+      const endDate = filters.fechaFin || new Date().toISOString().split('T')[0];
+
+      // Consultas por día
+      const { data: consultasDiarias } = await supabase
+        .from('consultas')
+        .select('fecha_consulta, precio')
+        .gte('fecha_consulta', startDate)
+        .lte('fecha_consulta', endDate)
+        .order('fecha_consulta');
+
+      // Turnos por estado
+      const { data: turnosEstado } = await supabase
+        .from('turnos')
+        .select('estado')
+        .gte('fecha', startDate)
+        .lte('fecha', endDate);
+
+      // Agrupar consultas por día
+      const consultasPorDia = consultasDiarias?.reduce((acc, consulta) => {
+        const fecha = new Date(consulta.fecha_consulta).toLocaleDateString('es-AR');
+        if (!acc[fecha]) {
+          acc[fecha] = { fecha, consultas: 0, ingresos: 0 };
+        }
+        acc[fecha].consultas += 1;
+        acc[fecha].ingresos += consulta.precio || 0;
+        return acc;
+      }, {} as Record<string, { fecha: string; consultas: number; ingresos: number }>) || {};
+
+      // Agrupar turnos por estado
+      const turnosPorEstado = turnosEstado?.reduce((acc, turno) => {
+        if (!acc[turno.estado]) {
+          acc[turno.estado] = 0;
+        }
+        acc[turno.estado] += 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      return {
+        consultasPorDia: Object.values(consultasPorDia),
+        turnosPorEstado: Object.entries(turnosPorEstado).map(([estado, count]) => ({
+          estado,
+          count
+        }))
+      };
     },
   });
 };
