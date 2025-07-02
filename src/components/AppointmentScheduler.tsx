@@ -1,9 +1,9 @@
 
 import React from 'react';
-import TurnoManagement from './TurnoManagement';
+import TurnoCalendarView from './turnos/TurnoCalendarView';
 
 const AppointmentScheduler = () => {
-  return <TurnoManagement />;
+  return <TurnoCalendarView />;
 };
 
 export default AppointmentScheduler;

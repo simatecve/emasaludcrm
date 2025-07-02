@@ -56,7 +56,7 @@ export const useTurnos = () => {
             nombre, 
             apellido, 
             matricula,
-            especialidades(nombre)
+            especialidades:especialidad_id(id, nombre)
           )
         `)
         .order('fecha', { ascending: true })
