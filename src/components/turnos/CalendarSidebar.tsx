@@ -17,6 +17,8 @@ interface CalendarSidebarProps {
   onEspecialidadChange: (value: string) => void;
   selectedMedico: string;
   onMedicoChange: (value: string) => void;
+  selectedEstado: string;
+  onEstadoChange: (value: string) => void;
 }
 
 const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
@@ -27,10 +29,19 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   selectedEspecialidad,
   onEspecialidadChange,
   selectedMedico,
-  onMedicoChange
+  onMedicoChange,
+  selectedEstado,
+  onEstadoChange
 }) => {
   const { data: especialidades } = useEspecialidades();
   const { data: medicos } = useMedicos();
+
+  const estados = [
+    { value: 'programado', label: 'Programado' },
+    { value: 'confirmado', label: 'Confirmado' },
+    { value: 'cancelado', label: 'Cancelado' },
+    { value: 'completado', label: 'Completado' }
+  ];
 
   return (
     <div className="w-80 space-y-4">
@@ -69,7 +80,7 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             <Label htmlFor="especialidad">Especialidad</Label>
             <select
               id="especialidad"
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md bg-white"
               value={selectedEspecialidad}
               onChange={(e) => onEspecialidadChange(e.target.value)}
             >
@@ -86,7 +97,7 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             <Label htmlFor="medico">Médico</Label>
             <select
               id="medico"
-              className="w-full p-2 border rounded-md"
+              className="w-full p-2 border rounded-md bg-white"
               value={selectedMedico}
               onChange={(e) => onMedicoChange(e.target.value)}
             >
@@ -99,6 +110,23 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
             </select>
           </div>
 
+          <div>
+            <Label htmlFor="estado">Estado</Label>
+            <select
+              id="estado"
+              className="w-full p-2 border rounded-md bg-white"
+              value={selectedEstado}
+              onChange={(e) => onEstadoChange(e.target.value)}
+            >
+              <option value="">Todos los estados</option>
+              {estados.map((estado) => (
+                <option key={estado.value} value={estado.value}>
+                  {estado.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <Button
             variant="outline"
             className="w-full"
@@ -106,10 +134,38 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               onSearchChange('');
               onEspecialidadChange('');
               onMedicoChange('');
+              onEstadoChange('');
             }}
           >
             Limpiar filtros
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Quick Stats */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Estadísticas Rápidas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span>Hoy:</span>
+              <span className="font-medium">12 turnos</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Esta semana:</span>
+              <span className="font-medium">48 turnos</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Pendientes:</span>
+              <span className="font-medium text-blue-600">8 turnos</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Confirmados:</span>
+              <span className="font-medium text-green-600">25 turnos</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

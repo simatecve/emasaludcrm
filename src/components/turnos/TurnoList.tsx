@@ -9,9 +9,10 @@ interface TurnoListProps {
   totalTurnos: number;
   onEdit: (turno: Turno) => void;
   onDelete: (id: number) => void;
+  onView?: (turno: Turno) => void;
 }
 
-const TurnoList = ({ turnos, totalTurnos, onEdit, onDelete }: TurnoListProps) => {
+const TurnoList = ({ turnos, totalTurnos, onEdit, onDelete, onView }: TurnoListProps) => {
   if (turnos.length === 0) {
     return (
       <Card>
@@ -23,15 +24,21 @@ const TurnoList = ({ turnos, totalTurnos, onEdit, onDelete }: TurnoListProps) =>
   }
 
   return (
-    <div className="grid gap-4">
-      {turnos.map((turno) => (
-        <TurnoCard
-          key={turno.id}
-          turno={turno}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="text-sm text-gray-600 mb-4">
+        Mostrando {turnos.length} de {totalTurnos} turnos
+      </div>
+      <div className="grid gap-4">
+        {turnos.map((turno) => (
+          <TurnoCard
+            key={turno.id}
+            turno={turno}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onView={onView}
+          />
+        ))}
+      </div>
     </div>
   );
 };
