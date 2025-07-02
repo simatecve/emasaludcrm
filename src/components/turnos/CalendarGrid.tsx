@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
+import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { type Turno } from '@/hooks/useTurnos';
 import { Eye, Edit } from 'lucide-react';
@@ -34,7 +34,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
 
   const getTurnoForSlot = (date: Date, time: string) => {
     return turnos.find(turno => {
-      const turnoDate = new Date(turno.fecha);
+      // Parse the date correctly - turno.fecha is a string in YYYY-MM-DD format
+      const turnoDate = parseISO(turno.fecha);
       const isSameDate = isSameDay(turnoDate, date);
       
       // Normalize both times to HH:MM format for comparison
@@ -50,7 +51,8 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
       const slotTime = normalizeTime(time);
       
       console.log(`Comparing turno ${turno.id}:`, {
-        turnoDate: format(turnoDate, 'yyyy-MM-dd'),
+        turnoDateOriginal: turno.fecha,
+        turnoDateParsed: format(turnoDate, 'yyyy-MM-dd'),
         slotDate: format(date, 'yyyy-MM-dd'),
         turnoTime,
         slotTime,
@@ -78,7 +80,7 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   };
 
   console.log('CalendarGrid - turnos:', turnos);
-  console.log('CalendarGrid - weekDays:', weekDays);
+  console.log('CalendarGrid - weekDays:', weekDays.map(day => format(day, 'yyyy-MM-dd')));
 
   return (
     <Card className="flex-1 overflow-hidden">
