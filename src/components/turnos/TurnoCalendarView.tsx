@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { addWeeks, subWeeks, startOfToday } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTurnos, type Turno } from '@/hooks/useTurnos';
+import { useTurnos, useDeleteTurno, type Turno } from '@/hooks/useTurnos';
 import TurnoForm from '../TurnoForm';
 import CalendarHeader from './CalendarHeader';
 import CalendarSidebar from './CalendarSidebar';
@@ -29,6 +28,9 @@ const TurnoCalendarView = () => {
   const [selectedEstado, setSelectedEstado] = useState('');
 
   const { data: turnos = [], isLoading } = useTurnos();
+  const deleteMutation = useDeleteTurno();
+
+  console.log('TurnoCalendarView - turnos loaded:', turnos);
 
   const handlePreviousWeek = () => {
     setCurrentDate(subWeeks(currentDate, 1));
@@ -82,8 +84,7 @@ const TurnoCalendarView = () => {
   };
 
   const handleDeleteTurno = async (id: number) => {
-    // This would be handled by the parent component
-    console.log('Delete turno:', id);
+    await deleteMutation.mutateAsync(id);
   };
 
   // Filter turnos based on search and filters
@@ -202,6 +203,7 @@ const TurnoCalendarView = () => {
           onMedicoChange={setSelectedMedico}
           selectedEstado={selectedEstado}
           onEstadoChange={setSelectedEstado}
+          turnos={turnos}
         />
 
         <div className="flex-1">

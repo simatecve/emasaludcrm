@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useEspecialidades } from '@/hooks/useEspecialidades';
 import { useMedicos } from '@/hooks/useMedicos';
+import { useTurnosStats } from '@/hooks/useTurnosStats';
+import { type Turno } from '@/hooks/useTurnos';
 
 interface CalendarSidebarProps {
   selectedDate: Date;
@@ -19,6 +21,7 @@ interface CalendarSidebarProps {
   onMedicoChange: (value: string) => void;
   selectedEstado: string;
   onEstadoChange: (value: string) => void;
+  turnos: Turno[];
 }
 
 const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
@@ -31,10 +34,12 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
   selectedMedico,
   onMedicoChange,
   selectedEstado,
-  onEstadoChange
+  onEstadoChange,
+  turnos
 }) => {
   const { data: especialidades } = useEspecialidades();
   const { data: medicos } = useMedicos();
+  const stats = useTurnosStats(turnos);
 
   const estados = [
     { value: 'programado', label: 'Programado' },
@@ -151,19 +156,19 @@ const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>Hoy:</span>
-              <span className="font-medium">12 turnos</span>
+              <span className="font-medium">{stats.turnosHoy} turnos</span>
             </div>
             <div className="flex justify-between">
               <span>Esta semana:</span>
-              <span className="font-medium">48 turnos</span>
+              <span className="font-medium">{stats.turnosEstaSemana} turnos</span>
             </div>
             <div className="flex justify-between">
               <span>Pendientes:</span>
-              <span className="font-medium text-blue-600">8 turnos</span>
+              <span className="font-medium text-blue-600">{stats.turnosPendientes} turnos</span>
             </div>
             <div className="flex justify-between">
               <span>Confirmados:</span>
-              <span className="font-medium text-green-600">25 turnos</span>
+              <span className="font-medium text-green-600">{stats.turnosConfirmados} turnos</span>
             </div>
           </div>
         </CardContent>

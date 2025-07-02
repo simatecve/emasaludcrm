@@ -33,9 +33,10 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
 
   const getTurnoForSlot = (date: Date, time: string) => {
-    return turnos.find(turno => 
-      isSameDay(new Date(turno.fecha), date) && turno.hora === time
-    );
+    return turnos.find(turno => {
+      const turnoDate = new Date(turno.fecha);
+      return isSameDay(turnoDate, date) && turno.hora === time;
+    });
   };
 
   const getStatusColor = (estado: string) => {
@@ -52,6 +53,9 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
         return 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100';
     }
   };
+
+  console.log('CalendarGrid - turnos:', turnos);
+  console.log('CalendarGrid - weekDays:', weekDays);
 
   return (
     <Card className="flex-1 overflow-hidden">
@@ -83,10 +87,11 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               </div>
               {weekDays.map((day) => {
                 const turno = getTurnoForSlot(day, time);
+                console.log(`Checking slot ${format(day, 'yyyy-MM-dd')} ${time}:`, turno);
                 return (
                   <div key={`${day.toISOString()}-${time}`} className="border-r p-1 relative">
                     {turno ? (
-                      <div className={`w-full h-full p-2 rounded border-2 ${getStatusColor(turno.estado)} transition-colors group`}>
+                      <div className={`w-full h-full p-2 rounded border-2 ${getStatusColor(turno.estado)} transition-colors group cursor-pointer`}>
                         <div className="text-xs space-y-1">
                           <div className="font-medium truncate">
                             {turno.pacientes?.nombre} {turno.pacientes?.apellido}
