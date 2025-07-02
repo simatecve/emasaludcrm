@@ -35,7 +35,30 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
   const getTurnoForSlot = (date: Date, time: string) => {
     return turnos.find(turno => {
       const turnoDate = new Date(turno.fecha);
-      return isSameDay(turnoDate, date) && turno.hora === time;
+      const isSameDate = isSameDay(turnoDate, date);
+      
+      // Normalize both times to HH:MM format for comparison
+      const normalizeTime = (timeStr: string) => {
+        // If it's in HH:MM:SS format, extract HH:MM
+        if (timeStr.includes(':') && timeStr.split(':').length === 3) {
+          return timeStr.substring(0, 5); // Take first 5 characters (HH:MM)
+        }
+        return timeStr;
+      };
+      
+      const turnoTime = normalizeTime(turno.hora);
+      const slotTime = normalizeTime(time);
+      
+      console.log(`Comparing turno ${turno.id}:`, {
+        turnoDate: format(turnoDate, 'yyyy-MM-dd'),
+        slotDate: format(date, 'yyyy-MM-dd'),
+        turnoTime,
+        slotTime,
+        isSameDate,
+        timeMatch: turnoTime === slotTime
+      });
+      
+      return isSameDate && turnoTime === slotTime;
     });
   };
 
@@ -87,7 +110,6 @@ const CalendarGrid: React.FC<CalendarGridProps> = ({
               </div>
               {weekDays.map((day) => {
                 const turno = getTurnoForSlot(day, time);
-                console.log(`Checking slot ${format(day, 'yyyy-MM-dd')} ${time}:`, turno);
                 return (
                   <div key={`${day.toISOString()}-${time}`} className="border-r p-1 relative">
                     {turno ? (
