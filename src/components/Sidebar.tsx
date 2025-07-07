@@ -42,7 +42,15 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
     )}>
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-700">
         <div className={cn("flex items-center gap-2", isCollapsed && "justify-center")}>
-          <Activity className="h-8 w-8 text-blue-400 flex-shrink-0" />
+          {systemConfig?.logo_url ? (
+            <img 
+              src={systemConfig.logo_url} 
+              alt="Logo" 
+              className="h-8 w-8 object-contain flex-shrink-0"
+            />
+          ) : (
+            <Activity className="h-8 w-8 text-blue-400 flex-shrink-0" />
+          )}
           {!isCollapsed && (
             <div>
               <h1 className="text-xl font-bold">{systemConfig?.name || 'EMA SALUD'}</h1>

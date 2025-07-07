@@ -36,11 +36,19 @@ const Login = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/42e4fc7a-8d01-4bb0-9eca-be84bb47d62a.png" 
-              alt="EMA SALUD Logo" 
-              className="h-16 w-auto"
-            />
+            {systemConfig?.logo_url ? (
+              <img 
+                src={systemConfig.logo_url} 
+                alt="Logo" 
+                className="h-16 w-auto object-contain"
+              />
+            ) : (
+              <img 
+                src="/lovable-uploads/42e4fc7a-8d01-4bb0-9eca-be84bb47d62a.png" 
+                alt="EMA SALUD Logo" 
+                className="h-16 w-auto"
+              />
+            )}
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
             {systemConfig?.name || 'EMA SALUD'}

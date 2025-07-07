@@ -8,6 +8,7 @@ interface SystemConfig {
   subtitle: string;
   copyright: string;
   version: string;
+  logo_url: string | null;
 }
 
 export const useSystemConfig = () => {
