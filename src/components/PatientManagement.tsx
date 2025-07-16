@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
-import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2, MapPin, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usePatients, useCreatePatient, useUpdatePatient, useDeletePatient, Patient, PatientFormData } from '@/hooks/usePatients';
 import PatientForm from './PatientForm';
+import PatientTable from './PatientTable';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -22,7 +22,9 @@ const PatientManagement = () => {
   const filteredPatients = patients?.filter(patient =>
     patient.dni.includes(searchTerm) ||
     patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.apellido.toLowerCase().includes(searchTerm.toLowerCase())
+    patient.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (patient.localidad && patient.localidad.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (patient.provincia && patient.provincia.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
   const handleCreatePatient = (data: PatientFormData) => {
@@ -127,7 +129,7 @@ const PatientManagement = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Buscar por DNI, nombre o apellido..."
+                    placeholder="Buscar por DNI, nombre, apellido, localidad..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -139,46 +141,13 @@ const PatientManagement = () => {
               {isLoading ? (
                 <div className="text-center py-4">Cargando pacientes...</div>
               ) : (
-                <div className="space-y-3">
-                  {filteredPatients.map((patient) => (
-                    <div
-                      key={patient.id}
-                      onClick={() => setSelectedPatient(patient)}
-                      className={`p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
-                        selectedPatient?.id === patient.id ? 'bg-blue-50 border-blue-200' : ''
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">
-                              {patient.nombre} {patient.apellido}
-                            </h3>
-                            <p className="text-sm text-gray-500">DNI: {patient.dni}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-medium text-gray-900">
-                            {patient.obra_social?.nombre || 'Sin obra social'}
-                          </p>
-                          <div className="flex items-center gap-1">
-                            <span className={`inline-block w-2 h-2 rounded-full ${
-                              patient.consultas_mes_actual >= patient.consultas_maximas 
-                                ? 'bg-red-500' 
-                                : 'bg-green-500'
-                            }`}></span>
-                            <span className="text-xs text-gray-500">
-                              {patient.consultas_mes_actual}/{patient.consultas_maximas} consultas
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <PatientTable
+                  patients={filteredPatients}
+                  onEdit={handleEditPatient}
+                  onDelete={handleDeletePatient}
+                  onSelect={setSelectedPatient}
+                  selectedPatient={selectedPatient}
+                />
               )}
             </CardContent>
           </Card>
@@ -200,6 +169,9 @@ const PatientManagement = () => {
                     {selectedPatient.nombre} {selectedPatient.apellido}
                   </h3>
                   <p className="text-gray-600">DNI: {selectedPatient.dni}</p>
+                  {selectedPatient.sexo && (
+                    <p className="text-sm text-gray-500">Sexo: {selectedPatient.sexo}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -221,6 +193,22 @@ const PatientManagement = () => {
                       <span className="text-sm">{selectedPatient.email}</span>
                     </div>
                   )}
+                  {(selectedPatient.localidad || selectedPatient.provincia) && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">
+                        {selectedPatient.localidad}
+                        {selectedPatient.localidad && selectedPatient.provincia && ', '}
+                        {selectedPatient.provincia}
+                      </span>
+                    </div>
+                  )}
+                  {selectedPatient.nacionalidad && (
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">Nacionalidad: {selectedPatient.nacionalidad}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="p-3 bg-gray-50 rounded-lg">
@@ -234,6 +222,22 @@ const PatientManagement = () => {
                     </p>
                   )}
                 </div>
+
+                {(selectedPatient.cuil_titular || selectedPatient.cuil_beneficiario) && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <h4 className="font-medium text-gray-900 mb-2">Información CUIL</h4>
+                    {selectedPatient.cuil_titular && (
+                      <p className="text-sm text-gray-600">
+                        CUIL Titular: {selectedPatient.cuil_titular}
+                      </p>
+                    )}
+                    {selectedPatient.cuil_beneficiario && (
+                      <p className="text-sm text-gray-600">
+                        CUIL Beneficiario: {selectedPatient.cuil_beneficiario}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-gray-900 mb-2">Consultas Este Mes</h4>

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +18,23 @@ export interface Patient {
   ultima_visita?: string;
   observaciones?: string;
   activo: boolean;
+  // Nuevos campos agregados
+  cuil_titular?: string;
+  cuil_beneficiario?: string;
+  tipo_doc?: string;
+  nro_doc?: string;
+  descripcion_paciente?: string;
+  parentesco?: string;
+  apellido_y_nombre?: string;
+  sexo?: string;
+  estado_civil?: string;
+  nacionalidad?: string;
+  fecha_nac_adicional?: string;
+  tipo_doc_familiar?: string;
+  nro_doc_familiar?: string;
+  localidad?: string;
+  provincia?: string;
+  fecha_alta?: string;
   obra_social?: {
     nombre: string;
   };
@@ -36,6 +52,22 @@ export interface PatientFormData {
   numero_afiliado?: string;
   consultas_maximas: number;
   observaciones?: string;
+  // Nuevos campos agregados
+  cuil_titular?: string;
+  cuil_beneficiario?: string;
+  tipo_doc?: string;
+  nro_doc?: string;
+  descripcion_paciente?: string;
+  parentesco?: string;
+  apellido_y_nombre?: string;
+  sexo?: string;
+  estado_civil?: string;
+  nacionalidad?: string;
+  fecha_nac_adicional?: string;
+  tipo_doc_familiar?: string;
+  nro_doc_familiar?: string;
+  localidad?: string;
+  provincia?: string;
 }
 
 export const usePatients = () => {

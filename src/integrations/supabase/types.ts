@@ -217,6 +217,24 @@ export type Database = {
           },
         ]
       }
+      n8n_chat_histories_ema: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       obras_sociales: {
         Row: {
           activa: boolean | null
@@ -257,57 +275,105 @@ export type Database = {
         Row: {
           activo: boolean | null
           apellido: string
+          apellido_y_nombre: string | null
           consultas_maximas: number | null
           consultas_mes_actual: number | null
           created_at: string | null
+          cuil_beneficiario: string | null
+          cuil_titular: string | null
+          descripcion_paciente: string | null
           direccion: string | null
           dni: string
           email: string | null
+          estado_civil: string | null
+          fecha_alta: string | null
+          fecha_nac_adicional: string | null
           fecha_nacimiento: string
           id: number
+          localidad: string | null
+          nacionalidad: string | null
           nombre: string
+          nro_doc: string | null
+          nro_doc_familiar: string | null
           numero_afiliado: string | null
           obra_social_id: number | null
           observaciones: string | null
+          parentesco: string | null
+          provincia: string | null
+          sexo: string | null
           telefono: string | null
+          tipo_doc: string | null
+          tipo_doc_familiar: string | null
           ultima_visita: string | null
           updated_at: string | null
         }
         Insert: {
           activo?: boolean | null
           apellido: string
+          apellido_y_nombre?: string | null
           consultas_maximas?: number | null
           consultas_mes_actual?: number | null
           created_at?: string | null
+          cuil_beneficiario?: string | null
+          cuil_titular?: string | null
+          descripcion_paciente?: string | null
           direccion?: string | null
           dni: string
           email?: string | null
+          estado_civil?: string | null
+          fecha_alta?: string | null
+          fecha_nac_adicional?: string | null
           fecha_nacimiento: string
           id?: number
+          localidad?: string | null
+          nacionalidad?: string | null
           nombre: string
+          nro_doc?: string | null
+          nro_doc_familiar?: string | null
           numero_afiliado?: string | null
           obra_social_id?: number | null
           observaciones?: string | null
+          parentesco?: string | null
+          provincia?: string | null
+          sexo?: string | null
           telefono?: string | null
+          tipo_doc?: string | null
+          tipo_doc_familiar?: string | null
           ultima_visita?: string | null
           updated_at?: string | null
         }
         Update: {
           activo?: boolean | null
           apellido?: string
+          apellido_y_nombre?: string | null
           consultas_maximas?: number | null
           consultas_mes_actual?: number | null
           created_at?: string | null
+          cuil_beneficiario?: string | null
+          cuil_titular?: string | null
+          descripcion_paciente?: string | null
           direccion?: string | null
           dni?: string
           email?: string | null
+          estado_civil?: string | null
+          fecha_alta?: string | null
+          fecha_nac_adicional?: string | null
           fecha_nacimiento?: string
           id?: number
+          localidad?: string | null
+          nacionalidad?: string | null
           nombre?: string
+          nro_doc?: string | null
+          nro_doc_familiar?: string | null
           numero_afiliado?: string | null
           obra_social_id?: number | null
           observaciones?: string | null
+          parentesco?: string | null
+          provincia?: string | null
+          sexo?: string | null
           telefono?: string | null
+          tipo_doc?: string | null
+          tipo_doc_familiar?: string | null
           ultima_visita?: string | null
           updated_at?: string | null
         }
