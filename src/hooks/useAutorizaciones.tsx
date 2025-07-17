@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +16,14 @@ export interface Autorizacion {
   observaciones?: string;
   documento_url?: string;
   activa: boolean;
+  prestacion_codigo?: string;
+  prestacion_descripcion?: string;
+  prestacion_cantidad?: number;
+  prestador?: string;
+  observacion_prestacion?: string;
+  numero_credencial?: string;
+  parentesco_beneficiario?: string;
+  profesional_solicitante?: string;
   pacientes?: { nombre: string; apellido: string; dni: string };
   medicos?: { nombre: string; apellido: string; matricula: string };
   obras_sociales?: { nombre: string };
@@ -33,6 +40,14 @@ export interface AutorizacionFormData {
   numero_autorizacion?: string;
   observaciones?: string;
   documento?: File;
+  prestacion_codigo?: string;
+  prestacion_descripcion?: string;
+  prestacion_cantidad?: number;
+  prestador?: string;
+  observacion_prestacion?: string;
+  numero_credencial?: string;
+  parentesco_beneficiario?: string;
+  profesional_solicitante?: string;
 }
 
 export const useAutorizaciones = () => {

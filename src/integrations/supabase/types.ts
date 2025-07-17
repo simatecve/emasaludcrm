@@ -26,9 +26,17 @@ export type Database = {
           id: number
           medico_id: number | null
           numero_autorizacion: string | null
+          numero_credencial: string | null
           obra_social_id: number | null
+          observacion_prestacion: string | null
           observaciones: string | null
           paciente_id: number
+          parentesco_beneficiario: string | null
+          prestacion_cantidad: number | null
+          prestacion_codigo: string | null
+          prestacion_descripcion: string | null
+          prestador: string | null
+          profesional_solicitante: string | null
           tipo_autorizacion: string
           updated_at: string | null
         }
@@ -43,9 +51,17 @@ export type Database = {
           id?: number
           medico_id?: number | null
           numero_autorizacion?: string | null
+          numero_credencial?: string | null
           obra_social_id?: number | null
+          observacion_prestacion?: string | null
           observaciones?: string | null
           paciente_id: number
+          parentesco_beneficiario?: string | null
+          prestacion_cantidad?: number | null
+          prestacion_codigo?: string | null
+          prestacion_descripcion?: string | null
+          prestador?: string | null
+          profesional_solicitante?: string | null
           tipo_autorizacion: string
           updated_at?: string | null
         }
@@ -60,9 +76,17 @@ export type Database = {
           id?: number
           medico_id?: number | null
           numero_autorizacion?: string | null
+          numero_credencial?: string | null
           obra_social_id?: number | null
+          observacion_prestacion?: string | null
           observaciones?: string | null
           paciente_id?: number
+          parentesco_beneficiario?: string | null
+          prestacion_cantidad?: number | null
+          prestacion_codigo?: string | null
+          prestacion_descripcion?: string | null
+          prestador?: string | null
+          profesional_solicitante?: string | null
           tipo_autorizacion?: string
           updated_at?: string | null
         }
@@ -232,6 +256,36 @@ export type Database = {
           id?: number
           message?: Json
           session_id?: string
+        }
+        Relationships: []
+      }
+      nomeclador: {
+        Row: {
+          codigo_practica: string
+          created_at: string | null
+          descripcion_practica: string
+          id: number
+          modulo: string
+          updated_at: string | null
+          valor_resultante_unidades: number | null
+        }
+        Insert: {
+          codigo_practica: string
+          created_at?: string | null
+          descripcion_practica: string
+          id?: never
+          modulo: string
+          updated_at?: string | null
+          valor_resultante_unidades?: number | null
+        }
+        Update: {
+          codigo_practica?: string
+          created_at?: string | null
+          descripcion_practica?: string
+          id?: never
+          modulo?: string
+          updated_at?: string | null
+          valor_resultante_unidades?: number | null
         }
         Relationships: []
       }

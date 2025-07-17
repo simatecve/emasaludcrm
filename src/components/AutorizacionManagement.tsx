@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import AutorizacionForm from './AutorizacionForm';
+import AutorizacionPDF from './AutorizacionPDF';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -64,7 +65,9 @@ const AutorizacionManagement = () => {
     const matchesSearch = 
       autorizacion.numero_autorizacion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       `${autorizacion.pacientes?.nombre} ${autorizacion.pacientes?.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizacion.tipo_autorizacion.toLowerCase().includes(searchTerm.toLowerCase());
+      autorizacion.tipo_autorizacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      autorizacion.prestacion_codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      autorizacion.prestacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesEstado = filterEstado === 'todos' || autorizacion.estado === filterEstado;
     const matchesTipo = filterTipo === 'todos' || autorizacion.tipo_autorizacion === filterTipo;
@@ -177,6 +180,12 @@ const AutorizacionManagement = () => {
                       {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
                       <br />
                       <span className="font-medium">DNI:</span> {autorizacion.pacientes?.dni}
+                      {autorizacion.numero_credencial && (
+                        <>
+                          <br />
+                          <span className="font-medium">Credencial:</span> {autorizacion.numero_credencial}
+                        </>
+                      )}
                     </div>
                     
                     <div>
@@ -186,6 +195,7 @@ const AutorizacionManagement = () => {
                           {autorizacion.medicos.nombre} {autorizacion.medicos.apellido}
                           <br />
                           <span className="font-medium">Matrícula:</span> {autorizacion.medicos.matricula}
+                          <br />
                         </>
                       )}
                       {autorizacion.obras_sociales && (
@@ -197,6 +207,13 @@ const AutorizacionManagement = () => {
                     </div>
                     
                     <div>
+                      {autorizacion.prestacion_codigo && (
+                        <>
+                          <span className="font-medium">Prestación:</span>{' '}
+                          {autorizacion.prestacion_codigo}
+                          <br />
+                        </>
+                      )}
                       {autorizacion.fecha_vencimiento && (
                         <>
                           <span className="font-medium">Vence:</span>{' '}
@@ -213,14 +230,16 @@ const AutorizacionManagement = () => {
                     </div>
                   </div>
 
-                  {autorizacion.descripcion && (
+                  {(autorizacion.prestacion_descripcion || autorizacion.descripcion) && (
                     <p className="text-sm text-gray-700 mt-2">
-                      <span className="font-medium">Descripción:</span> {autorizacion.descripcion}
+                      <span className="font-medium">Descripción:</span>{' '}
+                      {autorizacion.prestacion_descripcion || autorizacion.descripcion}
                     </p>
                   )}
                 </div>
 
                 <div className="flex gap-2 ml-4">
+                  <AutorizacionPDF autorizacion={autorizacion} />
                   {autorizacion.documento_url && (
                     <Button
                       variant="outline"
@@ -262,7 +281,7 @@ const AutorizacionManagement = () => {
 
       {/* Dialog para formulario */}
       <Dialog open={isFormOpen} onOpenChange={closeForm}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
           <AutorizacionForm
             autorizacion={selectedAutorizacion}
             onClose={closeForm}
