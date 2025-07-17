@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Search, Plus } from 'lucide-react';
-import { useNomeclador } from '@/hooks/useNomeclador';
+import { useNomecladorSearch } from '@/hooks/useNomeclador';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface PrestacionSelectorProps {
@@ -16,7 +16,7 @@ interface PrestacionSelectorProps {
 const PrestacionSelector = ({ onSelect, selectedCodigo }: PrestacionSelectorProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { data: prestaciones, isLoading } = useNomeclador(searchTerm);
+  const { data: prestaciones, isLoading } = useNomecladorSearch(searchTerm);
 
   const handleSelect = (prestacion: any) => {
     onSelect({
