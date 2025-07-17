@@ -267,7 +267,7 @@ export type Database = {
           id: number
           modulo: string
           updated_at: string | null
-          valor_resultante_unidades: number | null
+          valor_resultante_unidades: string | null
         }
         Insert: {
           codigo_practica: string
@@ -276,7 +276,7 @@ export type Database = {
           id?: never
           modulo: string
           updated_at?: string | null
-          valor_resultante_unidades?: number | null
+          valor_resultante_unidades?: string | null
         }
         Update: {
           codigo_practica?: string
@@ -285,7 +285,7 @@ export type Database = {
           id?: never
           modulo?: string
           updated_at?: string | null
-          valor_resultante_unidades?: number | null
+          valor_resultante_unidades?: string | null
         }
         Relationships: []
       }

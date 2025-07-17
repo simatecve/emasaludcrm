@@ -9,6 +9,7 @@ import MedicoManagement from '@/components/MedicoManagement';
 import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
+import NomecladorManagement from '@/components/NomecladorManagement';
 import ReportsManagement from '@/components/ReportsManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
@@ -44,6 +45,8 @@ const Index = () => {
         return <EspecialidadManagement />;
       case 'obras-sociales':
         return <ObraSocialManagement />;
+      case 'nomenclador':
+        return <NomecladorManagement />;
       case 'authorizations':
         return <AutorizacionManagement />;
       case 'reports':
