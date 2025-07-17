@@ -1,138 +1,136 @@
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useCreateNomeclador, useUpdateNomeclador, type NomecladorFormData } from '@/hooks/useNomecladorCrud';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useCreateNomeclador, useUpdateNomeclador } from '@/hooks/useNomecladorCrud';
 import { Nomenclador } from '@/hooks/useNomeclador';
-
-const nomencladorSchema = z.object({
-  codigo_practica: z.string().min(1, 'El código de práctica es requerido'),
-  descripcion_practica: z.string().min(1, 'La descripción de práctica es requerida'),
-  modulo: z.string().min(1, 'El módulo es requerido'),
-  valor_resultante_unidades: z.string().optional(),
-});
 
 interface NomecladorFormProps {
   nomenclador?: Nomenclador;
   onClose: () => void;
 }
 
-const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
-  const { mutate: createNomeclador } = useCreateNomeclador();
-  const { mutate: updateNomeclador } = useUpdateNomeclador();
+interface FormData {
+  codigo_practica: string;
+  descripcion_practica: string;
+  modulo: string;
+  valor_resultante_unidades: string;
+}
 
-  const form = useForm<NomecladorFormData>({
-    resolver: zodResolver(nomencladorSchema),
-    defaultValues: {
-      codigo_practica: nomenclador?.codigo_practica || '',
-      descripcion_practica: nomenclador?.descripcion_practica || '',
-      modulo: nomenclador?.modulo || '',
-      valor_resultante_unidades: nomenclador?.valor_resultante_unidades || '',
-    },
+const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
+  const [formData, setFormData] = useState<FormData>({
+    codigo_practica: nomenclador?.codigo_practica || '',
+    descripcion_practica: nomenclador?.descripcion_practica || '',
+    modulo: nomenclador?.modulo || '',
+    valor_resultante_unidades: nomenclador?.valor_resultante_unidades || '',
   });
 
-  const onSubmit = (data: NomecladorFormData) => {
-    if (nomenclador) {
-      updateNomeclador({ id: nomenclador.id, data });
-    } else {
-      createNomeclador(data);
+  const createMutation = useCreateNomeclador();
+  const updateMutation = useUpdateNomeclador();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.codigo_practica || !formData.descripcion_practica || !formData.modulo) {
+      return;
     }
+
+    const submitData = {
+      ...formData,
+      valor_resultante_unidades: formData.valor_resultante_unidades || null
+    };
+
+    if (nomenclador) {
+      await updateMutation.mutateAsync({ id: nomenclador.id, data: submitData });
+    } else {
+      await createMutation.mutateAsync(submitData);
+    }
+    
     onClose();
   };
 
+  const isLoading = createMutation.isPending || updateMutation.isPending;
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={onClose}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <h1 className="text-3xl font-bold text-gray-900">
+    <Card className="w-full max-w-2xl">
+      <CardHeader>
+        <CardTitle>
           {nomenclador ? 'Editar Nomenclador' : 'Nuevo Nomenclador'}
-        </h1>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Información del Nomenclador</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="codigo_practica"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Código de Práctica *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: 420101" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="codigo_practica">Código de Práctica *</Label>
+              <Input
+                id="codigo_practica"
+                type="text"
+                value={formData.codigo_practica}
+                onChange={(e) => setFormData({ ...formData, codigo_practica: e.target.value })}
+                placeholder="Ej: 160101"
+                required
               />
+            </div>
 
-              <FormField
-                control={form.control}
-                name="descripcion_practica"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descripción de Práctica *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Descripción detallada de la práctica" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <div className="space-y-2">
+              <Label htmlFor="modulo">Módulo *</Label>
+              <Input
+                id="modulo"
+                type="text"
+                value={formData.modulo}
+                onChange={(e) => setFormData({ ...formData, modulo: e.target.value })}
+                placeholder="Ej: ANESTESIA"
+                required
               />
+            </div>
+          </div>
 
-              <FormField
-                control={form.control}
-                name="modulo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Módulo *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ej: CONSULTORIOS EXTERNOS" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="space-y-2">
+            <Label htmlFor="descripcion_practica">Descripción de la Práctica *</Label>
+            <Textarea
+              id="descripcion_practica"
+              value={formData.descripcion_practica}
+              onChange={(e) => setFormData({ ...formData, descripcion_practica: e.target.value })}
+              placeholder="Descripción detallada de la práctica médica"
+              rows={3}
+              required
+            />
+          </div>
 
-              <FormField
-                control={form.control}
-                name="valor_resultante_unidades"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor Resultante Unidades</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Valor en unidades" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <div className="space-y-2">
+            <Label htmlFor="valor_resultante_unidades">Valor Resultante (Unidades)</Label>
+            <Input
+              id="valor_resultante_unidades"
+              type="text"
+              value={formData.valor_resultante_unidades}
+              onChange={(e) => setFormData({ ...formData, valor_resultante_unidades: e.target.value })}
+              placeholder="Valor en unidades"
+            />
+          </div>
 
-              <div className="flex gap-4 pt-4">
-                <Button type="submit">
-                  {nomenclador ? 'Actualizar' : 'Crear'} Nomenclador
-                </Button>
-                <Button type="button" variant="outline" onClick={onClose}>
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading || !formData.codigo_practica || !formData.descripcion_practica || !formData.modulo}
+            >
+              {isLoading ? 'Guardando...' : nomenclador ? 'Actualizar' : 'Crear'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
