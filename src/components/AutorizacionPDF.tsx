@@ -19,27 +19,46 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     
-    // Header with logo and title
+    // Load and add logo image
+    const logoImg = new Image();
+    logoImg.crossOrigin = 'anonymous';
+    
+    try {
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = reject;
+        logoImg.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
+      });
+      
+      // Add logo to PDF (upper left corner)
+      const logoWidth = 40;
+      const logoHeight = 25;
+      pdf.addImage(logoImg, 'PNG', 20, 10, logoWidth, logoHeight);
+    } catch (error) {
+      console.error('Error loading logo:', error);
+    }
+    
+    // Header with company info (adjusted for logo)
     pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
     
-    // Company name
-    pdf.text('EMA SALUD', 20, 25);
+    // Company name (moved right to accommodate logo)
+    pdf.text('EMA SALUD', 70, 20);
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
-    pdf.text('AV. LIBERTADOR 457', 20, 32);
-    pdf.text('(e) CAPITAL', 20, 37);
+    pdf.text('AV. LIBERTADOR 457', 70, 27);
+    pdf.text('(e) CAPITAL', 70, 32);
     
     // Authorization title and number
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Autorización', pageWidth / 2, 25, { align: 'center' });
+    pdf.text('Autorización', pageWidth / 2, 20, { align: 'center' });
     
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 25, { align: 'right' });
+    pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 20, { align: 'right' });
     
-    // Horizontal line
+    // Horizontal line (moved down to accommodate logo)
     pdf.line(20, 45, pageWidth - 20, 45);
     
     let yPos = 60;
