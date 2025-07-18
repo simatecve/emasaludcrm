@@ -49,14 +49,14 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.text('AV. LIBERTADOR 457', 70, 27);
     pdf.text('(e) CAPITAL', 70, 32);
     
-    // Authorization title and number
+    // Authorization title and number (moved to upper right)
     pdf.setFontSize(16);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Autorización', pageWidth / 2, 20, { align: 'center' });
+    pdf.text('Autorización', pageWidth - 20, 15, { align: 'right' });
     
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 20, { align: 'right' });
+    pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 25, { align: 'right' });
     
     // Horizontal line (moved down to accommodate logo)
     pdf.line(20, 45, pageWidth - 20, 45);
