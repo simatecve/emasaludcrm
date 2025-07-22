@@ -24,7 +24,7 @@ export const useAuditLogs = (limit = 100) => {
     queryKey: ['audit-logs', limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('audit_logs')
+        .from('audit_logs' as any)
         .select(`
           *,
           users:user_id (

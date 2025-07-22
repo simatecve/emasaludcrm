@@ -67,7 +67,7 @@ export const useCreateUser = () => {
       if (userError) throw userError;
 
       // Crear log de auditoría
-      await supabase.rpc('create_audit_log', {
+      await (supabase as any).rpc('create_audit_log', {
         p_action: 'CREATE_USER',
         p_table_name: 'users',
         p_record_id: authData.user.id,
@@ -107,7 +107,7 @@ export const useUpdateUser = () => {
       if (error) throw error;
 
       // Crear log de auditoría
-      await supabase.rpc('create_audit_log', {
+      await (supabase as any).rpc('create_audit_log', {
         p_action: 'UPDATE_USER',
         p_table_name: 'users',
         p_record_id: id,

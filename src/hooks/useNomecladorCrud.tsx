@@ -40,7 +40,7 @@ export const useCreateNomeclador = () => {
       if (error) throw error;
 
       // Crear log de auditoría
-      await supabase.rpc('create_audit_log', {
+      await (supabase as any).rpc('create_audit_log', {
         p_action: 'INSERT',
         p_table_name: 'nomeclador',
         p_record_id: result.id.toString(),
@@ -80,7 +80,7 @@ export const useUpdateNomeclador = () => {
       if (error) throw error;
 
       // Crear log de auditoría
-      await supabase.rpc('create_audit_log', {
+      await (supabase as any).rpc('create_audit_log', {
         p_action: 'UPDATE',
         p_table_name: 'nomeclador',
         p_record_id: id.toString(),
@@ -118,7 +118,7 @@ export const useDeleteNomeclador = () => {
       if (error) throw error;
 
       // Crear log de auditoría
-      await supabase.rpc('create_audit_log', {
+      await (supabase as any).rpc('create_audit_log', {
         p_action: 'DELETE',
         p_table_name: 'nomeclador',
         p_record_id: id.toString()
