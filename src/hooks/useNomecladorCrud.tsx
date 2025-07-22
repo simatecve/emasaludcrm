@@ -12,7 +12,7 @@ export interface NomecladorFormData {
 
 export const useNomecladorCrud = () => {
   return useQuery({
-    queryKey: ['nomenclador-crud'],
+    queryKey: ['nomeclador'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('nomeclador')
@@ -38,8 +38,7 @@ export const useCreateNomeclador = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nomenclador-crud'] });
-      queryClient.invalidateQueries({ queryKey: ['nomenclador'] });
+      queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
       toast({
         title: "Éxito",
         description: "Nomenclador creado correctamente",
@@ -69,8 +68,7 @@ export const useUpdateNomeclador = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nomenclador-crud'] });
-      queryClient.invalidateQueries({ queryKey: ['nomenclador'] });
+      queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
       toast({
         title: "Éxito",
         description: "Nomenclador actualizado correctamente",
@@ -100,8 +98,7 @@ export const useDeleteNomeclador = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['nomenclador-crud'] });
-      queryClient.invalidateQueries({ queryKey: ['nomenclador'] });
+      queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
       toast({
         title: "Éxito",
         description: "Nomenclador eliminado correctamente",

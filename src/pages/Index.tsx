@@ -10,7 +10,6 @@ import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
 import NomecladorManagement from '@/components/NomecladorManagement';
-import ReportsManagement from '@/components/ReportsManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -49,20 +48,6 @@ const Index = () => {
         return <NomecladorManagement />;
       case 'authorizations':
         return <AutorizacionManagement />;
-      case 'reports':
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Informes</h1>
-            <p className="text-gray-600">Sección de informes y reportes en desarrollo...</p>
-          </div>
-        );
-      case 'settings':
-        return (
-          <div className="p-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Configuración</h1>
-            <p className="text-gray-600">Configuración del sistema en desarrollo...</p>
-          </div>
-        );
       default:
         return <Dashboard />;
     }

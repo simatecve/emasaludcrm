@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { useNomeclador, Nomenclador } from '@/hooks/useNomeclador';
-import { useDeleteNomeclador } from '@/hooks/useNomecladorCrud';
+import { useNomecladorCrud, useDeleteNomeclador } from '@/hooks/useNomecladorCrud';
+import { Nomenclador } from '@/hooks/useNomeclador';
 import NomecladorForm from './NomecladorForm';
 
 const NomecladorManagement = () => {
@@ -15,7 +15,7 @@ const NomecladorManagement = () => {
   const [selectedNomeclador, setSelectedNomeclador] = useState<Nomenclador | undefined>();
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { data: nomencladores, isLoading } = useNomeclador();
+  const { data: nomencladores, isLoading } = useNomecladorCrud();
   const deleteMutation = useDeleteNomeclador();
 
   const openForm = (nomenclador?: Nomenclador) => {
