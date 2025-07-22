@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAutorizaciones, useDeleteAutorizacion, type Autorizacion } from '@/hooks/useAutorizaciones';
+import { useAutorizaciones, useDeleteAutorizacion, useCreateAutorizacion, useUpdateAutorizacion, type Autorizacion } from '@/hooks/useAutorizaciones';
 import { Plus, Edit, Trash2, FileText, Filter, Search } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,8 @@ const AutorizacionManagement = () => {
 
   const { data: autorizaciones, isLoading } = useAutorizaciones();
   const deleteMutation = useDeleteAutorizacion();
+  const createMutation = useCreateAutorizacion();
+  const updateMutation = useUpdateAutorizacion();
 
   const openForm = (autorizacion?: Autorizacion) => {
     setSelectedAutorizacion(autorizacion);
@@ -31,6 +33,22 @@ const AutorizacionManagement = () => {
   const closeForm = () => {
     setIsFormOpen(false);
     setSelectedAutorizacion(undefined);
+  };
+
+  const handleSubmit = async (data: any) => {
+    try {
+      if (selectedAutorizacion) {
+        await updateMutation.mutateAsync({
+          id: selectedAutorizacion.id,
+          data
+        });
+      } else {
+        await createMutation.mutateAsync(data);
+      }
+      closeForm();
+    } catch (error) {
+      console.error('Error saving authorization:', error);
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -284,7 +302,9 @@ const AutorizacionManagement = () => {
         <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
           <AutorizacionForm
             autorizacion={selectedAutorizacion}
-            onClose={closeForm}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+            isLoading={createMutation.isPending || updateMutation.isPending}
           />
         </DialogContent>
       </Dialog>

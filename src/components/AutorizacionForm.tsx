@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Upload, X } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatients';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
-import { AutorizacionFormData, Autorizacion } from '@/hooks/useAutorizaciones';
+import { AutorizacionFormData, Autorizacion, useCreateAutorizacion, useUpdateAutorizacion } from '@/hooks/useAutorizaciones';
 import PatientSelector from './PatientSelector';
 import PrestacionSelector from './PrestacionSelector';
 
@@ -134,7 +135,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_autorizacion">Tipo de Autorización *</Label>
-                <Select onValueChange={(value) => setValue('tipo_autorizacion', value)}>
+                <Select onValueChange={(value) => setValue('tipo_autorizacion', value)} defaultValue={watchedValues.tipo_autorizacion}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar tipo" />
                   </SelectTrigger>
@@ -152,7 +153,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="estado">Estado *</Label>
-                <Select onValueChange={(value) => setValue('estado', value)}>
+                <Select onValueChange={(value) => setValue('estado', value as 'pendiente' | 'aprobada' | 'rechazada' | 'vencida')} defaultValue={watchedValues.estado}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar estado" />
                   </SelectTrigger>
@@ -220,7 +221,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="medico_id">Médico Solicitante</Label>
-                <Select onValueChange={(value) => setValue('medico_id', value)}>
+                <Select onValueChange={(value) => setValue('medico_id', parseInt(value))} defaultValue={watchedValues.medico_id?.toString()}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar médico" />
                   </SelectTrigger>
@@ -236,7 +237,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
 
               <div className="space-y-2">
                 <Label htmlFor="obra_social_id">Obra Social</Label>
-                <Select onValueChange={(value) => setValue('obra_social_id', value)}>
+                <Select onValueChange={(value) => setValue('obra_social_id', parseInt(value))} defaultValue={watchedValues.obra_social_id?.toString()}>
                   <SelectTrigger>
                     <SelectValue placeholder="Seleccionar obra social" />
                   </SelectTrigger>
@@ -274,8 +275,8 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
               <Label>Prestación</Label>
               <PrestacionSelector
                 onSelect={(prestacion) => {
-                  setValue('prestacion_codigo', prestacion.codigo_practica);
-                  setValue('prestacion_descripcion', prestacion.descripcion_practica);
+                  setValue('prestacion_codigo', prestacion.codigo);
+                  setValue('prestacion_descripcion', prestacion.descripcion);
                 }}
               />
             </div>
