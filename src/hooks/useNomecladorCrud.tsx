@@ -31,11 +31,23 @@ export const useCreateNomeclador = () => {
 
   return useMutation({
     mutationFn: async (data: NomecladorFormData) => {
-      const { error } = await supabase
+      const { data: result, error } = await supabase
         .from('nomeclador')
-        .insert([data]);
+        .insert([data])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Crear log de auditoría
+      await supabase.rpc('create_audit_log', {
+        p_action: 'INSERT',
+        p_table_name: 'nomeclador',
+        p_record_id: result.id.toString(),
+        p_new_values: data
+      });
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
@@ -66,6 +78,14 @@ export const useUpdateNomeclador = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Crear log de auditoría
+      await supabase.rpc('create_audit_log', {
+        p_action: 'UPDATE',
+        p_table_name: 'nomeclador',
+        p_record_id: id.toString(),
+        p_new_values: data
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
@@ -96,6 +116,13 @@ export const useDeleteNomeclador = () => {
         .eq('id', id);
 
       if (error) throw error;
+
+      // Crear log de auditoría
+      await supabase.rpc('create_audit_log', {
+        p_action: 'DELETE',
+        p_table_name: 'nomeclador',
+        p_record_id: id.toString()
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });

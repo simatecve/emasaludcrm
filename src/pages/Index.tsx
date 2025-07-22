@@ -10,6 +10,8 @@ import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
 import NomecladorManagement from '@/components/NomecladorManagement';
+import UserManagement from '@/components/UserManagement';
+import AuditLogs from '@/components/AuditLogs';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -48,6 +50,10 @@ const Index = () => {
         return <NomecladorManagement />;
       case 'authorizations':
         return <AutorizacionManagement />;
+      case 'users':
+        return <UserManagement />;
+      case 'audit-logs':
+        return <AuditLogs />;
       default:
         return <Dashboard />;
     }

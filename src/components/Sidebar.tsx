@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
@@ -19,16 +19,47 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
   const { data: systemConfig } = useSystemConfig();
   const { data: currentUser } = useCurrentUser();
 
-  const menuItems = [
-    { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
-    { id: 'patients', label: 'Pacientes', icon: Users },
-    { id: 'appointments', label: 'Turnos', icon: Calendar },
-    { id: 'medicos', label: 'Médicos', icon: UserCog },
-    { id: 'especialidades', label: 'Especialidades', icon: Stethoscope },
-    { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
-    { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
-    { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
-  ];
+  const getMenuItems = () => {
+    const baseItems = [
+      { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
+    ];
+
+    // Secciones disponibles según el rol
+    if (currentUser?.role === 'admin') {
+      return [
+        ...baseItems,
+        { id: 'patients', label: 'Pacientes', icon: Users },
+        { id: 'appointments', label: 'Turnos', icon: Calendar },
+        { id: 'medicos', label: 'Médicos', icon: UserCog },
+        { id: 'especialidades', label: 'Especialidades', icon: Stethoscope },
+        { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
+        { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
+        { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+        { id: 'users', label: 'Usuarios', icon: UsersIcon },
+        { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
+      ];
+    } else if (currentUser?.role === 'usuario_normal') {
+      return [
+        ...baseItems,
+        { id: 'patients', label: 'Pacientes', icon: Users },
+        { id: 'appointments', label: 'Turnos', icon: Calendar },
+        { id: 'medicos', label: 'Médicos', icon: UserCog },
+        { id: 'especialidades', label: 'Especialidades', icon: Stethoscope },
+        { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
+        { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
+        { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+      ];
+    } else if (currentUser?.role === 'prestador') {
+      return [
+        ...baseItems,
+        { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+      ];
+    }
+
+    return baseItems;
+  };
+
+  const menuItems = getMenuItems();
 
   const handleSignOut = async () => {
     await signOut();
@@ -98,7 +129,11 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
           <div className="text-sm text-slate-400 mb-4">
             <p className="font-medium text-white">{currentUser.full_name}</p>
             <p>{currentUser.email}</p>
-            <p className="capitalize">{currentUser.role}</p>
+            <p className="capitalize">
+              {currentUser.role === 'admin' ? 'Administrador' : 
+               currentUser.role === 'usuario_normal' ? 'Usuario Normal' : 
+               'Prestador'}
+            </p>
           </div>
         )}
         <Button

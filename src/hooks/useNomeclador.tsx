@@ -16,6 +16,7 @@ export const useNomeclador = () => {
   return useQuery({
     queryKey: ['nomeclador'],
     queryFn: async () => {
+      // Remover límite para obtener todos los registros
       const { data, error } = await supabase
         .from('nomeclador')
         .select('*')
@@ -38,7 +39,7 @@ export const useNomecladorSearch = (searchTerm: string) => {
         .select('*')
         .or(`codigo_practica.ilike.%${searchTerm}%,descripcion_practica.ilike.%${searchTerm}%`)
         .order('codigo_practica')
-        .limit(20);
+        .limit(50); // Mantener límite solo para búsquedas específicas
 
       if (error) throw error;
       return data as Nomenclador[];

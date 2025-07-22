@@ -8,7 +8,7 @@ export interface CurrentUser {
   email: string;
   username: string;
   full_name: string;
-  role: string;
+  role: 'admin' | 'usuario_normal' | 'prestador';
   is_active: boolean;
 }
 
