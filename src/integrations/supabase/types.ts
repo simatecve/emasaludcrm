@@ -161,6 +161,45 @@ export type Database = {
           },
         ]
       }
+      diagnosticos: {
+        Row: {
+          created_at: string | null
+          diagnostico: string
+          estado: string | null
+          fecha_diagnostico: string
+          id: number
+          medico_tratante: string | null
+          observaciones: string | null
+          paciente_id: number
+          tratamiento: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          diagnostico: string
+          estado?: string | null
+          fecha_diagnostico?: string
+          id?: number
+          medico_tratante?: string | null
+          observaciones?: string | null
+          paciente_id: number
+          tratamiento?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          diagnostico?: string
+          estado?: string | null
+          fecha_diagnostico?: string
+          id?: number
+          medico_tratante?: string | null
+          observaciones?: string | null
+          paciente_id?: number
+          tratamiento?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       especialidades: {
         Row: {
           activa: boolean | null
