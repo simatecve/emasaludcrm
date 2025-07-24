@@ -45,15 +45,18 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       // Rotate and add watermark using transform
       pdf.setTextColor(200, 200, 200);
       
-      // Apply rotation transformation (45 degrees in radians)
+      // Apply rotation transformation using internal API
       const angle = 45 * Math.PI / 180;
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       
-      // Transform matrix for rotation around center point
-      pdf.setTransformMatrix(cos, sin, -sin, cos, centerX - centerX * cos + centerY * sin, centerY - centerX * sin - centerY * cos);
+      // Use the internal transform method
+      pdf.internal.write(`q`); // Save graphics state
+      pdf.internal.write(`${cos.toFixed(5)} ${sin.toFixed(5)} ${(-sin).toFixed(5)} ${cos.toFixed(5)} ${centerX.toFixed(2)} ${centerY.toFixed(2)} cm`);
       
-      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
+      pdf.addImage(logoImg, 'PNG', -watermarkSize/2, -watermarkSize/2, watermarkSize, watermarkSize);
+      
+      pdf.internal.write(`Q`); // Restore graphics state
       
       // Restore normal state
       pdf.restoreGraphicsState();
