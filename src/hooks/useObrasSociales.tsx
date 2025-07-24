@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +27,6 @@ export const useObrasSociales = () => {
       const { data, error } = await supabase
         .from('obras_sociales')
         .select('*')
-        .eq('activa', true)
         .order('nombre');
 
       if (error) throw error;
@@ -74,7 +72,7 @@ export const useUpdateObraSocial = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<ObraSocialFormData> }) => {
+    mutationFn: async ({ id, data }: { id: number; data: Partial<ObraSocialFormData & { activa: boolean }> }) => {
       const { error } = await supabase
         .from('obras_sociales')
         .update(data)
@@ -107,7 +105,7 @@ export const useDeleteObraSocial = () => {
     mutationFn: async (obraSocialId: number) => {
       const { error } = await supabase
         .from('obras_sociales')
-        .update({ activa: false })
+        .delete()
         .eq('id', obraSocialId);
 
       if (error) throw error;
@@ -116,7 +114,7 @@ export const useDeleteObraSocial = () => {
       queryClient.invalidateQueries({ queryKey: ['obras-sociales'] });
       toast({
         title: "Obra Social eliminada",
-        description: "La obra social se ha eliminado exitosamente.",
+        description: "La obra social se ha eliminado permanentemente.",
       });
     },
     onError: (error: any) => {
