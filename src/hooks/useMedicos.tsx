@@ -39,7 +39,7 @@ export const useMedicos = () => {
         .from('medicos')
         .select(`
           *,
-          especialidad:especialidades(nombre)
+          especialidades:especialidad_id(id, nombre)
         `)
         .eq('activo', true)
         .order('apellido');
