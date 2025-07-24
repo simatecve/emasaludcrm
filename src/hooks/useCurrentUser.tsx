@@ -1,4 +1,5 @@
 
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,7 +40,9 @@ export const useCurrentUser = () => {
       return data as CurrentUser;
     },
     enabled: !!user?.id,
-    retry: 3,
+    retry: false, // No reintentar para evitar loops infinitos
     staleTime: 5 * 60 * 1000, // 5 minutos
+    refetchOnWindowFocus: false, // Evitar refetch automático
   });
 };
+
