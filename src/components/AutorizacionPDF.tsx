@@ -18,6 +18,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
   const generatePDF = async () => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
     
     // Load and add logo image
     const logoImg = new Image();
@@ -30,7 +31,28 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         logoImg.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
       });
       
-      // Add logo to PDF (upper left corner)
+      // Add watermark logo in the center of the page (rotated and semi-transparent)
+      const watermarkSize = 120;
+      const centerX = pageWidth / 2;
+      const centerY = pageHeight / 2;
+      
+      // Save current state
+      pdf.saveGraphicsState();
+      
+      // Set transparency for watermark
+      pdf.setGState(pdf.GState({ opacity: 0.1 }));
+      
+      // Rotate and add watermark
+      pdf.setTextColor(200, 200, 200);
+      pdf.saveGraphicsState();
+      pdf.rotate(45, centerX, centerY);
+      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
+      pdf.restoreGraphicsState();
+      
+      // Restore normal opacity for rest of content
+      pdf.restoreGraphicsState();
+      
+      // Add logo to PDF (upper left corner - normal logo)
       const logoWidth = 40;
       const logoHeight = 25;
       pdf.addImage(logoImg, 'PNG', 20, 10, logoWidth, logoHeight);
