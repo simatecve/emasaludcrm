@@ -20,15 +20,26 @@ export const useCurrentUser = () => {
     queryFn: async () => {
       if (!user?.id) throw new Error('Usuario no autenticado');
 
+      console.log('Fetching user data for ID:', user.id);
+
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      console.log('User data fetched:', data);
+      console.log('Error:', error);
+
+      if (error) {
+        console.error('Error fetching user:', error);
+        throw error;
+      }
+      
       return data as CurrentUser;
     },
     enabled: !!user?.id,
+    retry: 3,
+    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 };

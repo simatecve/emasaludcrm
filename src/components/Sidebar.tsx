@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
@@ -15,17 +15,27 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse }: SidebarProps) => {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { data: systemConfig } = useSystemConfig();
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading: isLoadingUser, error: userError } = useCurrentUser();
+
+  console.log('Auth user:', user);
+  console.log('Current user data:', currentUser);
+  console.log('User loading:', isLoadingUser);
+  console.log('User error:', userError);
 
   const getMenuItems = () => {
     const baseItems = [
       { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
     ];
 
+    // Si no hay datos del usuario aún, mostrar solo el dashboard
+    if (!currentUser) {
+      return baseItems;
+    }
+
     // Secciones disponibles según el rol
-    if (currentUser?.role === 'admin') {
+    if (currentUser.role === 'admin') {
       return [
         ...baseItems,
         { id: 'patients', label: 'Pacientes', icon: Users },
@@ -38,7 +48,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
       ];
-    } else if (currentUser?.role === 'usuario_normal') {
+    } else if (currentUser.role === 'usuario_normal') {
       return [
         ...baseItems,
         { id: 'patients', label: 'Pacientes', icon: Users },
@@ -49,7 +59,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
       ];
-    } else if (currentUser?.role === 'prestador') {
+    } else if (currentUser.role === 'prestador') {
       return [
         ...baseItems,
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
@@ -125,15 +135,33 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         "mt-8 pt-4 border-t border-slate-700",
         isCollapsed && "text-center"
       )}>
-        {!isCollapsed && currentUser && (
+        {!isCollapsed && (
           <div className="text-sm text-slate-400 mb-4">
-            <p className="font-medium text-white">{currentUser.full_name}</p>
-            <p>{currentUser.email}</p>
-            <p className="capitalize">
-              {currentUser.role === 'admin' ? 'Administrador' : 
-               currentUser.role === 'usuario_normal' ? 'Usuario Normal' : 
-               'Prestador'}
-            </p>
+            {isLoadingUser ? (
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Cargando usuario...</span>
+              </div>
+            ) : currentUser ? (
+              <>
+                <p className="font-medium text-white">{currentUser.full_name}</p>
+                <p>{currentUser.email}</p>
+                <p className="capitalize">
+                  {currentUser.role === 'admin' ? 'Administrador' : 
+                   currentUser.role === 'usuario_normal' ? 'Usuario Normal' : 
+                   'Prestador'}
+                </p>
+              </>
+            ) : userError ? (
+              <p className="text-red-400">Error cargando usuario</p>
+            ) : user ? (
+              <>
+                <p className="font-medium text-white">{user.email}</p>
+                <p className="text-yellow-400">Rol no disponible</p>
+              </>
+            ) : (
+              <p className="text-slate-500">Usuario no autenticado</p>
+            )}
           </div>
         )}
         <Button
