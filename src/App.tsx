@@ -9,17 +9,18 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-// Create QueryClient instance inside the App component to ensure proper React context
 const App = () => {
-  // Create QueryClient instance with React context
-  const queryClient = React.useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: 1,
+  // Create QueryClient instance with React context - moved inside component body
+  const queryClient = React.useMemo(() => {
+    return new QueryClient({
+      defaultOptions: {
+        queries: {
+          staleTime: 5 * 60 * 1000, // 5 minutes
+          retry: 1,
+        },
       },
-    },
-  }), []);
+    });
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

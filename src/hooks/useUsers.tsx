@@ -22,6 +22,11 @@ export interface CreateUserData {
   role: 'admin' | 'usuario_normal' | 'prestador';
 }
 
+interface PasswordChangeResponse {
+  success?: boolean;
+  error?: string;
+}
+
 export const useUsers = () => {
   return useQuery({
     queryKey: ['users'],
@@ -84,7 +89,7 @@ export const useUpdateUser = () => {
       if (error) throw error;
 
       // Crear log de auditoría
-      await (supabase as any).rpc('create_audit_log', {
+      await supabase.rpc('create_audit_log', {
         p_action: 'UPDATE_USER',
         p_table_name: 'users',
         p_record_id: id,
@@ -119,9 +124,12 @@ export const useChangePassword = () => {
       });
 
       if (error) throw error;
-      if (data?.error) throw new Error(data.error);
+      
+      // Type cast the response to our expected interface
+      const response = data as PasswordChangeResponse;
+      if (response?.error) throw new Error(response.error);
 
-      return data;
+      return response;
     },
     onSuccess: () => {
       toast({
