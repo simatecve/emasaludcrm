@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       autorizaciones: {
         Row: {
           activa: boolean | null
@@ -567,51 +603,6 @@ export type Database = {
           },
         ]
       }
-      typebot: {
-        Row: {
-          chatid: string
-          id: number
-          session: string
-          typebotsessionid: string
-        }
-        Insert: {
-          chatid: string
-          id?: number
-          session: string
-          typebotsessionid: string
-        }
-        Update: {
-          chatid?: string
-          id?: number
-          session?: string
-          typebotsessionid?: string
-        }
-        Relationships: []
-      }
-      typebot_shortcuts: {
-        Row: {
-          chatid: string
-          id: number
-          session: string
-          shortcut: string
-          text: string
-        }
-        Insert: {
-          chatid: string
-          id?: number
-          session: string
-          shortcut: string
-          text: string
-        }
-        Update: {
-          chatid?: string
-          id?: number
-          session?: string
-          shortcut?: string
-          text?: string
-        }
-        Relationships: []
-      }
       users: {
         Row: {
           created_at: string | null
@@ -653,7 +644,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      change_user_password: {
+        Args: { target_user_id: string; new_password: string }
+        Returns: Json
+      }
+      create_audit_log: {
+        Args: {
+          p_action: string
+          p_table_name: string
+          p_record_id: string
+          p_new_values?: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

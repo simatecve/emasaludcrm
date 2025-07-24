@@ -107,3 +107,34 @@ export const useUpdateUser = () => {
     },
   });
 };
+
+export const useChangePassword = () => {
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.rpc('change_user_password', {
+        target_user_id: userId,
+        new_password: newPassword
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      return data;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Contraseña actualizada",
+        description: "La contraseña ha sido cambiada exitosamente",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: "Error al cambiar contraseña: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+};

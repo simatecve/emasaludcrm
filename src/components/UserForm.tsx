@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useCreateUser, useUpdateUser } from '@/hooks/useUsers';
-import { Loader2 } from 'lucide-react';
+import { useCreateUser, useUpdateUser, useChangePassword } from '@/hooks/useUsers';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 interface UserFormProps {
   user?: any;
@@ -24,8 +25,13 @@ const UserForm = ({ user, onClose }: UserFormProps) => {
     is_active: user?.is_active ?? true,
   });
 
+  const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
+  const changePasswordMutation = useChangePassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +61,20 @@ const UserForm = ({ user, onClose }: UserFormProps) => {
     }
     
     onClose();
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword) {
+      alert('Ingrese una nueva contraseña');
+      return;
+    }
+    
+    await changePasswordMutation.mutateAsync({
+      userId: user.id,
+      newPassword: newPassword
+    });
+    
+    setNewPassword('');
   };
 
   const isLoading = createMutation.isPending || updateMutation.isPending;
@@ -105,13 +125,24 @@ const UserForm = ({ user, onClose }: UserFormProps) => {
         {!user && (
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              required
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
         )}
 
@@ -137,6 +168,51 @@ const UserForm = ({ user, onClose }: UserFormProps) => {
           />
           <Label htmlFor="is_active">Usuario Activo</Label>
         </div>
+
+        {user && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <h4 className="text-sm font-medium">Cambiar Contraseña</h4>
+              <div className="space-y-2">
+                <Label htmlFor="new_password">Nueva Contraseña</Label>
+                <div className="relative">
+                  <Input
+                    id="new_password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Ingrese nueva contraseña"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleChangePassword}
+                disabled={changePasswordMutation.isPending || !newPassword}
+              >
+                {changePasswordMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cambiando...
+                  </>
+                ) : (
+                  'Cambiar Contraseña'
+                )}
+              </Button>
+            </div>
+          </>
+        )}
 
         <div className="flex justify-end space-x-2 pt-4">
           <Button type="button" variant="outline" onClick={onClose}>
