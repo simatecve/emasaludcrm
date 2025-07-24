@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -32,8 +31,6 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
 
     // Si hay error cargando usuario pero hay usuario autenticado, mostrar menú completo para admin
     if (userError && user) {
-      // Asumimos que es admin si hay error (fallback para casos como este)
-      // En un entorno real, deberías tener una forma más robusta de determinar el rol
       console.log('Error loading user data, showing full menu as fallback');
       return [
         ...baseItems,
@@ -69,6 +66,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
       ];
     } else if (currentUser.role === 'usuario_normal') {
+      // Usuario normal: no puede ver usuarios ni logs de auditoría
       return [
         ...baseItems,
         { id: 'patients', label: 'Pacientes', icon: Users },
@@ -80,6 +78,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
       ];
     } else if (currentUser.role === 'prestador') {
+      // Prestador: solo puede acceder a autorizaciones
       return [
         ...baseItems,
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
@@ -206,4 +205,3 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
 };
 
 export default Sidebar;
-

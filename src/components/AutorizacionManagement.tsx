@@ -1,310 +1,369 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAutorizaciones, useDeleteAutorizacion, useCreateAutorizacion, useUpdateAutorizacion, type Autorizacion } from '@/hooks/useAutorizaciones';
-import { Plus, Edit, Trash2, FileText, Filter, Search } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Plus, Search, Edit, Trash2, Eye, Download, Shield } from 'lucide-react';
+import { useAutorizaciones, useDeleteAutorizacion } from '@/hooks/useAutorizaciones';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AutorizacionForm from './AutorizacionForm';
-import AutorizacionPDF from './AutorizacionPDF';
+import PrestadorAutorizacionForm from './PrestadorAutorizacionForm';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const AutorizacionManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedAutorizacion, setSelectedAutorizacion] = useState<Autorizacion | undefined>();
+  const [selectedAutorizacion, setSelectedAutorizacion] = useState<any>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterEstado, setFilterEstado] = useState<string>('todos');
-  const [filterTipo, setFilterTipo] = useState<string>('todos');
+  const { data: autorizaciones, isLoading, error } = useAutorizaciones();
+  const { data: currentUser } = useCurrentUser();
+  const deleteAutorizacion = useDeleteAutorizacion();
+  const { toast } = useToast();
 
-  const { data: autorizaciones, isLoading } = useAutorizaciones();
-  const deleteMutation = useDeleteAutorizacion();
-  const createMutation = useCreateAutorizacion();
-  const updateMutation = useUpdateAutorizacion();
-
-  const openForm = (autorizacion?: Autorizacion) => {
+  const openForm = (autorizacion?: any) => {
     setSelectedAutorizacion(autorizacion);
     setIsFormOpen(true);
   };
 
   const closeForm = () => {
-    setIsFormOpen(false);
     setSelectedAutorizacion(undefined);
-  };
-
-  const handleSubmit = async (data: any) => {
-    try {
-      if (selectedAutorizacion) {
-        await updateMutation.mutateAsync({
-          id: selectedAutorizacion.id,
-          data
-        });
-      } else {
-        await createMutation.mutateAsync(data);
-      }
-      closeForm();
-    } catch (error) {
-      console.error('Error saving authorization:', error);
-    }
+    setIsFormOpen(false);
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta autorización?')) {
-      await deleteMutation.mutateAsync(id);
+    if (currentUser?.role === 'usuario_normal' || currentUser?.role === 'prestador') {
+      toast({
+        title: "Sin permisos",
+        description: "No tiene permisos para eliminar registros",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (window.confirm('¿Está seguro que desea eliminar esta autorización?')) {
+      try {
+        await deleteAutorizacion.mutateAsync(id);
+      } catch (error) {
+        console.error('Error deleting authorization:', error);
+      }
     }
   };
 
-  const getEstadoBadge = (estado: string) => {
-    const variants = {
-      pendiente: 'default',
-      aprobada: 'default',
-      rechazada: 'destructive',
-      vencida: 'secondary'
-    } as const;
+  const filteredAutorizaciones = autorizaciones?.filter(autorizacion =>
+    autorizacion.pacientes?.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    autorizacion.pacientes?.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    autorizacion.pacientes?.dni.includes(searchTerm) ||
+    autorizacion.tipo_autorizacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    autorizacion.numero_autorizacion?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const colors = {
-      pendiente: 'bg-yellow-100 text-yellow-800',
-      aprobada: 'bg-green-100 text-green-800',
-      rechazada: 'bg-red-100 text-red-800',
-      vencida: 'bg-gray-100 text-gray-800'
-    } as const;
-
-    return (
-      <Badge variant={variants[estado as keyof typeof variants]} className={colors[estado as keyof typeof colors]}>
-        {estado.charAt(0).toUpperCase() + estado.slice(1)}
-      </Badge>
-    );
+  const getEstadoColor = (estado: string) => {
+    switch (estado) {
+      case 'aprobada':
+        return 'default';
+      case 'pendiente':
+        return 'secondary';
+      case 'rechazada':
+        return 'destructive';
+      case 'vencida':
+        return 'outline';
+      default:
+        return 'secondary';
+    }
   };
 
-  const filteredAutorizaciones = autorizaciones?.filter(autorizacion => {
-    const matchesSearch = 
-      autorizacion.numero_autorizacion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      `${autorizacion.pacientes?.nombre} ${autorizacion.pacientes?.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizacion.tipo_autorizacion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizacion.prestacion_codigo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      autorizacion.prestacion_descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesEstado = filterEstado === 'todos' || autorizacion.estado === filterEstado;
-    const matchesTipo = filterTipo === 'todos' || autorizacion.tipo_autorizacion === filterTipo;
+  const getEstadoLabel = (estado: string) => {
+    switch (estado) {
+      case 'aprobada':
+        return 'Aprobada';
+      case 'pendiente':
+        return 'Pendiente';
+      case 'rechazada':
+        return 'Rechazada';
+      case 'vencida':
+        return 'Vencida';
+      default:
+        return estado;
+    }
+  };
 
-    return matchesSearch && matchesEstado && matchesTipo;
-  });
+  // Verificar permisos para prestadores
+  if (currentUser?.role === 'prestador') {
+    // Los prestadores pueden crear una sola solicitud
+    const userAutorizaciones = autorizaciones?.filter(auth => auth.prestador === currentUser.full_name);
+    const canCreateNew = !userAutorizaciones || userAutorizaciones.length === 0;
 
-  const tiposUnicos = [...new Set(autorizaciones?.map(a => a.tipo_autorizacion))];
+    return (
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Mis Solicitudes de Autorización</h1>
+            <p className="text-gray-600">Gestionar solicitudes de autorización como prestador</p>
+          </div>
+          {canCreateNew && (
+            <Button onClick={() => openForm()} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Nueva Solicitud
+            </Button>
+          )}
+        </div>
 
-  if (isLoading) {
+        {!canCreateNew && (
+          <Alert>
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              Ya tiene una solicitud de autorización activa. Los prestadores pueden realizar una sola solicitud.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Mis Solicitudes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="text-center py-8">Cargando autorizaciones...</div>
+            ) : userAutorizaciones && userAutorizaciones.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha Solicitud</TableHead>
+                    <TableHead>Prestación</TableHead>
+                    <TableHead className="w-[100px]">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {userAutorizaciones.map((autorizacion) => (
+                    <TableRow key={autorizacion.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            DNI: {autorizacion.pacientes?.dni}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {autorizacion.tipo_autorizacion}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getEstadoColor(autorizacion.estado)}>
+                          {getEstadoLabel(autorizacion.estado)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {autorizacion.fecha_solicitud ? 
+                          format(new Date(autorizacion.fecha_solicitud), 'dd/MM/yyyy', { locale: es }) : 
+                          'No especificada'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {autorizacion.prestacion_codigo && (
+                            <div>Código: {autorizacion.prestacion_codigo}</div>
+                          )}
+                          {autorizacion.prestacion_descripcion && (
+                            <div className="text-gray-600">{autorizacion.prestacion_descripcion}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openForm(autorizacion)}
+                            disabled={autorizacion.estado !== 'pendiente'}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No tiene solicitudes de autorización
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <PrestadorAutorizacionForm onClose={closeForm} />
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  }
+
+  // Vista normal para admin y usuario_normal
+  if (error) {
     return (
       <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="h-32 bg-gray-200 rounded"></div>
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>
+            Error al cargar autorizaciones: {error.message}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Gestión de Autorizaciones</h1>
-        <Button onClick={() => openForm()}>
-          <Plus className="h-4 w-4 mr-2" />
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gestión de Autorizaciones</h1>
+          <p className="text-gray-600">Administrar autorizaciones médicas</p>
+        </div>
+        <Button onClick={() => openForm()} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
           Nueva Autorización
         </Button>
       </div>
 
-      {/* Filtros */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
+          <div className="flex items-center gap-4">
+            <CardTitle>Autorizaciones Registradas</CardTitle>
+            <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar por paciente, número o tipo..."
+                placeholder="Buscar autorizaciones..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
-            
-            <Select value={filterEstado} onValueChange={setFilterEstado}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los estados</SelectItem>
-                <SelectItem value="pendiente">Pendientes</SelectItem>
-                <SelectItem value="aprobada">Aprobadas</SelectItem>
-                <SelectItem value="rechazada">Rechazadas</SelectItem>
-                <SelectItem value="vencida">Vencidas</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos los tipos</SelectItem>
-                {tiposUnicos.map(tipo => (
-                  <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setSearchTerm('');
-                setFilterEstado('todos');
-                setFilterTipo('todos');
-              }}
-            >
-              Limpiar Filtros
-            </Button>
           </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8">Cargando autorizaciones...</div>
+          ) : filteredAutorizaciones && filteredAutorizaciones.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Paciente</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha Solicitud</TableHead>
+                    <TableHead>Médico</TableHead>
+                    <TableHead>Obra Social</TableHead>
+                    <TableHead>Prestación</TableHead>
+                    <TableHead className="w-[150px]">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAutorizaciones.map((autorizacion) => (
+                    <TableRow key={autorizacion.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">
+                            {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            DNI: {autorizacion.pacientes?.dni}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="capitalize">
+                        {autorizacion.tipo_autorizacion}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getEstadoColor(autorizacion.estado)}>
+                          {getEstadoLabel(autorizacion.estado)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {autorizacion.fecha_solicitud ? 
+                          format(new Date(autorizacion.fecha_solicitud), 'dd/MM/yyyy', { locale: es }) : 
+                          'No especificada'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {autorizacion.medicos ? 
+                          `${autorizacion.medicos.nombre} ${autorizacion.medicos.apellido}` : 
+                          'No asignado'
+                        }
+                      </TableCell>
+                      <TableCell>
+                        {autorizacion.obras_sociales?.nombre || 'No especificada'}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {autorizacion.prestacion_codigo && (
+                            <div>Código: {autorizacion.prestacion_codigo}</div>
+                          )}
+                          {autorizacion.prestacion_descripcion && (
+                            <div className="text-gray-600">{autorizacion.prestacion_descripcion}</div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openForm(autorizacion)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {autorizacion.documento_url && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => window.open(autorizacion.documento_url, '_blank')}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {currentUser?.role === 'admin' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(autorizacion.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              {searchTerm ? 'No se encontraron autorizaciones' : 'No hay autorizaciones registradas'}
+            </div>
+          )}
         </CardContent>
       </Card>
 
-      {/* Lista de Autorizaciones */}
-      <div className="grid gap-4">
-        {filteredAutorizaciones?.map((autorizacion) => (
-          <Card key={autorizacion.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start">
-                <div className="flex-1 space-y-2">
-                  <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-semibold">
-                      {autorizacion.numero_autorizacion || `AUT-${autorizacion.id}`}
-                    </h3>
-                    {getEstadoBadge(autorizacion.estado)}
-                    <Badge variant="outline">
-                      {autorizacion.tipo_autorizacion}
-                    </Badge>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-                    <div>
-                      <span className="font-medium">Paciente:</span>{' '}
-                      {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
-                      <br />
-                      <span className="font-medium">DNI:</span> {autorizacion.pacientes?.dni}
-                      {autorizacion.numero_credencial && (
-                        <>
-                          <br />
-                          <span className="font-medium">Credencial:</span> {autorizacion.numero_credencial}
-                        </>
-                      )}
-                    </div>
-                    
-                    <div>
-                      {autorizacion.medicos && (
-                        <>
-                          <span className="font-medium">Médico:</span>{' '}
-                          {autorizacion.medicos.nombre} {autorizacion.medicos.apellido}
-                          <br />
-                          <span className="font-medium">Matrícula:</span> {autorizacion.medicos.matricula}
-                          <br />
-                        </>
-                      )}
-                      {autorizacion.obras_sociales && (
-                        <>
-                          <span className="font-medium">Obra Social:</span>{' '}
-                          {autorizacion.obras_sociales.nombre}
-                        </>
-                      )}
-                    </div>
-                    
-                    <div>
-                      {autorizacion.prestacion_codigo && (
-                        <>
-                          <span className="font-medium">Prestación:</span>{' '}
-                          {autorizacion.prestacion_codigo}
-                          <br />
-                        </>
-                      )}
-                      {autorizacion.fecha_vencimiento && (
-                        <>
-                          <span className="font-medium">Vence:</span>{' '}
-                          {format(new Date(autorizacion.fecha_vencimiento), 'dd/MM/yyyy', { locale: es })}
-                          <br />
-                        </>
-                      )}
-                      {autorizacion.documento_url && (
-                        <div className="flex items-center gap-1 text-blue-600">
-                          <FileText className="h-3 w-3" />
-                          <span className="text-xs">Documento adjunto</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {(autorizacion.prestacion_descripcion || autorizacion.descripcion) && (
-                    <p className="text-sm text-gray-700 mt-2">
-                      <span className="font-medium">Descripción:</span>{' '}
-                      {autorizacion.prestacion_descripcion || autorizacion.descripcion}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex gap-2 ml-4">
-                  <AutorizacionPDF autorizacion={autorizacion} />
-                  {autorizacion.documento_url && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(autorizacion.documento_url, '_blank')}
-                    >
-                      <FileText className="h-4 w-4" />
-                    </Button>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openForm(autorizacion)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(autorizacion.id)}
-                    disabled={deleteMutation.isPending}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {filteredAutorizaciones?.length === 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-gray-500">No se encontraron autorizaciones que coincidan con los filtros.</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Dialog para formulario */}
-      <Dialog open={isFormOpen} onOpenChange={closeForm}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto">
+      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <AutorizacionForm
             autorizacion={selectedAutorizacion}
-            onSubmit={handleSubmit}
-            onCancel={closeForm}
-            isLoading={createMutation.isPending || updateMutation.isPending}
+            onClose={closeForm}
           />
         </DialogContent>
       </Dialog>

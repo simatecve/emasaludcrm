@@ -1,6 +1,8 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCurrentUser } from './useCurrentUser';
 
 export interface Autorizacion {
   id: number;
@@ -224,9 +226,15 @@ export const useUpdateAutorizacion = () => {
 export const useDeleteAutorizacion = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { data: currentUser } = useCurrentUser();
 
   return useMutation({
     mutationFn: async (autorizacionId: number) => {
+      // Verificar permisos
+      if (currentUser?.role !== 'admin') {
+        throw new Error('No tiene permisos para eliminar registros');
+      }
+
       console.log('Deleting authorization:', autorizacionId);
       
       const { error } = await supabase
