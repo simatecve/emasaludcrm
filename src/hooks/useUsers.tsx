@@ -43,38 +43,14 @@ export const useCreateUser = () => {
 
   return useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      // Crear usuario en auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: userData
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Crear perfil en users
-      const { error: userError } = await supabase
-        .from('users')
-        .insert([{
-          id: authData.user.id,
-          email: userData.email,
-          username: userData.username,
-          full_name: userData.full_name,
-          role: userData.role,
-          password_hash: 'managed_by_auth'
-        }]);
-
-      if (userError) throw userError;
-
-      // Crear log de auditoría
-      await (supabase as any).rpc('create_audit_log', {
-        p_action: 'CREATE_USER',
-        p_table_name: 'users',
-        p_record_id: authData.user.id,
-        p_new_values: { email: userData.email, username: userData.username, full_name: userData.full_name, role: userData.role }
-      });
-
-      return authData.user;
+      return data.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -84,6 +60,7 @@ export const useCreateUser = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Error creating user:', error);
       toast({
         title: "Error",
         description: "Error al crear usuario: " + error.message,
