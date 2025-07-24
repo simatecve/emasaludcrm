@@ -1,5 +1,5 @@
 
-import React, { useMemo } from "react";
+import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,17 +9,17 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
-const App = () => {
-  // Create QueryClient instance inside component to ensure React context is available
-  const queryClient = useMemo(() => new QueryClient({
-    defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        retry: 1,
-      },
+// Create QueryClient instance outside of component to avoid React context issues
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
     },
-  }), []);
+  },
+});
 
+const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
