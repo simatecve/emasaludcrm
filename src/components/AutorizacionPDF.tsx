@@ -42,14 +42,20 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       // Set transparency for watermark
       pdf.setGState(pdf.GState({ opacity: 0.1 }));
       
-      // Rotate and add watermark
+      // Rotate and add watermark using transform
       pdf.setTextColor(200, 200, 200);
-      pdf.saveGraphicsState();
-      pdf.rotate(45, centerX, centerY);
-      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
-      pdf.restoreGraphicsState();
       
-      // Restore normal opacity for rest of content
+      // Apply rotation transformation (45 degrees in radians)
+      const angle = 45 * Math.PI / 180;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      
+      // Transform matrix for rotation around center point
+      pdf.setTransformMatrix(cos, sin, -sin, cos, centerX - centerX * cos + centerY * sin, centerY - centerX * sin - centerY * cos);
+      
+      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
+      
+      // Restore normal state
       pdf.restoreGraphicsState();
       
       // Add logo to PDF (upper left corner - normal logo)
