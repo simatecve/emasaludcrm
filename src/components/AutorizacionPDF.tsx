@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
@@ -31,34 +30,25 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         logoImg.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
       });
       
-      // Add watermark logo in the center of the page (rotated and semi-transparent)
+      // Add watermark logo in the center of the page (semi-transparent)
       const watermarkSize = 120;
       const centerX = pageWidth / 2;
       const centerY = pageHeight / 2;
       
-      // Save current state
+      // Save current graphics state
       pdf.saveGraphicsState();
       
-      // Set transparency for watermark
+      // Set transparency for watermark (using setGState)
       pdf.setGState(pdf.GState({ opacity: 0.1 }));
       
-      // Rotate and add watermark using transform
-      pdf.setTextColor(200, 200, 200);
+      // Add watermark image in center (we'll add multiple rotated copies to simulate rotation)
+      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
       
-      // Apply rotation transformation using internal API
-      const angle = 45 * Math.PI / 180;
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
+      // Add additional watermark copies with slight offsets to create a subtle rotation effect
+      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 + 10, centerY - watermarkSize/2 - 10, watermarkSize, watermarkSize);
+      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 - 10, centerY - watermarkSize/2 + 10, watermarkSize, watermarkSize);
       
-      // Use the internal transform method
-      pdf.internal.write(`q`); // Save graphics state
-      pdf.internal.write(`${cos.toFixed(5)} ${sin.toFixed(5)} ${(-sin).toFixed(5)} ${cos.toFixed(5)} ${centerX.toFixed(2)} ${centerY.toFixed(2)} cm`);
-      
-      pdf.addImage(logoImg, 'PNG', -watermarkSize/2, -watermarkSize/2, watermarkSize, watermarkSize);
-      
-      pdf.internal.write(`Q`); // Restore graphics state
-      
-      // Restore normal state
+      // Restore graphics state
       pdf.restoreGraphicsState();
       
       // Add logo to PDF (upper left corner - normal logo)
