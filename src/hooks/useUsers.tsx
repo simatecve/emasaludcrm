@@ -118,18 +118,14 @@ export const useChangePassword = () => {
 
   return useMutation({
     mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
-      const { data, error } = await supabase.rpc('change_user_password', {
-        target_user_id: userId,
-        new_password: newPassword
+      const { data, error } = await supabase.functions.invoke('change-password', {
+        body: { userId, newPassword }
       });
 
       if (error) throw error;
-      
-      // Type cast the response to our expected interface
-      const response = data as PasswordChangeResponse;
-      if (response?.error) throw new Error(response.error);
+      if (data?.error) throw new Error(data.error);
 
-      return response;
+      return data;
     },
     onSuccess: () => {
       toast({
