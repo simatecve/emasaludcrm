@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Plus, Search, Edit, Trash2, Eye, Download, Shield } from 'lucide-react';
-import { useAutorizaciones, useDeleteAutorizacion } from '@/hooks/useAutorizaciones';
+import { useAutorizaciones, useDeleteAutorizacion, useCreateAutorizacion, useUpdateAutorizacion } from '@/hooks/useAutorizaciones';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AutorizacionForm from './AutorizacionForm';
@@ -23,6 +22,8 @@ const AutorizacionManagement = () => {
   const { data: autorizaciones, isLoading, error } = useAutorizaciones();
   const { data: currentUser } = useCurrentUser();
   const deleteAutorizacion = useDeleteAutorizacion();
+  const createAutorizacion = useCreateAutorizacion();
+  const updateAutorizacion = useUpdateAutorizacion();
   const { toast } = useToast();
 
   const openForm = (autorizacion?: any) => {
@@ -33,6 +34,35 @@ const AutorizacionManagement = () => {
   const closeForm = () => {
     setSelectedAutorizacion(undefined);
     setIsFormOpen(false);
+  };
+
+  const handleSubmit = async (data: any) => {
+    try {
+      if (selectedAutorizacion) {
+        await updateAutorizacion.mutateAsync({
+          id: selectedAutorizacion.id,
+          data
+        });
+        toast({
+          title: "Éxito",
+          description: "Autorización actualizada correctamente",
+        });
+      } else {
+        await createAutorizacion.mutateAsync(data);
+        toast({
+          title: "Éxito",
+          description: "Autorización creada correctamente",
+        });
+      }
+      closeForm();
+    } catch (error) {
+      console.error('Error saving authorization:', error);
+      toast({
+        title: "Error",
+        description: "Error al guardar la autorización",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (id: number) => {
@@ -363,7 +393,9 @@ const AutorizacionManagement = () => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <AutorizacionForm
             autorizacion={selectedAutorizacion}
-            onClose={closeForm}
+            onSubmit={handleSubmit}
+            onCancel={closeForm}
+            isLoading={createAutorizacion.isPending || updateAutorizacion.isPending}
           />
         </DialogContent>
       </Dialog>
