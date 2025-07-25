@@ -239,12 +239,7 @@ const AutorizacionManagement = () => {
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <PrestadorAutorizacionForm
-              autorizacion={selectedAutorizacion}
-              onSubmit={handleSubmit}
-              onCancel={closeForm}
-              isLoading={createAutorizacion.isPending || updateAutorizacion.isPending}
-            />
+            <PrestadorAutorizacionForm onClose={closeForm} />
           </DialogContent>
         </Dialog>
       </div>
