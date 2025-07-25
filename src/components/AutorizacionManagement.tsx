@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AutorizacionForm from './AutorizacionForm';
 import PrestadorAutorizacionForm from './PrestadorAutorizacionForm';
+import AutorizacionPDF from './AutorizacionPDF';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -160,70 +162,73 @@ const AutorizacionManagement = () => {
             {isLoading ? (
               <div className="text-center py-8">Cargando autorizaciones...</div>
             ) : userAutorizaciones && userAutorizaciones.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Paciente</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Fecha Solicitud</TableHead>
-                    <TableHead>Prestación</TableHead>
-                    <TableHead className="w-[100px]">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {userAutorizaciones.map((autorizacion) => (
-                    <TableRow key={autorizacion.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            DNI: {autorizacion.pacientes?.dni}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="capitalize">
-                        {autorizacion.tipo_autorizacion}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getEstadoColor(autorizacion.estado)}>
-                          {getEstadoLabel(autorizacion.estado)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {autorizacion.fecha_solicitud ? 
-                          format(new Date(autorizacion.fecha_solicitud), 'dd/MM/yyyy', { locale: es }) : 
-                          'No especificada'
-                        }
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          {autorizacion.prestacion_codigo && (
-                            <div>Código: {autorizacion.prestacion_codigo}</div>
-                          )}
-                          {autorizacion.prestacion_descripcion && (
-                            <div className="text-gray-600">{autorizacion.prestacion_descripcion}</div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openForm(autorizacion)}
-                            disabled={autorizacion.estado !== 'pendiente'}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Paciente</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Fecha Solicitud</TableHead>
+                      <TableHead>Prestación</TableHead>
+                      <TableHead className="w-[120px]">Acciones</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {userAutorizaciones.map((autorizacion) => (
+                      <TableRow key={autorizacion.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">
+                              {autorizacion.pacientes?.nombre} {autorizacion.pacientes?.apellido}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              DNI: {autorizacion.pacientes?.dni}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="capitalize">
+                          {autorizacion.tipo_autorizacion}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={getEstadoColor(autorizacion.estado)}>
+                            {getEstadoLabel(autorizacion.estado)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {autorizacion.fecha_solicitud ? 
+                            format(new Date(autorizacion.fecha_solicitud), 'dd/MM/yyyy', { locale: es }) : 
+                            'No especificada'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {autorizacion.prestacion_codigo && (
+                              <div>Código: {autorizacion.prestacion_codigo}</div>
+                            )}
+                            {autorizacion.prestacion_descripcion && (
+                              <div className="text-gray-600">{autorizacion.prestacion_descripcion}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openForm(autorizacion)}
+                              disabled={autorizacion.estado !== 'pendiente'}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <AutorizacionPDF autorizacion={autorizacion} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
                 No tiene solicitudes de autorización
@@ -234,7 +239,12 @@ const AutorizacionManagement = () => {
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <PrestadorAutorizacionForm onClose={closeForm} />
+            <PrestadorAutorizacionForm
+              autorizacion={selectedAutorizacion}
+              onSubmit={handleSubmit}
+              onCancel={closeForm}
+              isLoading={createAutorizacion.isPending || updateAutorizacion.isPending}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -297,7 +307,7 @@ const AutorizacionManagement = () => {
                     <TableHead>Médico</TableHead>
                     <TableHead>Obra Social</TableHead>
                     <TableHead>Prestación</TableHead>
-                    <TableHead className="w-[150px]">Acciones</TableHead>
+                    <TableHead className="w-[180px]">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -355,6 +365,7 @@ const AutorizacionManagement = () => {
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
+                          <AutorizacionPDF autorizacion={autorizacion} />
                           {autorizacion.documento_url && (
                             <Button
                               variant="outline"
