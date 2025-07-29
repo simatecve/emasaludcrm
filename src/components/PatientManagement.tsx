@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2, MapPin, Users, Activity } from 'lucide-react';
+import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2, MapPin, Users, Activity, Filter, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { usePatients, useCreatePatient, useUpdatePatient, useDeletePatient, Patient, PatientFormData } from '@/hooks/usePatients';
+import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { useCreateDiagnostico, useUpdateDiagnostico } from '@/hooks/useDiagnosticos';
 import PatientForm from './PatientForm';
 import PatientTable from './PatientTable';
@@ -18,21 +21,64 @@ const PatientManagement = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState('list');
+  
+  // Nuevos estados para filtros
+  const [selectedObraSocial, setSelectedObraSocial] = useState<string>('all');
+  const [selectedSexo, setSelectedSexo] = useState<string>('all');
+  const [selectedProvincia, setSelectedProvincia] = useState<string>('all');
+  const [selectedEstado, setSelectedEstado] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const { data: patients, isLoading, error } = usePatients();
+  const { data: obrasSociales } = useObrasSociales();
   const createPatient = useCreatePatient();
   const updatePatient = useUpdatePatient();
   const deletePatient = useDeletePatient();
   const createDiagnostico = useCreateDiagnostico();
   const updateDiagnostico = useUpdateDiagnostico();
 
-  const filteredPatients = patients?.filter(patient =>
-    patient.dni.includes(searchTerm) ||
-    patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (patient.localidad && patient.localidad.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (patient.provincia && patient.provincia.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
+  // Obtener valores únicos para filtros
+  const uniqueProvincias = Array.from(new Set(patients?.map(p => p.provincia).filter(Boolean))).sort();
+  const uniqueSexos = Array.from(new Set(patients?.map(p => p.sexo).filter(Boolean))).sort();
+
+  const filteredPatients = patients?.filter(patient => {
+    // Filtro de búsqueda por texto
+    const searchMatch = searchTerm === '' || 
+      patient.dni.includes(searchTerm) ||
+      patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patient.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (patient.localidad && patient.localidad.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (patient.provincia && patient.provincia.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Filtro por obra social
+    const obraSocialMatch = selectedObraSocial === 'all' || 
+      (selectedObraSocial === 'sin-obra-social' && !patient.obra_social_id) ||
+      patient.obra_social_id?.toString() === selectedObraSocial;
+
+    // Filtro por sexo
+    const sexoMatch = selectedSexo === 'all' || patient.sexo === selectedSexo;
+
+    // Filtro por provincia
+    const provinciaMatch = selectedProvincia === 'all' || patient.provincia === selectedProvincia;
+
+    // Filtro por estado (activo/inactivo)
+    const estadoMatch = selectedEstado === 'all' || 
+      (selectedEstado === 'activo' && patient.activo) ||
+      (selectedEstado === 'inactivo' && !patient.activo);
+
+    return searchMatch && obraSocialMatch && sexoMatch && provinciaMatch && estadoMatch;
+  }) || [];
+
+  const clearAllFilters = () => {
+    setSelectedObraSocial('all');
+    setSelectedSexo('all');
+    setSelectedProvincia('all');
+    setSelectedEstado('all');
+    setSearchTerm('');
+  };
+
+  const hasActiveFilters = selectedObraSocial !== 'all' || selectedSexo !== 'all' || 
+    selectedProvincia !== 'all' || selectedEstado !== 'all' || searchTerm !== '';
 
   const handleCreatePatient = (data: PatientFormData) => {
     createPatient.mutate(data, {
@@ -149,16 +195,159 @@ const PatientManagement = () => {
             <div className="lg:col-span-2 space-y-4">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                      <Input
-                        placeholder="Buscar por DNI, nombre, apellido, localidad..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                      />
+                  <div className="space-y-4">
+                    {/* Búsqueda principal */}
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                          placeholder="Buscar por DNI, nombre, apellido, localidad..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowFilters(!showFilters)}
+                        className="flex items-center gap-2"
+                      >
+                        <Filter className="h-4 w-4" />
+                        Filtros
+                        {hasActiveFilters && (
+                          <Badge variant="destructive" className="ml-1 text-xs">
+                            {[selectedObraSocial !== 'all', selectedSexo !== 'all', selectedProvincia !== 'all', selectedEstado !== 'all', searchTerm !== ''].filter(Boolean).length}
+                          </Badge>
+                        )}
+                      </Button>
                     </div>
+
+                    {/* Filtros desplegables */}
+                    {showFilters && (
+                      <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-medium text-gray-700">Filtros Avanzados</h3>
+                          {hasActiveFilters && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={clearAllFilters}
+                              className="flex items-center gap-2 text-red-600 hover:text-red-700"
+                            >
+                              <X className="h-4 w-4" />
+                              Limpiar filtros
+                            </Button>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {/* Filtro por Obra Social */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">
+                              Obra Social
+                            </label>
+                            <Select value={selectedObraSocial} onValueChange={setSelectedObraSocial}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todas" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todas las obras sociales</SelectItem>
+                                <SelectItem value="sin-obra-social">Sin obra social</SelectItem>
+                                {obrasSociales?.filter(os => os.activa).map((obraSocial) => (
+                                  <SelectItem key={obraSocial.id} value={obraSocial.id.toString()}>
+                                    {obraSocial.nombre}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Filtro por Sexo */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">
+                              Sexo
+                            </label>
+                            <Select value={selectedSexo} onValueChange={setSelectedSexo}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todos" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                {uniqueSexos.map((sexo) => (
+                                  <SelectItem key={sexo} value={sexo}>
+                                    {sexo}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Filtro por Provincia */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">
+                              Provincia
+                            </label>
+                            <Select value={selectedProvincia} onValueChange={setSelectedProvincia}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todas" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todas las provincias</SelectItem>
+                                {uniqueProvincias.map((provincia) => (
+                                  <SelectItem key={provincia} value={provincia}>
+                                    {provincia}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Filtro por Estado */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">
+                              Estado
+                            </label>
+                            <Select value={selectedEstado} onValueChange={setSelectedEstado}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todos" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todos</SelectItem>
+                                <SelectItem value="activo">Activos</SelectItem>
+                                <SelectItem value="inactivo">Inactivos</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        {/* Resumen de resultados */}
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <span className="text-sm text-gray-600">
+                            Mostrando {filteredPatients.length} de {patients?.length || 0} pacientes
+                          </span>
+                          {hasActiveFilters && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <span>Filtros activos:</span>
+                              {selectedObraSocial !== 'all' && (
+                                <Badge variant="secondary">
+                                  {selectedObraSocial === 'sin-obra-social' ? 'Sin OS' : 
+                                    obrasSociales?.find(os => os.id.toString() === selectedObraSocial)?.nombre}
+                                </Badge>
+                              )}
+                              {selectedSexo !== 'all' && (
+                                <Badge variant="secondary">{selectedSexo}</Badge>
+                              )}
+                              {selectedProvincia !== 'all' && (
+                                <Badge variant="secondary">{selectedProvincia}</Badge>
+                              )}
+                              {selectedEstado !== 'all' && (
+                                <Badge variant="secondary">{selectedEstado === 'activo' ? 'Activos' : 'Inactivos'}</Badge>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent>
