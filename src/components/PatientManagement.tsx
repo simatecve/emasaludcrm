@@ -14,11 +14,13 @@ import PatientForm from './PatientForm';
 import PatientTable from './PatientTable';
 import DiagnosticosList from './DiagnosticosList';
 import DiagnosticoForm from './DiagnosticoForm';
+import PatientImport from './PatientImport';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState('list');
   
@@ -167,9 +169,13 @@ const PatientManagement = () => {
           <p className="text-gray-600">Administra los datos de los pacientes y sus obras sociales</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => setShowImport(true)}
+          >
             <Upload className="h-4 w-4" />
-            Importar Excel
+            Importar Excel/CSV
           </Button>
           <Button onClick={handleNewPatient} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700">
             <Plus className="h-4 w-4" />
@@ -556,6 +562,11 @@ const PatientManagement = () => {
           </>
         )}
       </Tabs>
+
+      <PatientImport 
+        isOpen={showImport}
+        onClose={() => setShowImport(false)}
+      />
     </div>
   );
 };
