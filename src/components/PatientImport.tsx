@@ -179,13 +179,13 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
           headers.forEach((header, index) => {
             const value = values[index];
             if (value) {
-              switch (header) {
-                case 'obra_social_id':
-                case 'consultas_maximas':
-                  patientData[header as keyof PatientFormData] = parseInt(value) as any;
-                  break;
-                default:
-                  patientData[header as keyof PatientFormData] = value as any;
+              if (header === 'obra_social_id' || header === 'consultas_maximas') {
+                const numValue = parseInt(value);
+                if (!isNaN(numValue)) {
+                  (patientData as any)[header] = numValue;
+                }
+              } else {
+                (patientData as any)[header] = value;
               }
             }
           });
