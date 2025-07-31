@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -25,15 +24,11 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
   console.log('User error:', userError);
 
   const getMenuItems = () => {
-    const baseItems = [
-      { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
-    ];
-
     // Si hay error cargando usuario pero hay usuario autenticado, mostrar menú completo para admin
     if (userError && user) {
       console.log('Error loading user data, showing full menu as fallback');
       return [
-        ...baseItems,
+        { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
         { id: 'patients', label: 'Pacientes', icon: Users },
         { id: 'appointments', label: 'Turnos', icon: Calendar },
         { id: 'medicos', label: 'Médicos', icon: UserCog },
@@ -46,15 +41,15 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
       ];
     }
 
-    // Si no hay datos del usuario aún, mostrar solo el dashboard
+    // Si no hay datos del usuario aún, mostrar solo el dashboard para admin/usuario_normal
     if (!currentUser) {
-      return baseItems;
+      return [{ id: 'dashboard', label: 'Panel Principal', icon: BarChart3 }];
     }
 
     // Secciones disponibles según el rol
     if (currentUser.role === 'admin') {
       return [
-        ...baseItems,
+        { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
         { id: 'patients', label: 'Pacientes', icon: Users },
         { id: 'appointments', label: 'Turnos', icon: Calendar },
         { id: 'medicos', label: 'Médicos', icon: UserCog },
@@ -68,7 +63,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
     } else if (currentUser.role === 'usuario_normal') {
       // Usuario normal: no puede ver usuarios ni logs de auditoría
       return [
-        ...baseItems,
+        { id: 'dashboard', label: 'Panel Principal', icon: BarChart3 },
         { id: 'patients', label: 'Pacientes', icon: Users },
         { id: 'appointments', label: 'Turnos', icon: Calendar },
         { id: 'medicos', label: 'Médicos', icon: UserCog },
@@ -78,14 +73,13 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
       ];
     } else if (currentUser.role === 'prestador') {
-      // Prestador: solo puede acceder a autorizaciones
+      // Prestador: solo puede acceder a autorizaciones (SIN dashboard)
       return [
-        ...baseItems,
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
       ];
     }
 
-    return baseItems;
+    return [{ id: 'dashboard', label: 'Panel Principal', icon: BarChart3 }];
   };
 
   const menuItems = getMenuItems();
