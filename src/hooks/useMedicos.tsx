@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -12,12 +11,7 @@ export interface Medico {
   telefono?: string;
   email?: string;
   direccion?: string;
-  especialidad_id?: number;
   activo: boolean;
-  especialidades?: {
-    id: number;
-    nombre: string;
-  };
 }
 
 export interface MedicoFormData {
@@ -28,7 +22,6 @@ export interface MedicoFormData {
   telefono?: string;
   email?: string;
   direccion?: string;
-  especialidad_id?: number;
 }
 
 export const useMedicos = () => {
@@ -37,10 +30,7 @@ export const useMedicos = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('medicos')
-        .select(`
-          *,
-          especialidades:especialidad_id(id, nombre)
-        `)
+        .select('*')
         .eq('activo', true)
         .order('apellido');
 

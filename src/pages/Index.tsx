@@ -7,7 +7,6 @@ import Dashboard from '@/components/Dashboard';
 import PatientManagement from '@/components/PatientManagement';
 import AppointmentScheduler from '@/components/AppointmentScheduler';
 import MedicoManagement from '@/components/MedicoManagement';
-import EspecialidadManagement from '@/components/EspecialidadManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
 import NomecladorManagement from '@/components/NomecladorManagement';
@@ -51,8 +50,6 @@ const Index = () => {
         return <AppointmentScheduler />;
       case 'medicos':
         return <MedicoManagement />;
-      case 'especialidades':
-        return <EspecialidadManagement />;
       case 'obras-sociales':
         return <ObraSocialManagement />;
       case 'nomenclador':

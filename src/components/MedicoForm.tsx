@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useCreateMedico, useUpdateMedico, type MedicoFormData } from '@/hooks/useMedicos';
-import { useEspecialidades } from '@/hooks/useEspecialidades';
 
 const medicoSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -19,7 +18,6 @@ const medicoSchema = z.object({
   telefono: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   direccion: z.string().optional(),
-  especialidad_id: z.number().optional(),
 });
 
 interface MedicoFormProps {
@@ -30,7 +28,6 @@ interface MedicoFormProps {
 const MedicoForm = ({ medico, onClose }: MedicoFormProps) => {
   const { mutate: createMedico } = useCreateMedico();
   const { mutate: updateMedico } = useUpdateMedico();
-  const { data: especialidades } = useEspecialidades();
 
   const form = useForm<MedicoFormData>({
     resolver: zodResolver(medicoSchema),
@@ -42,7 +39,6 @@ const MedicoForm = ({ medico, onClose }: MedicoFormProps) => {
       telefono: medico?.telefono || '',
       email: medico?.email || '',
       direccion: medico?.direccion || '',
-      especialidad_id: medico?.especialidad_id || undefined,
     },
   });
 
@@ -132,32 +128,6 @@ const MedicoForm = ({ medico, onClose }: MedicoFormProps) => {
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name="especialidad_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Especialidad</FormLabel>
-                    <FormControl>
-                      <select
-                        {...field}
-                        value={field.value || ''}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <option value="">Seleccionar especialidad</option>
-                        {especialidades?.map((especialidad) => (
-                          <option key={especialidad.id} value={especialidad.id}>
-                            {especialidad.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField

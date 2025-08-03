@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,7 +68,6 @@ const MedicoManagement = () => {
                 <TableHead>Nombre</TableHead>
                 <TableHead>DNI</TableHead>
                 <TableHead>Matrícula</TableHead>
-                <TableHead>Especialidad</TableHead>
                 <TableHead>Teléfono</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -83,7 +81,6 @@ const MedicoManagement = () => {
                   </TableCell>
                   <TableCell>{medico.dni}</TableCell>
                   <TableCell>{medico.matricula}</TableCell>
-                  <TableCell>{medico.especialidades?.nombre || '-'}</TableCell>
                   <TableCell>{medico.telefono || '-'}</TableCell>
                   <TableCell>{medico.email || '-'}</TableCell>
                   <TableCell className="text-right">
