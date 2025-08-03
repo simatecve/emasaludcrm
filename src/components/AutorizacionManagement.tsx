@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useAutorizaciones, useDeleteAutorizacion, useCreateAutorizacion, useUpd
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import AutorizacionForm from './AutorizacionForm';
-import PrestadorAutorizacionForm from './PrestadorAutorizacionForm';
+import SimplePrestadorAutorizacionForm from './SimplePrestadorAutorizacionForm';
 import AutorizacionPDF from './AutorizacionPDF';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
@@ -124,9 +123,8 @@ const AutorizacionManagement = () => {
     }
   };
 
-  // Verificar permisos para prestadores
+  // Vista específica para prestadores
   if (currentUser?.role === 'prestador') {
-    // Los prestadores pueden crear una sola solicitud
     const userAutorizaciones = autorizaciones?.filter(auth => auth.prestador === currentUser.full_name);
     const canCreateNew = !userAutorizaciones || userAutorizaciones.length === 0;
 
@@ -238,8 +236,8 @@ const AutorizacionManagement = () => {
         </Card>
 
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <PrestadorAutorizacionForm onClose={closeForm} />
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <SimplePrestadorAutorizacionForm onClose={closeForm} />
           </DialogContent>
         </Dialog>
       </div>

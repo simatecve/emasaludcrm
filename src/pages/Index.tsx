@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import Sidebar from '@/components/Sidebar';
 import Dashboard from '@/components/Dashboard';
 import PatientManagement from '@/components/PatientManagement';
@@ -17,8 +18,16 @@ import { Loader2 } from 'lucide-react';
 
 const Index = () => {
   const { user, loading } = useAuth();
+  const { data: currentUser } = useCurrentUser();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Redirect prestador users to authorizations automatically
+  useEffect(() => {
+    if (currentUser?.role === 'prestador') {
+      setActiveSection('authorizations');
+    }
+  }, [currentUser]);
 
   if (loading) {
     return (
