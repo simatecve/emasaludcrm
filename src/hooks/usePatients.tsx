@@ -18,6 +18,7 @@ export interface Patient {
   ultima_visita?: string;
   observaciones?: string;
   activo: boolean;
+  tag_id?: number;
   // Nuevos campos agregados
   cuil_titular?: string;
   cuil_beneficiario?: string;
@@ -38,6 +39,12 @@ export interface Patient {
   obra_social?: {
     nombre: string;
   };
+  patient_tag?: {
+    id: number;
+    name: string;
+    color: string;
+    description?: string;
+  };
 }
 
 export interface PatientFormData {
@@ -52,6 +59,7 @@ export interface PatientFormData {
   numero_afiliado?: string;
   consultas_maximas: number;
   observaciones?: string;
+  tag_id?: number;
   // Nuevos campos agregados
   cuil_titular?: string;
   cuil_beneficiario?: string;
@@ -78,7 +86,8 @@ export const usePatients = () => {
         .from('pacientes')
         .select(`
           *,
-          obra_social:obras_sociales(nombre)
+          obra_social:obras_sociales(nombre),
+          patient_tag:patient_tags(id, name, color, description)
         `)
         .eq('activo', true)
         .order('apellido');

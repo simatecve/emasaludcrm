@@ -430,6 +430,7 @@ export type Database = {
           parentesco: string | null
           provincia: string | null
           sexo: string | null
+          tag_id: number | null
           telefono: string | null
           tipo_doc: string | null
           tipo_doc_familiar: string | null
@@ -465,6 +466,7 @@ export type Database = {
           parentesco?: string | null
           provincia?: string | null
           sexo?: string | null
+          tag_id?: number | null
           telefono?: string | null
           tipo_doc?: string | null
           tipo_doc_familiar?: string | null
@@ -500,6 +502,7 @@ export type Database = {
           parentesco?: string | null
           provincia?: string | null
           sexo?: string | null
+          tag_id?: number | null
           telefono?: string | null
           tipo_doc?: string | null
           tipo_doc_familiar?: string | null
@@ -514,7 +517,44 @@ export type Database = {
             referencedRelation: "obras_sociales"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "pacientes_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "patient_tags"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      patient_tags: {
+        Row: {
+          active: boolean | null
+          color: string
+          created_at: string | null
+          description: string | null
+          id: number
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          color?: string
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       system_config: {
         Row: {
@@ -556,7 +596,7 @@ export type Database = {
           fecha: string
           hora: string
           id: number
-          medico_id: number
+          medico_id: number | null
           motivo: string | null
           observaciones: string | null
           paciente_id: number
@@ -568,7 +608,7 @@ export type Database = {
           fecha: string
           hora: string
           id?: number
-          medico_id: number
+          medico_id?: number | null
           motivo?: string | null
           observaciones?: string | null
           paciente_id: number
@@ -580,7 +620,7 @@ export type Database = {
           fecha?: string
           hora?: string
           id?: number
-          medico_id?: number
+          medico_id?: number | null
           motivo?: string | null
           observaciones?: string | null
           paciente_id?: number

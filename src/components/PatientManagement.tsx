@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2, MapPin, Users, Activity, Filter, X } from 'lucide-react';
+import { Search, Plus, Upload, FileText, User, Phone, Calendar, Edit, Trash2, MapPin, Users, Activity, Filter, X, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { usePatients, useCreatePatient, useUpdatePatient, useDeletePatient, Patient, PatientFormData } from '@/hooks/usePatients';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
+import { usePatientTags } from '@/hooks/usePatientTags';
 import { useCreateDiagnostico, useUpdateDiagnostico } from '@/hooks/useDiagnosticos';
 import PatientForm from './PatientForm';
 import PatientTable from './PatientTable';
@@ -24,15 +25,17 @@ const PatientManagement = () => {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState('list');
   
-  // Nuevos estados para filtros
+  // Estados para filtros
   const [selectedObraSocial, setSelectedObraSocial] = useState<string>('all');
   const [selectedSexo, setSelectedSexo] = useState<string>('all');
   const [selectedProvincia, setSelectedProvincia] = useState<string>('all');
   const [selectedEstado, setSelectedEstado] = useState<string>('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
 
   const { data: patients, isLoading, error } = usePatients();
   const { data: obrasSociales } = useObrasSociales();
+  const { data: patientTags } = usePatientTags();
   const createPatient = useCreatePatient();
   const updatePatient = useUpdatePatient();
   const deletePatient = useDeletePatient();
@@ -68,7 +71,12 @@ const PatientManagement = () => {
       (selectedEstado === 'activo' && patient.activo) ||
       (selectedEstado === 'inactivo' && !patient.activo);
 
-    return searchMatch && obraSocialMatch && sexoMatch && provinciaMatch && estadoMatch;
+    // Filtro por etiqueta
+    const tagMatch = selectedTag === 'all' || 
+      (selectedTag === 'sin-etiqueta' && !patient.tag_id) ||
+      patient.tag_id?.toString() === selectedTag;
+
+    return searchMatch && obraSocialMatch && sexoMatch && provinciaMatch && estadoMatch && tagMatch;
   }) || [];
 
   const clearAllFilters = () => {
@@ -76,11 +84,12 @@ const PatientManagement = () => {
     setSelectedSexo('all');
     setSelectedProvincia('all');
     setSelectedEstado('all');
+    setSelectedTag('all');
     setSearchTerm('');
   };
 
   const hasActiveFilters = selectedObraSocial !== 'all' || selectedSexo !== 'all' || 
-    selectedProvincia !== 'all' || selectedEstado !== 'all' || searchTerm !== '';
+    selectedProvincia !== 'all' || selectedEstado !== 'all' || selectedTag !== 'all' || searchTerm !== '';
 
   const handleCreatePatient = (data: PatientFormData) => {
     createPatient.mutate(data, {
@@ -222,7 +231,7 @@ const PatientManagement = () => {
                         Filtros
                         {hasActiveFilters && (
                           <Badge variant="destructive" className="ml-1 text-xs">
-                            {[selectedObraSocial !== 'all', selectedSexo !== 'all', selectedProvincia !== 'all', selectedEstado !== 'all', searchTerm !== ''].filter(Boolean).length}
+                            {[selectedObraSocial !== 'all', selectedSexo !== 'all', selectedProvincia !== 'all', selectedEstado !== 'all', selectedTag !== 'all', searchTerm !== ''].filter(Boolean).length}
                           </Badge>
                         )}
                       </Button>
@@ -246,7 +255,7 @@ const PatientManagement = () => {
                           )}
                         </div>
                         
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                           {/* Filtro por Obra Social */}
                           <div>
                             <label className="text-xs font-medium text-gray-600 mb-1 block">
@@ -262,6 +271,33 @@ const PatientManagement = () => {
                                 {obrasSociales?.filter(os => os.activa).map((obraSocial) => (
                                   <SelectItem key={obraSocial.id} value={obraSocial.id.toString()}>
                                     {obraSocial.nombre}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Filtro por Etiqueta */}
+                          <div>
+                            <label className="text-xs font-medium text-gray-600 mb-1 block">
+                              Etiqueta
+                            </label>
+                            <Select value={selectedTag} onValueChange={setSelectedTag}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Todas" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all">Todas las etiquetas</SelectItem>
+                                <SelectItem value="sin-etiqueta">Sin etiqueta</SelectItem>
+                                {patientTags?.map((tag) => (
+                                  <SelectItem key={tag.id} value={tag.id.toString()}>
+                                    <div className="flex items-center gap-2">
+                                      <div 
+                                        className="w-3 h-3 rounded-full" 
+                                        style={{ backgroundColor: tag.color }}
+                                      />
+                                      {tag.name}
+                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -340,6 +376,17 @@ const PatientManagement = () => {
                                     obrasSociales?.find(os => os.id.toString() === selectedObraSocial)?.nombre}
                                 </Badge>
                               )}
+                              {selectedTag !== 'all' && (
+                                <Badge variant="secondary" style={{ 
+                                  backgroundColor: selectedTag === 'sin-etiqueta' ? '#9CA3AF' : 
+                                    patientTags?.find(t => t.id.toString() === selectedTag)?.color + '20',
+                                  color: selectedTag === 'sin-etiqueta' ? 'white' : 
+                                    patientTags?.find(t => t.id.toString() === selectedTag)?.color
+                                }}>
+                                  {selectedTag === 'sin-etiqueta' ? 'Sin etiqueta' : 
+                                    patientTags?.find(t => t.id.toString() === selectedTag)?.name}
+                                </Badge>
+                              )}
                               {selectedSexo !== 'all' && (
                                 <Badge variant="secondary">{selectedSexo}</Badge>
                               )}
@@ -388,6 +435,21 @@ const PatientManagement = () => {
                         {selectedPatient.nombre} {selectedPatient.apellido}
                       </h3>
                       <p className="text-gray-600">DNI: {selectedPatient.dni}</p>
+                      {selectedPatient.patient_tag && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Tag className="h-4 w-4 text-gray-500" />
+                          <Badge 
+                            style={{ 
+                              backgroundColor: selectedPatient.patient_tag.color + '20',
+                              color: selectedPatient.patient_tag.color,
+                              borderColor: selectedPatient.patient_tag.color
+                            }}
+                            className="border"
+                          >
+                            {selectedPatient.patient_tag.name}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex gap-2">
@@ -444,6 +506,26 @@ const PatientManagement = () => {
                     <p className="text-gray-600">DNI: {selectedPatient.dni}</p>
                     {selectedPatient.sexo && (
                       <p className="text-sm text-gray-500">Sexo: {selectedPatient.sexo}</p>
+                    )}
+                    {selectedPatient.patient_tag && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <Tag className="h-4 w-4 text-gray-500" />
+                        <Badge 
+                          style={{ 
+                            backgroundColor: selectedPatient.patient_tag.color + '20',
+                            color: selectedPatient.patient_tag.color,
+                            borderColor: selectedPatient.patient_tag.color
+                          }}
+                          className="border"
+                        >
+                          {selectedPatient.patient_tag.name}
+                        </Badge>
+                        {selectedPatient.patient_tag.description && (
+                          <span className="text-xs text-gray-500">
+                            - {selectedPatient.patient_tag.description}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
