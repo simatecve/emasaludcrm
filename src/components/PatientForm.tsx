@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
+import { usePatientTags } from '@/hooks/usePatientTags';
 import { PatientFormData, Patient } from '@/hooks/usePatients';
 
 interface PatientFormProps {
@@ -19,6 +21,7 @@ interface PatientFormProps {
 
 const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, isLoading }) => {
   const { data: obrasSociales, isLoading: loadingObrasSociales } = useObrasSociales();
+  const { data: patientTags, isLoading: loadingPatientTags } = usePatientTags();
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<PatientFormData>({
     defaultValues: {
@@ -33,6 +36,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       numero_afiliado: '',
       consultas_maximas: 2,
       observaciones: '',
+      tag_id: undefined,
       cuil_titular: '',
       cuil_beneficiario: '',
       tipo_doc: '',
@@ -64,6 +68,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       setValue('numero_afiliado', patient.numero_afiliado || '');
       setValue('consultas_maximas', patient.consultas_maximas);
       setValue('observaciones', patient.observaciones || '');
+      setValue('tag_id', patient.tag_id);
       
       setValue('cuil_titular', patient.cuil_titular || '');
       setValue('cuil_beneficiario', patient.cuil_beneficiario || '');
@@ -84,6 +89,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
   }, [patient, setValue]);
 
   const selectedObraSocial = watch('obra_social_id');
+  const selectedTag = watch('tag_id');
   const selectedSexo = watch('sexo');
   const selectedEstadoCivil = watch('estado_civil');
   const selectedTipoDoc = watch('tipo_doc');
@@ -175,7 +181,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="obra_social_id">Obra Social</Label>
                   <Select value={selectedObraSocial?.toString()} onValueChange={(value) => setValue('obra_social_id', value ? parseInt(value) : undefined)}>
@@ -198,6 +204,27 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                     {...register('numero_afiliado')}
                     placeholder="Número de afiliado"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="tag_id">Etiqueta de Estado</Label>
+                  <Select value={selectedTag?.toString()} onValueChange={(value) => setValue('tag_id', value ? parseInt(value) : undefined)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar etiqueta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {!loadingPatientTags && patientTags?.map((tag) => (
+                        <SelectItem key={tag.id} value={tag.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full" 
+                              style={{ backgroundColor: tag.color }}
+                            />
+                            {tag.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

@@ -41,7 +41,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       // Set transparency for watermark (using setGState)
       pdf.setGState(pdf.GState({ opacity: 0.1 }));
       
-      // Add watermark image in center (we'll add multiple rotated copies to simulate rotation)
+      // Add watermark image in center (we'll add multiple rotated copies to simulate rotation effect)
       pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
       
       // Add additional watermark copies with slight offsets to create a subtle rotation effect
@@ -173,6 +173,33 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     // Vertical lines for table
     pdf.line(colPositions[1], tableStartY, colPositions[1], tableStartY + tableHeight);
     pdf.line(colPositions[2], tableStartY, colPositions[2], tableStartY + tableHeight);
+    
+    // Move yPos after table
+    yPos = tableStartY + tableHeight + 20;
+    
+    // Signature section
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Firmas', 20, yPos);
+    yPos += 15;
+    
+    // Specialist signature
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text('Firma del Especialista:', 20, yPos);
+    pdf.line(20, yPos + 15, 100, yPos + 15); // Signature line
+    pdf.text('Aclaración:', 20, yPos + 25);
+    pdf.line(20, yPos + 30, 100, yPos + 30); // Name line
+    pdf.text('Matrícula:', 20, yPos + 40);
+    pdf.line(20, yPos + 45, 100, yPos + 45); // License line
+    
+    // Patient signature
+    pdf.text('Firma del Paciente:', 110, yPos);
+    pdf.line(110, yPos + 15, 190, yPos + 15); // Signature line
+    pdf.text('Aclaración:', 110, yPos + 25);
+    pdf.line(110, yPos + 30, 190, yPos + 30); // Name line
+    pdf.text('DNI:', 110, yPos + 40);
+    pdf.line(110, yPos + 45, 190, yPos + 45); // DNI line
     
     // Footer
     const footerY = pdf.internal.pageSize.getHeight() - 30;
