@@ -13,9 +13,9 @@ const Dashboard = () => {
 
   const statsCards = [
     {
-      title: 'Pacientes Totales',
+      title: 'Pacientes Registrados',
       value: statsLoading ? '...' : (stats?.totalPacientes?.toString() || '0'),
-      change: 'Pacientes activos',
+      change: 'Total en sistema',
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'

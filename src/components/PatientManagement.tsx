@@ -175,7 +175,14 @@ const PatientManagement = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Pacientes</h1>
-          <p className="text-gray-600">Administra los datos de los pacientes y sus obras sociales</p>
+          <p className="text-gray-600">
+            Administra los datos de los pacientes y sus obras sociales
+            {!isLoading && (
+              <span className="ml-2 text-sm font-medium text-blue-600">
+                ({patients?.length || 0} registros totales)
+              </span>
+            )}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -365,7 +372,7 @@ const PatientManagement = () => {
                         {/* Resumen de resultados */}
                         <div className="flex items-center justify-between pt-2 border-t">
                           <span className="text-sm text-gray-600">
-                            Mostrando {filteredPatients.length} de {patients?.length || 0} pacientes
+                            Mostrando {filteredPatients.length} de {patients?.length || 0} pacientes registrados
                           </span>
                           {hasActiveFilters && (
                             <div className="flex items-center gap-2 text-sm text-gray-600">

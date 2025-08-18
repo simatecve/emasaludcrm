@@ -20,11 +20,10 @@ export const useDashboardStats = () => {
 
       console.log('Fetching dashboard stats for:', { today, startOfMonth, endOfMonth });
 
-      // Total pacientes activos
+      // Total pacientes (incluyendo activos e inactivos)
       const { data: pacientes, error: pacientesError } = await supabase
         .from('pacientes')
-        .select('id')
-        .eq('activo', true);
+        .select('id', { count: 'exact' });
 
       if (pacientesError) {
         console.error('Error fetching pacientes:', pacientesError);
