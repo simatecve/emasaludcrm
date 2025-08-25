@@ -110,18 +110,22 @@ export const useCreatePatient = () => {
       // Process the data to handle empty strings and null values
       const processedData = { ...patientData };
       
-      // Convert empty strings to null for date fields
-      if (processedData.fecha_nac_adicional === '') {
-        processedData.fecha_nac_adicional = null;
-      }
-      
-      // Remove undefined values for foreign key fields
-      if (processedData.obra_social_id === undefined) {
-        delete processedData.obra_social_id;
-      }
-      if (processedData.tag_id === undefined) {
-        delete processedData.tag_id;
-      }
+      // Convert empty strings to null for optional fields
+      Object.keys(processedData).forEach(key => {
+        const typedKey = key as keyof PatientFormData;
+        const value = processedData[typedKey];
+        
+        // Convert empty strings to null for all optional fields
+        if (value === '' || value === undefined) {
+          if (key === 'obra_social_id' || key === 'tag_id') {
+            delete (processedData as any)[typedKey];
+          } else if (key !== 'nombre' && key !== 'apellido' && key !== 'dni' && 
+                     key !== 'fecha_nacimiento' && key !== 'telefono' && 
+                     key !== 'email' && key !== 'direccion' && key !== 'consultas_maximas') {
+            (processedData as any)[typedKey] = null;
+          }
+        }
+      });
 
       const { data, error } = await supabase
         .from('pacientes')

@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -403,7 +403,7 @@ export type Database = {
       pacientes: {
         Row: {
           activo: boolean | null
-          apellido: string
+          apellido: string | null
           apellido_y_nombre: string | null
           consultas_maximas: number | null
           consultas_mes_actual: number | null
@@ -412,16 +412,16 @@ export type Database = {
           cuil_titular: string | null
           descripcion_paciente: string | null
           direccion: string | null
-          dni: string
+          dni: string | null
           email: string | null
           estado_civil: string | null
           fecha_alta: string | null
           fecha_nac_adicional: string | null
-          fecha_nacimiento: string
+          fecha_nacimiento: string | null
           id: number
           localidad: string | null
           nacionalidad: string | null
-          nombre: string
+          nombre: string | null
           nro_doc: string | null
           nro_doc_familiar: string | null
           numero_afiliado: string | null
@@ -439,7 +439,7 @@ export type Database = {
         }
         Insert: {
           activo?: boolean | null
-          apellido: string
+          apellido?: string | null
           apellido_y_nombre?: string | null
           consultas_maximas?: number | null
           consultas_mes_actual?: number | null
@@ -448,16 +448,16 @@ export type Database = {
           cuil_titular?: string | null
           descripcion_paciente?: string | null
           direccion?: string | null
-          dni: string
+          dni?: string | null
           email?: string | null
           estado_civil?: string | null
           fecha_alta?: string | null
           fecha_nac_adicional?: string | null
-          fecha_nacimiento: string
+          fecha_nacimiento?: string | null
           id?: number
           localidad?: string | null
           nacionalidad?: string | null
-          nombre: string
+          nombre?: string | null
           nro_doc?: string | null
           nro_doc_familiar?: string | null
           numero_afiliado?: string | null
@@ -475,7 +475,7 @@ export type Database = {
         }
         Update: {
           activo?: boolean | null
-          apellido?: string
+          apellido?: string | null
           apellido_y_nombre?: string | null
           consultas_maximas?: number | null
           consultas_mes_actual?: number | null
@@ -484,16 +484,16 @@ export type Database = {
           cuil_titular?: string | null
           descripcion_paciente?: string | null
           direccion?: string | null
-          dni?: string
+          dni?: string | null
           email?: string | null
           estado_civil?: string | null
           fecha_alta?: string | null
           fecha_nac_adicional?: string | null
-          fecha_nacimiento?: string
+          fecha_nacimiento?: string | null
           id?: number
           localidad?: string | null
           nacionalidad?: string | null
-          nombre?: string
+          nombre?: string | null
           nro_doc?: string | null
           nro_doc_familiar?: string | null
           numero_afiliado?: string | null
@@ -685,15 +685,15 @@ export type Database = {
     }
     Functions: {
       change_user_password: {
-        Args: { target_user_id: string; new_password: string }
+        Args: { new_password: string; target_user_id: string }
         Returns: Json
       }
       create_audit_log: {
         Args: {
           p_action: string
-          p_table_name: string
-          p_record_id: string
           p_new_values?: Json
+          p_record_id: string
+          p_table_name: string
         }
         Returns: undefined
       }

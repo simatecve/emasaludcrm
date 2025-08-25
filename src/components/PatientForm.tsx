@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -96,25 +95,24 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
   const selectedTipoDocFamiliar = watch('tipo_doc_familiar');
 
   const handleFormSubmit = (data: PatientFormData) => {
-    // Convert empty date strings to null
-    const processedData: PatientFormData = {
-      ...data,
-      fecha_nac_adicional: data.fecha_nac_adicional === '' ? null : data.fecha_nac_adicional,
-    };
+    // Clean the data before submission
+    const cleanedData: PatientFormData = { ...data };
     
-    // Remove empty string fields and convert them to null or undefined
-    Object.keys(processedData).forEach(key => {
-      const typedKey = key as keyof PatientFormData;
-      if (processedData[typedKey] === '') {
-        if (key === 'fecha_nac_adicional') {
-          (processedData as any)[typedKey] = null;
-        } else if (key === 'obra_social_id' || key === 'tag_id') {
-          (processedData as any)[typedKey] = undefined;
-        }
-      }
-    });
+    // Handle special cases for empty values
+    if (!cleanedData.obra_social_id || cleanedData.obra_social_id === 0) {
+      cleanedData.obra_social_id = undefined;
+    }
+    
+    if (!cleanedData.tag_id || cleanedData.tag_id === 0) {
+      cleanedData.tag_id = undefined;
+    }
+    
+    // Convert empty date to null
+    if (!cleanedData.fecha_nac_adicional || cleanedData.fecha_nac_adicional === '') {
+      cleanedData.fecha_nac_adicional = null;
+    }
 
-    onSubmit(processedData);
+    onSubmit(cleanedData);
   };
 
   return (
