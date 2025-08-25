@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -30,7 +31,7 @@ export interface Patient {
   sexo?: string;
   estado_civil?: string;
   nacionalidad?: string;
-  fecha_nac_adicional?: string;
+  fecha_nac_adicional?: string | null;
   tipo_doc_familiar?: string;
   nro_doc_familiar?: string;
   localidad?: string;
@@ -71,7 +72,7 @@ export interface PatientFormData {
   sexo?: string;
   estado_civil?: string;
   nacionalidad?: string;
-  fecha_nac_adicional?: string;
+  fecha_nac_adicional?: string | null;
   tipo_doc_familiar?: string;
   nro_doc_familiar?: string;
   localidad?: string;
@@ -104,13 +105,34 @@ export const useCreatePatient = () => {
 
   return useMutation({
     mutationFn: async (patientData: PatientFormData) => {
+      console.log('Creating patient with data:', patientData);
+      
+      // Process the data to handle empty strings and null values
+      const processedData = { ...patientData };
+      
+      // Convert empty strings to null for date fields
+      if (processedData.fecha_nac_adicional === '') {
+        processedData.fecha_nac_adicional = null;
+      }
+      
+      // Remove undefined values for foreign key fields
+      if (processedData.obra_social_id === undefined) {
+        delete processedData.obra_social_id;
+      }
+      if (processedData.tag_id === undefined) {
+        delete processedData.tag_id;
+      }
+
       const { data, error } = await supabase
         .from('pacientes')
-        .insert([patientData])
+        .insert([processedData])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating patient:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -121,6 +143,7 @@ export const useCreatePatient = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Create patient error:', error);
       toast({
         title: "Error",
         description: `Error al crear paciente: ${error.message}`,

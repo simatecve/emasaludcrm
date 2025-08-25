@@ -95,13 +95,34 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
   const selectedTipoDoc = watch('tipo_doc');
   const selectedTipoDocFamiliar = watch('tipo_doc_familiar');
 
+  const handleFormSubmit = (data: PatientFormData) => {
+    // Convert empty date strings to null
+    const processedData = {
+      ...data,
+      fecha_nac_adicional: data.fecha_nac_adicional === '' ? null : data.fecha_nac_adicional,
+    };
+    
+    // Remove empty string fields and convert them to null or undefined
+    Object.keys(processedData).forEach(key => {
+      if (processedData[key as keyof PatientFormData] === '') {
+        if (key === 'fecha_nac_adicional') {
+          processedData[key as keyof PatientFormData] = null as any;
+        } else if (key === 'obra_social_id' || key === 'tag_id') {
+          processedData[key as keyof PatientFormData] = undefined as any;
+        }
+      }
+    });
+
+    onSubmit(processedData);
+  };
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle>{patient ? 'Editar Paciente' : 'Nuevo Paciente'}</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
           <Tabs defaultValue="basicos" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basicos">Datos Básicos</TabsTrigger>
