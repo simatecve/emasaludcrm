@@ -154,31 +154,34 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="telefono">Teléfono</Label>
+                  <Label htmlFor="telefono">Teléfono *</Label>
                   <Input
                     id="telefono"
-                    {...register('telefono')}
+                    {...register('telefono', { required: 'El teléfono es requerido' })}
                     placeholder="+54 11 1234-5678"
                   />
+                  {errors.telefono && <p className="text-red-500 text-sm">{errors.telefono.message}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email *</Label>
                   <Input
                     id="email"
                     type="email"
-                    {...register('email')}
+                    {...register('email', { required: 'El email es requerido' })}
                     placeholder="email@ejemplo.com"
                   />
+                  {errors.email && <p className="text-red-500 text-sm">{errors.email.message}</p>}
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="direccion">Dirección</Label>
+                <Label htmlFor="direccion">Dirección *</Label>
                 <Input
                   id="direccion"
-                  {...register('direccion')}
+                  {...register('direccion', { required: 'La dirección es requerida' })}
                   placeholder="Dirección completa"
                 />
+                {errors.direccion && <p className="text-red-500 text-sm">{errors.direccion.message}</p>}
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -235,7 +238,6 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                   type="number"
                   min="1"
                   {...register('consultas_maximas', { 
-                    required: 'Las consultas máximas son requeridas',
                     min: { value: 1, message: 'Debe ser al menos 1' }
                   })}
                 />
