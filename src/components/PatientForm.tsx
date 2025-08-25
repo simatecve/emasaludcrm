@@ -97,18 +97,19 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
 
   const handleFormSubmit = (data: PatientFormData) => {
     // Convert empty date strings to null
-    const processedData = {
+    const processedData: PatientFormData = {
       ...data,
       fecha_nac_adicional: data.fecha_nac_adicional === '' ? null : data.fecha_nac_adicional,
     };
     
     // Remove empty string fields and convert them to null or undefined
     Object.keys(processedData).forEach(key => {
-      if (processedData[key as keyof PatientFormData] === '') {
+      const typedKey = key as keyof PatientFormData;
+      if (processedData[typedKey] === '') {
         if (key === 'fecha_nac_adicional') {
-          processedData[key as keyof PatientFormData] = null as any;
+          (processedData as any)[typedKey] = null;
         } else if (key === 'obra_social_id' || key === 'tag_id') {
-          processedData[key as keyof PatientFormData] = undefined as any;
+          (processedData as any)[typedKey] = undefined;
         }
       }
     });
