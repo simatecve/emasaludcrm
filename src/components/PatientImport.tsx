@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Download, FileText, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Upload, Download, FileText, CheckCircle, XCircle, Info, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCreatePatient, PatientFormData } from '@/hooks/usePatients';
 
@@ -24,7 +24,7 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
   const { toast } = useToast();
   const createPatient = useCreatePatient();
 
-  // Generate example CSV data
+  // Generate example CSV data with more comprehensive data
   const generateExampleCSV = () => {
     const headers = [
       'nombre',
@@ -55,14 +55,14 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
     const exampleData = [
       [
         'Juan Carlos',
-        'Pérez',
+        'Pérez García',
         '12345678',
         '1980-05-15',
         '011-1234-5678',
         'juan.perez@email.com',
-        'Av. Corrientes 1234, CABA',
+        'Av. Corrientes 1234, Piso 3, Depto A, CABA',
         '1',
-        '123456789',
+        '00123456789001',
         '3',
         '20-12345678-9',
         '20-12345678-9',
@@ -70,24 +70,24 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
         '12345678',
         'Titular',
         'Titular',
-        'PÉREZ, Juan Carlos',
+        'PÉREZ GARCÍA, Juan Carlos',
         'M',
         'Casado',
         'Argentina',
+        'Ciudad Autónoma de Buenos Aires',
         'Buenos Aires',
-        'Buenos Aires',
-        'Paciente nuevo'
+        'Paciente derivado por medicina general. Hipertensión controlada.'
       ],
       [
         'María Elena',
-        'González',
+        'González López',
         '87654321',
         '1992-08-22',
         '011-8765-4321',
-        'maria.gonzalez@email.com',
-        'Av. Santa Fe 5678, CABA',
+        'maria.gonzalez@gmail.com',
+        'Av. Santa Fe 5678, Villa Crespo, CABA',
         '2',
-        '987654321',
+        '00987654321002',
         '2',
         '27-87654321-4',
         '27-87654321-4',
@@ -95,13 +95,88 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
         '87654321',
         'Titular',
         'Titular',
-        'GONZÁLEZ, María Elena',
+        'GONZÁLEZ LÓPEZ, María Elena',
         'F',
         'Soltera',
         'Argentina',
         'La Plata',
         'Buenos Aires',
-        'Control mensual'
+        'Control mensual. Diabetes tipo 2 en tratamiento.'
+      ],
+      [
+        'Roberto',
+        'Martínez',
+        '45678912',
+        '1975-12-03',
+        '011-4567-8912',
+        'roberto.martinez@hotmail.com',
+        'Calle Falsa 123, San Telmo, CABA',
+        '1',
+        '00456789120003',
+        '4',
+        '20-45678912-7',
+        '20-45678912-7',
+        'DNI',
+        '45678912',
+        'Titular',
+        'Titular',
+        'MARTÍNEZ, Roberto',
+        'M',
+        'Divorciado',
+        'Argentina',
+        'Rosario',
+        'Santa Fe',
+        'Paciente con antecedentes cardíacos. Requiere seguimiento.'
+      ],
+      [
+        'Ana Sofía',
+        'Rodríguez',
+        '78945612',
+        '2010-03-18',
+        '011-7894-5612',
+        'sofia.rodriguez@yahoo.com',
+        'Pasaje Los Álamos 567, Palermo, CABA',
+        '3',
+        '00789456120004',
+        '1',
+        '27-12345678-9',
+        '27-78945612-3',
+        'DNI',
+        '78945612',
+        'Hija',
+        'Hija',
+        'RODRÍGUEZ, Ana Sofía',
+        'F',
+        'Menor',
+        'Argentina',
+        'Córdoba',
+        'Córdoba',
+        'Menor de edad. Controles pediátricos regulares.'
+      ],
+      [
+        'Pedro Luis',
+        'Fernández',
+        '32165498',
+        '1960-09-10',
+        '011-3216-5498',
+        'pedro.fernandez@empresa.com.ar',
+        'Av. Rivadavia 9876, Caballito, CABA',
+        '2',
+        '00321654980005',
+        '5',
+        '20-32165498-2',
+        '20-32165498-2',
+        'DNI',
+        '32165498',
+        'Titular',
+        'Titular',
+        'FERNÁNDEZ, Pedro Luis',
+        'M',
+        'Viudo',
+        'Argentina',
+        'Mendoza',
+        'Mendoza',
+        'Adulto mayor. Controles geriátricos. Medicación crónica.'
       ]
     ];
 
@@ -110,19 +185,19 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
       ...exampleData.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', 'ejemplo_pacientes.csv');
+    link.setAttribute('download', 'plantilla_pacientes_ejemplo.csv');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
     toast({
-      title: "CSV de ejemplo descargado",
-      description: "Use este archivo como plantilla para importar pacientes.",
+      title: "Plantilla descargada",
+      description: "Se descargó la plantilla con ejemplos de pacientes. Use este formato para importar sus datos.",
     });
   };
 
@@ -231,44 +306,111 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Importar Pacientes desde CSV
+            Importación Masiva de Pacientes desde CSV
           </DialogTitle>
           <DialogDescription>
-            Importe pacientes masivamente desde un archivo CSV. Descargue primero el archivo de ejemplo.
+            Importe múltiples pacientes de una sola vez usando un archivo CSV. Siga los pasos a continuación para una importación exitosa.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Download example button */}
+          {/* Warning Alert */}
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Importante:</strong> Antes de importar, asegúrese de que las obras sociales referenciadas ya existan en el sistema. 
+              Los IDs de obra social deben coincidir con los registros existentes.
+            </AlertDescription>
+          </Alert>
+
+          {/* Step 1: Download template */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                Paso 1: Descargue el archivo de ejemplo
+                Paso 1: Descargar Plantilla de Ejemplo
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Descargue la plantilla CSV con ejemplos de datos para entender el formato correcto. 
+                Esta plantilla incluye todos los campos disponibles y ejemplos realistas de datos de pacientes.
+              </p>
               <Button 
                 onClick={generateExampleCSV}
                 variant="outline"
                 className="w-full flex items-center gap-2"
               >
                 <Download className="h-4 w-4" />
-                Descargar CSV de ejemplo
+                Descargar Plantilla CSV con Ejemplos
               </Button>
             </CardContent>
           </Card>
 
-          {/* Upload area */}
+          {/* Step 2: Prepare data */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                Paso 2: Preparar sus Datos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm space-y-3">
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Campos Obligatorios:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+                    <li><strong>nombre:</strong> Nombre del paciente (ej: "Juan Carlos")</li>
+                    <li><strong>apellido:</strong> Apellido del paciente (ej: "Pérez García")</li>
+                    <li><strong>dni:</strong> Número de DNI sin puntos (ej: "12345678")</li>
+                    <li><strong>fecha_nacimiento:</strong> Formato YYYY-MM-DD (ej: "1980-05-15")</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Campos Importantes:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+                    <li><strong>obra_social_id:</strong> ID numérico de la obra social (debe existir en el sistema)</li>
+                    <li><strong>consultas_maximas:</strong> Número máximo de consultas (por defecto: 2)</li>
+                    <li><strong>telefono:</strong> Con código de área (ej: "011-1234-5678")</li>
+                    <li><strong>email:</strong> Dirección de correo electrónico válida</li>
+                    <li><strong>direccion:</strong> Dirección completa con detalles</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Formato de Datos:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+                    <li><strong>Fechas:</strong> Usar formato YYYY-MM-DD (año-mes-día)</li>
+                    <li><strong>Sexo:</strong> "M" para Masculino, "F" para Femenino</li>
+                    <li><strong>CUIL:</strong> Formato completo con guiones (ej: "20-12345678-9")</li>
+                    <li><strong>Números:</strong> Solo dígitos, sin puntos ni espacios en DNI</li>
+                    <li><strong>Texto:</strong> Use comillas si contiene comas o caracteres especiales</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-gray-800 mb-2">Codificación del Archivo:</h4>
+                  <ul className="list-disc list-inside space-y-1 text-gray-600 ml-4">
+                    <li>Guarde el archivo CSV con codificación <strong>UTF-8</strong></li>
+                    <li>En Excel: "Guardar como" → "CSV UTF-8 (delimitado por comas)"</li>
+                    <li>Verifique que los caracteres especiales (ñ, acentos) se vean correctamente</li>
+                  </ul>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Step 3: Upload file */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
                 <Upload className="h-4 w-4" />
-                Paso 2: Suba su archivo CSV
+                Paso 3: Subir Archivo CSV
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -287,6 +429,7 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
                   <div className="space-y-2">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="text-gray-600">Procesando archivo...</p>
+                    <p className="text-sm text-gray-500">Esto puede tomar unos momentos dependiendo del tamaño del archivo</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -295,13 +438,14 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
                       <p className="text-lg font-medium">
                         Arrastre su archivo CSV aquí
                       </p>
-                      <p className="text-gray-500">o haga clic para seleccionar</p>
+                      <p className="text-gray-500">o haga clic para seleccionar desde su computadora</p>
+                      <p className="text-xs text-gray-400 mt-2">Tamaño máximo recomendado: 1000 registros por archivo</p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      Seleccionar archivo
+                      Seleccionar archivo CSV
                     </Button>
                     <input
                       ref={fileInputRef}
@@ -320,46 +464,50 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
           {importResults && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Resultados de la importación</CardTitle>
+                <CardTitle className="text-base">Resultados de la Importación</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2 text-green-600">
                   <CheckCircle className="h-4 w-4" />
-                  <span>{importResults.success} pacientes importados exitosamente</span>
+                  <span className="font-medium">{importResults.success} pacientes importados exitosamente</span>
                 </div>
                 
                 {importResults.errors.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-red-600">
                       <XCircle className="h-4 w-4" />
-                      <span>{importResults.errors.length} errores encontrados</span>
+                      <span className="font-medium">{importResults.errors.length} errores encontrados</span>
                     </div>
-                    <div className="max-h-32 overflow-y-auto space-y-1">
+                    <div className="max-h-40 overflow-y-auto space-y-1">
                       {importResults.errors.map((error, index) => (
                         <Alert key={index} variant="destructive" className="py-2">
                           <AlertDescription className="text-xs">
-                            Fila {error.row}: {error.error}
+                            <strong>Fila {error.row}:</strong> {error.error}
                           </AlertDescription>
                         </Alert>
                       ))}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Corrija los errores en su archivo CSV y vuelva a importar solo las filas con problemas.
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
 
-          {/* Instructions */}
+          {/* Additional tips */}
           <Alert>
             <Info className="h-4 w-4" />
-            <AlertDescription className="text-xs">
-              <strong>Instrucciones:</strong>
-              <ul className="mt-2 space-y-1 list-disc list-inside">
-                <li>Descargue el archivo de ejemplo y úselo como plantilla</li>
-                <li>Complete los datos de sus pacientes en el formato CSV</li>
-                <li>Los campos requeridos son: nombre, apellido, dni, fecha_nacimiento</li>
-                <li>Las fechas deben estar en formato YYYY-MM-DD</li>
-                <li>Si no especifica consultas_maximas, se asignará 2 por defecto</li>
+            <AlertDescription className="text-sm">
+              <strong>Consejos para una importación exitosa:</strong>
+              <ul className="mt-2 space-y-1 list-disc list-inside text-xs">
+                <li>Verifique que todas las obras sociales referenciadas existan antes de importar</li>
+                <li>Use la plantilla descargada como base para mantener el formato correcto</li>
+                <li>Revise que no haya DNIs duplicados en su archivo</li>
+                <li>Verifique las fechas de nacimiento (formato YYYY-MM-DD)</li>
+                <li>Para archivos grandes (+500 registros), considere dividirlos en lotes más pequeños</li>
+                <li>Mantenga una copia de respaldo de sus datos antes de importar</li>
               </ul>
             </AlertDescription>
           </Alert>
