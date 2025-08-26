@@ -95,23 +95,45 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
   const selectedTipoDocFamiliar = watch('tipo_doc_familiar');
 
   const handleFormSubmit = (data: PatientFormData) => {
-    // Clean the data before submission
-    const cleanedData: PatientFormData = { ...data };
+    console.log('Form submitted with data:', data);
     
-    // Handle special cases for empty values
-    if (!cleanedData.obra_social_id || cleanedData.obra_social_id === 0) {
-      cleanedData.obra_social_id = undefined;
-    }
-    
-    if (!cleanedData.tag_id || cleanedData.tag_id === 0) {
-      cleanedData.tag_id = undefined;
-    }
-    
-    // Convert empty date to null
-    if (!cleanedData.fecha_nac_adicional || cleanedData.fecha_nac_adicional === '') {
-      cleanedData.fecha_nac_adicional = null;
-    }
+    // Clean up the data before submission
+    const cleanedData: PatientFormData = {
+      // Required fields
+      nombre: data.nombre.trim(),
+      apellido: data.apellido.trim(),
+      dni: data.dni.trim(),
+      fecha_nacimiento: data.fecha_nacimiento,
+      telefono: data.telefono?.trim() || '',
+      email: data.email?.trim() || '',
+      direccion: data.direccion?.trim() || '',
+      consultas_maximas: data.consultas_maximas || 2,
+      
+      // Optional foreign key fields - convert 0 or empty to undefined
+      obra_social_id: data.obra_social_id && data.obra_social_id !== 0 ? data.obra_social_id : undefined,
+      tag_id: data.tag_id && data.tag_id !== 0 ? data.tag_id : undefined,
+      
+      // Other optional fields - keep them as they are, empty strings will be handled in the hook
+      numero_afiliado: data.numero_afiliado,
+      observaciones: data.observaciones,
+      cuil_titular: data.cuil_titular,
+      cuil_beneficiario: data.cuil_beneficiario,
+      tipo_doc: data.tipo_doc,
+      nro_doc: data.nro_doc,
+      descripcion_paciente: data.descripcion_paciente,
+      parentesco: data.parentesco,
+      apellido_y_nombre: data.apellido_y_nombre,
+      sexo: data.sexo,
+      estado_civil: data.estado_civil,
+      nacionalidad: data.nacionalidad,
+      fecha_nac_adicional: data.fecha_nac_adicional || null,
+      tipo_doc_familiar: data.tipo_doc_familiar,
+      nro_doc_familiar: data.nro_doc_familiar,
+      localidad: data.localidad,
+      provincia: data.provincia,
+    };
 
+    console.log('Cleaned data for submission:', cleanedData);
     onSubmit(cleanedData);
   };
 

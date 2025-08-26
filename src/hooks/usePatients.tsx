@@ -20,7 +20,6 @@ export interface Patient {
   observaciones?: string;
   activo: boolean;
   tag_id?: number;
-  // Nuevos campos agregados
   cuil_titular?: string;
   cuil_beneficiario?: string;
   tipo_doc?: string;
@@ -61,7 +60,6 @@ export interface PatientFormData {
   consultas_maximas: number;
   observaciones?: string;
   tag_id?: number;
-  // Nuevos campos agregados
   cuil_titular?: string;
   cuil_beneficiario?: string;
   tipo_doc?: string;
@@ -107,29 +105,53 @@ export const useCreatePatient = () => {
     mutationFn: async (patientData: PatientFormData) => {
       console.log('Creating patient with data:', patientData);
       
-      // Process the data to handle empty strings and null values
-      const processedData = { ...patientData };
+      // Create a clean data object for insertion
+      const insertData: any = {};
       
-      // Convert empty strings to null for optional fields
-      Object.keys(processedData).forEach(key => {
-        const typedKey = key as keyof PatientFormData;
-        const value = processedData[typedKey];
-        
-        // Convert empty strings to null for all optional fields
-        if (value === '' || value === undefined) {
-          if (key === 'obra_social_id' || key === 'tag_id') {
-            delete (processedData as any)[typedKey];
-          } else if (key !== 'nombre' && key !== 'apellido' && key !== 'dni' && 
-                     key !== 'fecha_nacimiento' && key !== 'telefono' && 
-                     key !== 'email' && key !== 'direccion' && key !== 'consultas_maximas') {
-            (processedData as any)[typedKey] = null;
-          }
+      // Always include required fields
+      insertData.nombre = patientData.nombre;
+      insertData.apellido = patientData.apellido;
+      insertData.dni = patientData.dni;
+      insertData.fecha_nacimiento = patientData.fecha_nacimiento;
+      insertData.telefono = patientData.telefono;
+      insertData.email = patientData.email;
+      insertData.direccion = patientData.direccion;
+      insertData.consultas_maximas = patientData.consultas_maximas;
+      
+      // Handle optional fields - only include if they have values
+      if (patientData.obra_social_id) {
+        insertData.obra_social_id = patientData.obra_social_id;
+      }
+      
+      if (patientData.tag_id) {
+        insertData.tag_id = patientData.tag_id;
+      }
+      
+      // Include other optional fields only if they have meaningful values
+      const optionalFields = [
+        'numero_afiliado', 'observaciones', 'cuil_titular', 'cuil_beneficiario',
+        'tipo_doc', 'nro_doc', 'descripcion_paciente', 'parentesco', 
+        'apellido_y_nombre', 'sexo', 'estado_civil', 'nacionalidad',
+        'tipo_doc_familiar', 'nro_doc_familiar', 'localidad', 'provincia'
+      ];
+      
+      optionalFields.forEach(field => {
+        const value = patientData[field as keyof PatientFormData];
+        if (value && value !== '') {
+          insertData[field] = value;
         }
       });
+      
+      // Handle fecha_nac_adicional specially (can be null)
+      if (patientData.fecha_nac_adicional && patientData.fecha_nac_adicional !== '') {
+        insertData.fecha_nac_adicional = patientData.fecha_nac_adicional;
+      }
+
+      console.log('Final insert data:', insertData);
 
       const { data, error } = await supabase
         .from('pacientes')
-        .insert([processedData])
+        .insert([insertData])
         .select()
         .single();
 
