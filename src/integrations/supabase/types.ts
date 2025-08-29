@@ -534,6 +534,117 @@ export type Database = {
           },
         ]
       }
+      pacientes_backup: {
+        Row: {
+          activo: boolean | null
+          apellido: string | null
+          apellido_y_nombre: string | null
+          consultas_maximas: number | null
+          consultas_mes_actual: number | null
+          created_at: string | null
+          cuil_beneficiario: string | null
+          cuil_titular: string | null
+          descripcion_paciente: string | null
+          direccion: string | null
+          dni: string | null
+          email: string | null
+          estado_civil: string | null
+          fecha_alta: string | null
+          fecha_nac_adicional: string | null
+          fecha_nacimiento: string | null
+          id: number | null
+          localidad: string | null
+          nacionalidad: string | null
+          nombre: string | null
+          nro_doc: string | null
+          nro_doc_familiar: string | null
+          numero_afiliado: string | null
+          obra_social_id: number | null
+          observaciones: string | null
+          parentesco: string | null
+          provincia: string | null
+          sexo: string | null
+          tag_id: number | null
+          telefono: string | null
+          tipo_doc: string | null
+          tipo_doc_familiar: string | null
+          ultima_visita: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          apellido?: string | null
+          apellido_y_nombre?: string | null
+          consultas_maximas?: number | null
+          consultas_mes_actual?: number | null
+          created_at?: string | null
+          cuil_beneficiario?: string | null
+          cuil_titular?: string | null
+          descripcion_paciente?: string | null
+          direccion?: string | null
+          dni?: string | null
+          email?: string | null
+          estado_civil?: string | null
+          fecha_alta?: string | null
+          fecha_nac_adicional?: string | null
+          fecha_nacimiento?: string | null
+          id?: number | null
+          localidad?: string | null
+          nacionalidad?: string | null
+          nombre?: string | null
+          nro_doc?: string | null
+          nro_doc_familiar?: string | null
+          numero_afiliado?: string | null
+          obra_social_id?: number | null
+          observaciones?: string | null
+          parentesco?: string | null
+          provincia?: string | null
+          sexo?: string | null
+          tag_id?: number | null
+          telefono?: string | null
+          tipo_doc?: string | null
+          tipo_doc_familiar?: string | null
+          ultima_visita?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          apellido?: string | null
+          apellido_y_nombre?: string | null
+          consultas_maximas?: number | null
+          consultas_mes_actual?: number | null
+          created_at?: string | null
+          cuil_beneficiario?: string | null
+          cuil_titular?: string | null
+          descripcion_paciente?: string | null
+          direccion?: string | null
+          dni?: string | null
+          email?: string | null
+          estado_civil?: string | null
+          fecha_alta?: string | null
+          fecha_nac_adicional?: string | null
+          fecha_nacimiento?: string | null
+          id?: number | null
+          localidad?: string | null
+          nacionalidad?: string | null
+          nombre?: string | null
+          nro_doc?: string | null
+          nro_doc_familiar?: string | null
+          numero_afiliado?: string | null
+          obra_social_id?: number | null
+          observaciones?: string | null
+          parentesco?: string | null
+          provincia?: string | null
+          sexo?: string | null
+          tag_id?: number | null
+          telefono?: string | null
+          tipo_doc?: string | null
+          tipo_doc_familiar?: string | null
+          ultima_visita?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       patient_tags: {
         Row: {
           active: boolean | null
