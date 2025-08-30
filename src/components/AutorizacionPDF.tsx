@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { FileText } from 'lucide-react';
@@ -91,9 +92,8 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       pdf.text(`Prestador: ${autorizacion.prestador}`, 20, yPos);
       yPos += 6;
     }
-    if (autorizacion.observaciones || autorizacion.observacion_prestacion) {
-      const obs = autorizacion.observaciones || autorizacion.observacion_prestacion || '';
-      pdf.text(`Observacion: ${obs}`, 20, yPos);
+    if (autorizacion.observaciones) {
+      pdf.text(`Observacion: ${autorizacion.observaciones}`, 20, yPos);
       yPos += 10;
     }
     
@@ -111,9 +111,8 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       }
       yPos += 6;
       
-      if (autorizacion.descripcion || autorizacion.observacion_prestacion) {
-        const desc = autorizacion.descripcion || autorizacion.observacion_prestacion || '';
-        pdf.text(`Observaciones: ${desc}`, 20, yPos);
+      if (autorizacion.descripcion) {
+        pdf.text(`Observaciones: ${autorizacion.descripcion}`, 20, yPos);
         yPos += 6;
       }
       
@@ -154,20 +153,38 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.setTextColor(0, 0, 0); // Black text
     pdf.setFont('helvetica', 'normal');
     
-    const cantidad = autorizacion.prestacion_cantidad || 1;
-    const codigo = autorizacion.prestacion_codigo || '';
-    const descripcion = autorizacion.prestacion_descripcion || '';
+    let totalRowHeight = 0;
     
-    pdf.text(cantidad.toString(), colPositions[0] + 5, yPos + 6);
-    pdf.text(codigo, colPositions[1] + 5, yPos + 6);
-    
-    // Handle long descriptions
-    const maxWidth = colWidths[2] - 10;
-    const descLines = pdf.splitTextToSize(descripcion, maxWidth);
-    pdf.text(descLines, colPositions[2] + 5, yPos + 6);
+    // Render prestaciones from the prestaciones array
+    if (autorizacion.prestaciones && autorizacion.prestaciones.length > 0) {
+      autorizacion.prestaciones.forEach(prestacion => {
+        const cantidad = prestacion.cantidad || 1;
+        const codigo = prestacion.prestacion_codigo || '';
+        const descripcion = prestacion.prestacion_descripcion || '';
+        
+        pdf.text(cantidad.toString(), colPositions[0] + 5, yPos + 6);
+        pdf.text(codigo, colPositions[1] + 5, yPos + 6);
+        
+        // Handle long descriptions
+        const maxWidth = colWidths[2] - 10;
+        const descLines = pdf.splitTextToSize(descripcion, maxWidth);
+        pdf.text(descLines, colPositions[2] + 5, yPos + 6);
+        
+        const rowHeight = Math.max(12, (descLines.length * 6) + 6);
+        totalRowHeight += rowHeight;
+        yPos += rowHeight;
+      });
+    } else {
+      // Fallback si no hay prestaciones
+      pdf.text('1', colPositions[0] + 5, yPos + 6);
+      pdf.text('N/A', colPositions[1] + 5, yPos + 6);
+      pdf.text('Sin prestaciones especificadas', colPositions[2] + 5, yPos + 6);
+      totalRowHeight = 12;
+      yPos += 12;
+    }
     
     // Table border
-    const tableHeight = 12 + (descLines.length * 6) + 6;
+    const tableHeight = 12 + totalRowHeight;
     pdf.rect(20, tableStartY, pageWidth - 40, tableHeight);
     
     // Vertical lines for table
