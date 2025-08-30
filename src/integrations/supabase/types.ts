@@ -50,6 +50,47 @@ export type Database = {
         }
         Relationships: []
       }
+      autorizacion_prestaciones: {
+        Row: {
+          autorizacion_id: number
+          cantidad: number
+          created_at: string | null
+          id: number
+          observaciones: string | null
+          prestacion_codigo: string
+          prestacion_descripcion: string
+          updated_at: string | null
+        }
+        Insert: {
+          autorizacion_id: number
+          cantidad?: number
+          created_at?: string | null
+          id?: number
+          observaciones?: string | null
+          prestacion_codigo: string
+          prestacion_descripcion: string
+          updated_at?: string | null
+        }
+        Update: {
+          autorizacion_id?: number
+          cantidad?: number
+          created_at?: string | null
+          id?: number
+          observaciones?: string | null
+          prestacion_codigo?: string
+          prestacion_descripcion?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "autorizacion_prestaciones_autorizacion_id_fkey"
+            columns: ["autorizacion_id"]
+            isOneToOne: false
+            referencedRelation: "autorizaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       autorizaciones: {
         Row: {
           activa: boolean | null
@@ -149,6 +190,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_stop: {
+        Row: {
+          id: number
+          numero: string | null
+          stop: boolean | null
+        }
+        Insert: {
+          id?: number
+          numero?: string | null
+          stop?: boolean | null
+        }
+        Update: {
+          id?: number
+          numero?: string | null
+          stop?: boolean | null
+        }
+        Relationships: []
       }
       consultas: {
         Row: {

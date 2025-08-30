@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,10 @@ import { Upload, X } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatients';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
-import { AutorizacionFormData, Autorizacion, useCreateAutorizacion, useUpdateAutorizacion } from '@/hooks/useAutorizaciones';
+import { AutorizacionFormData, Autorizacion } from '@/hooks/useAutorizaciones';
+import { AutorizacionPrestacionFormData } from '@/hooks/useAutorizacionPrestaciones';
 import PatientSelector from './PatientSelector';
-import PrestacionSelector from './PrestacionSelector';
+import MultiplePrestacionesSelector from './MultiplePrestacionesSelector';
 
 interface AutorizacionFormProps {
   autorizacion?: Autorizacion;
@@ -29,8 +30,9 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
   isLoading = false
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [prestaciones, setPrestaciones] = useState<AutorizacionPrestacionFormData[]>([]);
   
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<AutorizacionFormData>({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Omit<AutorizacionFormData, 'prestaciones'>>({
     defaultValues: {
       paciente_id: autorizacion?.paciente_id || 0,
       medico_id: autorizacion?.medico_id || undefined,
@@ -41,14 +43,10 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
       estado: autorizacion?.estado || 'pendiente',
       numero_autorizacion: autorizacion?.numero_autorizacion || '',
       observaciones: autorizacion?.observaciones || '',
-      prestacion_codigo: autorizacion?.prestacion_codigo || '',
-      prestacion_descripcion: autorizacion?.prestacion_descripcion || '',
-      prestacion_cantidad: autorizacion?.prestacion_cantidad || 1,
-      prestador: autorizacion?.prestador || '',
-      observacion_prestacion: autorizacion?.observacion_prestacion || '',
       numero_credencial: autorizacion?.numero_credencial || '',
       parentesco_beneficiario: autorizacion?.parentesco_beneficiario || '',
       profesional_solicitante: autorizacion?.profesional_solicitante || '',
+      prestador: autorizacion?.prestador || '',
     }
   });
 
@@ -58,22 +56,35 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
 
   const watchedValues = watch();
 
+  // Cargar prestaciones existentes al editar
+  useEffect(() => {
+    if (autorizacion?.prestaciones) {
+      const prestacionesFormData = autorizacion.prestaciones.map(p => ({
+        prestacion_codigo: p.prestacion_codigo,
+        prestacion_descripcion: p.prestacion_descripcion,
+        cantidad: p.cantidad,
+        observaciones: p.observaciones || ''
+      }));
+      setPrestaciones(prestacionesFormData);
+    }
+  }, [autorizacion]);
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     setSelectedFile(file || null);
-    setValue('documento', file || undefined);
   };
 
   const removeFile = () => {
     setSelectedFile(null);
-    setValue('documento', undefined);
   };
 
-  const onFormSubmit = (data: AutorizacionFormData) => {
-    onSubmit({
+  const onFormSubmit = (data: Omit<AutorizacionFormData, 'prestaciones'>) => {
+    const formData: AutorizacionFormData = {
       ...data,
-      documento: selectedFile || undefined
-    });
+      documento: selectedFile || undefined,
+      prestaciones: prestaciones
+    };
+    onSubmit(formData);
   };
 
   return (
@@ -141,9 +152,11 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="consulta">Consulta</SelectItem>
-                    <SelectItem value="practica">Práctica</SelectItem>
+                    <SelectItem value="estudio">Estudio</SelectItem>
+                    <SelectItem value="tratamiento">Tratamiento</SelectItem>
+                    <SelectItem value="cirugia">Cirugía</SelectItem>
                     <SelectItem value="medicamento">Medicamento</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
+                    <SelectItem value="internacion">Internación</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.tipo_autorizacion && (
@@ -261,59 +274,6 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
                   placeholder="Nombre del profesional"
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Información de la Prestación */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Información de la Prestación</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Prestación</Label>
-              <PrestacionSelector
-                onSelect={(prestacion) => {
-                  setValue('prestacion_codigo', prestacion.codigo);
-                  setValue('prestacion_descripcion', prestacion.descripcion);
-                }}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prestacion_codigo">Código de Prestación</Label>
-                <Input
-                  id="prestacion_codigo"
-                  {...register('prestacion_codigo')}
-                  placeholder="Código de la prestación"
-                  readOnly
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="prestacion_descripcion">Descripción de la Prestación</Label>
-                <Input
-                  id="prestacion_descripcion"
-                  {...register('prestacion_descripcion')}
-                  placeholder="Descripción de la prestación"
-                  readOnly
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prestacion_cantidad">Cantidad</Label>
-                <Input
-                  type="number"
-                  id="prestacion_cantidad"
-                  {...register('prestacion_cantidad', { valueAsNumber: true })}
-                  placeholder="Cantidad"
-                  defaultValue={1}
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="prestador">Prestador</Label>
@@ -324,16 +284,19 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="observacion_prestacion">Observación de la Prestación</Label>
-              <Textarea
-                id="observacion_prestacion"
-                {...register('observacion_prestacion')}
-                placeholder="Observación de la prestación"
-                rows={2}
-              />
-            </div>
+        {/* Múltiples Prestaciones */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Prestaciones</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MultiplePrestacionesSelector
+              prestaciones={prestaciones}
+              onPrestacionesChange={setPrestaciones}
+            />
           </CardContent>
         </Card>
 
@@ -352,6 +315,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
                 id="documento"
                 className="hidden"
                 onChange={handleFileChange}
+                accept=".pdf,.jpg,.jpeg,.png"
               />
               <Button asChild variant="outline">
                 <label htmlFor="documento" className="cursor-pointer">

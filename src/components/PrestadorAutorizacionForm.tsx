@@ -12,6 +12,8 @@ import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { FileText, Upload } from 'lucide-react';
+import { AutorizacionPrestacionFormData } from '@/hooks/useAutorizacionPrestaciones';
+import MultiplePrestacionesSelector from './MultiplePrestacionesSelector';
 
 interface PrestadorAutorizacionFormProps {
   onClose: () => void;
@@ -23,15 +25,14 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
     obra_social_id: '',
     tipo_autorizacion: '',
     descripcion: '',
-    prestacion_codigo: '',
-    prestacion_descripcion: '',
-    prestacion_cantidad: 1,
     numero_credencial: '',
     parentesco_beneficiario: '',
     profesional_solicitante: '',
     observaciones: '',
     documento: null as File | null,
   });
+
+  const [prestaciones, setPrestaciones] = useState<AutorizacionPrestacionFormData[]>([]);
 
   const { data: currentUser } = useCurrentUser();
   const { data: patients } = usePatients();
@@ -51,6 +52,15 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
       return;
     }
 
+    if (prestaciones.length === 0) {
+      toast({
+        title: "Error",
+        description: "Debe agregar al menos una prestación",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await createAutorizacion.mutateAsync({
         paciente_id: parseInt(formData.paciente_id),
@@ -58,15 +68,13 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
         tipo_autorizacion: formData.tipo_autorizacion,
         descripcion: formData.descripcion,
         estado: 'pendiente',
-        prestacion_codigo: formData.prestacion_codigo,
-        prestacion_descripcion: formData.prestacion_descripcion,
-        prestacion_cantidad: formData.prestacion_cantidad,
         prestador: currentUser?.full_name || 'Prestador',
         numero_credencial: formData.numero_credencial,
         parentesco_beneficiario: formData.parentesco_beneficiario,
         profesional_solicitante: formData.profesional_solicitante,
         observaciones: formData.observaciones,
         documento: formData.documento,
+        prestaciones: prestaciones,
       });
       
       onClose();
@@ -87,7 +95,7 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="h-5 w-5" />
@@ -95,7 +103,7 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="paciente_id">Paciente *</Label>
@@ -156,40 +164,6 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="prestacion_codigo">Código de Prestación</Label>
-              <Input
-                id="prestacion_codigo"
-                value={formData.prestacion_codigo}
-                onChange={(e) => setFormData(prev => ({ ...prev, prestacion_codigo: e.target.value }))}
-                placeholder="Código de prestación"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="prestacion_cantidad">Cantidad</Label>
-              <Input
-                id="prestacion_cantidad"
-                type="number"
-                min="1"
-                value={formData.prestacion_cantidad}
-                onChange={(e) => setFormData(prev => ({ ...prev, prestacion_cantidad: parseInt(e.target.value) || 1 }))}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="prestacion_descripcion">Descripción de la Prestación</Label>
-            <Textarea
-              id="prestacion_descripcion"
-              value={formData.prestacion_descripcion}
-              onChange={(e) => setFormData(prev => ({ ...prev, prestacion_descripcion: e.target.value }))}
-              placeholder="Descripción detallada de la prestación solicitada"
-              rows={3}
-            />
-          </div>
-
           <div>
             <Label htmlFor="descripcion">Descripción General</Label>
             <Textarea
@@ -198,6 +172,14 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
               onChange={(e) => setFormData(prev => ({ ...prev, descripcion: e.target.value }))}
               placeholder="Descripción general de la solicitud"
               rows={3}
+            />
+          </div>
+
+          {/* Múltiples Prestaciones */}
+          <div className="space-y-4">
+            <MultiplePrestacionesSelector
+              prestaciones={prestaciones}
+              onPrestacionesChange={setPrestaciones}
             />
           </div>
 

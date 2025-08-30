@@ -1,8 +1,8 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentUser } from './useCurrentUser';
+import { AutorizacionPrestacionFormData } from './useAutorizacionPrestaciones';
 
 export interface Autorizacion {
   id: number;
@@ -18,17 +18,20 @@ export interface Autorizacion {
   observaciones?: string;
   documento_url?: string;
   activa: boolean;
-  prestacion_codigo?: string;
-  prestacion_descripcion?: string;
-  prestacion_cantidad?: number;
-  prestador?: string;
-  observacion_prestacion?: string;
   numero_credencial?: string;
   parentesco_beneficiario?: string;
   profesional_solicitante?: string;
+  prestador?: string;
   pacientes?: { nombre: string; apellido: string; dni: string };
   medicos?: { nombre: string; apellido: string; matricula: string };
   obras_sociales?: { nombre: string };
+  prestaciones?: Array<{
+    id: number;
+    prestacion_codigo: string;
+    prestacion_descripcion: string;
+    cantidad: number;
+    observaciones?: string;
+  }>;
 }
 
 export interface AutorizacionFormData {
@@ -42,21 +45,18 @@ export interface AutorizacionFormData {
   numero_autorizacion?: string;
   observaciones?: string;
   documento?: File;
-  prestacion_codigo?: string;
-  prestacion_descripcion?: string;
-  prestacion_cantidad?: number;
-  prestador?: string;
-  observacion_prestacion?: string;
   numero_credencial?: string;
   parentesco_beneficiario?: string;
   profesional_solicitante?: string;
+  prestador?: string;
+  prestaciones: AutorizacionPrestacionFormData[];
 }
 
 export const useAutorizaciones = () => {
   return useQuery({
     queryKey: ['autorizaciones'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: autorizaciones, error } = await supabase
         .from('autorizaciones')
         .select(`
           *,
@@ -68,7 +68,24 @@ export const useAutorizaciones = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Autorizacion[];
+
+      // Obtener prestaciones para cada autorización
+      const autorizacionesConPrestaciones = await Promise.all(
+        (autorizaciones || []).map(async (autorizacion) => {
+          const { data: prestaciones } = await supabase
+            .from('autorizacion_prestaciones')
+            .select('id, prestacion_codigo, prestacion_descripcion, cantidad, observaciones')
+            .eq('autorizacion_id', autorizacion.id)
+            .order('created_at', { ascending: true });
+
+          return {
+            ...autorizacion,
+            prestaciones: prestaciones || []
+          };
+        })
+      );
+
+      return autorizacionesConPrestaciones as Autorizacion[];
     },
   });
 };
@@ -108,8 +125,8 @@ export const useCreateAutorizacion = () => {
         console.log('Document uploaded successfully:', documento_url);
       }
 
-      // Crear la autorización
-      const { documento, ...dataToInsert } = autorizacionData;
+      // Crear la autorización (sin prestaciones)
+      const { documento, prestaciones, ...dataToInsert } = autorizacionData;
       const insertData = {
         ...dataToInsert,
         documento_url
@@ -117,7 +134,7 @@ export const useCreateAutorizacion = () => {
 
       console.log('Inserting authorization data:', insertData);
 
-      const { data, error } = await supabase
+      const { data: autorizacion, error } = await supabase
         .from('autorizaciones')
         .insert([insertData])
         .select()
@@ -128,11 +145,32 @@ export const useCreateAutorizacion = () => {
         throw error;
       }
 
-      console.log('Authorization created successfully:', data);
-      return data;
+      console.log('Authorization created successfully:', autorizacion);
+
+      // Agregar prestaciones si existen
+      if (prestaciones && prestaciones.length > 0) {
+        const prestacionesData = prestaciones.map(prestacion => ({
+          autorizacion_id: autorizacion.id,
+          ...prestacion
+        }));
+
+        const { error: prestacionesError } = await supabase
+          .from('autorizacion_prestaciones')
+          .insert(prestacionesData);
+
+        if (prestacionesError) {
+          console.error('Prestaciones insert error:', prestacionesError);
+          throw prestacionesError;
+        }
+
+        console.log('Prestaciones added successfully');
+      }
+
+      return autorizacion;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['autorizacion-prestaciones'] });
       toast({
         title: "Autorización creada",
         description: "La autorización se ha creado exitosamente.",
@@ -184,8 +222,8 @@ export const useUpdateAutorizacion = () => {
         console.log('New document uploaded successfully:', documento_url);
       }
 
-      // Actualizar la autorización
-      const { documento, ...dataToUpdate } = data;
+      // Actualizar la autorización (sin prestaciones)
+      const { documento, prestaciones, ...dataToUpdate } = data;
       const updateData = {
         ...dataToUpdate,
         ...(documento_url && { documento_url })
@@ -203,10 +241,44 @@ export const useUpdateAutorizacion = () => {
         throw error;
       }
 
+      // Actualizar prestaciones si se proporcionaron
+      if (prestaciones !== undefined) {
+        // Eliminar prestaciones existentes
+        const { error: deleteError } = await supabase
+          .from('autorizacion_prestaciones')
+          .delete()
+          .eq('autorizacion_id', id);
+
+        if (deleteError) {
+          console.error('Delete prestaciones error:', deleteError);
+          throw deleteError;
+        }
+
+        // Insertar nuevas prestaciones
+        if (prestaciones.length > 0) {
+          const prestacionesData = prestaciones.map(prestacion => ({
+            autorizacion_id: id,
+            ...prestacion
+          }));
+
+          const { error: prestacionesError } = await supabase
+            .from('autorizacion_prestaciones')
+            .insert(prestacionesData);
+
+          if (prestacionesError) {
+            console.error('Insert prestaciones error:', prestacionesError);
+            throw prestacionesError;
+          }
+
+          console.log('Prestaciones updated successfully');
+        }
+      }
+
       console.log('Authorization updated successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['autorizacion-prestaciones'] });
       toast({
         title: "Autorización actualizada",
         description: "Los datos de la autorización se han actualizado exitosamente.",
