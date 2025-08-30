@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAutorizaciones, useUpdateAutorizacion, useDeleteAutorizacion } from '@/hooks/useAutorizaciones';
+import { useAutorizaciones, useUpdateAutorizacion, useDeleteAutorizacion, useCreateAutorizacion } from '@/hooks/useAutorizaciones';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import AutorizacionForm from './AutorizacionForm';
 import AutorizacionPDF from './AutorizacionPDF';
@@ -43,6 +43,7 @@ const AutorizacionManagement = () => {
   const { data: currentUser } = useCurrentUser();
   const updateAutorizacion = useUpdateAutorizacion();
   const deleteAutorizacion = useDeleteAutorizacion();
+  const createAutorizacion = useCreateAutorizacion();
   const { toast } = useToast();
 
   const getStatusBadge = (estado: string) => {
@@ -50,7 +51,7 @@ const AutorizacionManagement = () => {
       case 'pendiente':
         return <Badge variant="secondary">Pendiente</Badge>;
       case 'aprobada':
-        return <Badge variant="success">Aprobada</Badge>;
+        return <Badge variant="default">Aprobada</Badge>;
       case 'rechazada':
         return <Badge variant="destructive">Rechazada</Badge>;
       case 'vencida':
@@ -60,7 +61,7 @@ const AutorizacionManagement = () => {
     }
   };
 
-  const handleStatusChange = async (autorizacionId: number, newStatus: string) => {
+  const handleStatusChange = async (autorizacionId: number, newStatus: 'pendiente' | 'aprobada' | 'rechazada' | 'vencida') => {
     try {
       await updateAutorizacion.mutateAsync({ id: autorizacionId, data: { estado: newStatus } });
       toast({
@@ -90,6 +91,25 @@ const AutorizacionManagement = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleFormSubmit = async (data: any) => {
+    try {
+      if (selectedAutorizacion) {
+        await updateAutorizacion.mutateAsync({ id: selectedAutorizacion.id, data });
+      } else {
+        await createAutorizacion.mutateAsync(data);
+      }
+      setIsFormOpen(false);
+      setSelectedAutorizacion(null);
+    } catch (error) {
+      // Error is handled by the mutation hooks
+    }
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setSelectedAutorizacion(null);
   };
 
   const filteredAutorizaciones = autorizaciones?.filter(autorizacion => {
@@ -134,10 +154,9 @@ const AutorizacionManagement = () => {
             </DialogHeader>
             <AutorizacionForm
               autorizacion={selectedAutorizacion}
-              onClose={() => {
-                setIsFormOpen(false);
-                setSelectedAutorizacion(null);
-              }}
+              onSubmit={handleFormSubmit}
+              onCancel={handleFormClose}
+              isLoading={updateAutorizacion.isPending || createAutorizacion.isPending}
             />
           </DialogContent>
         </Dialog>
@@ -249,7 +268,7 @@ const AutorizacionManagement = () => {
                     {currentUser?.role === 'admin' ? (
                       <Select
                         value={autorizacion.estado}
-                        onValueChange={(value) => handleStatusChange(autorizacion.id, value)}
+                        onValueChange={(value: 'pendiente' | 'aprobada' | 'rechazada' | 'vencida') => handleStatusChange(autorizacion.id, value)}
                       >
                         <SelectTrigger className="w-32">
                           <SelectValue />
