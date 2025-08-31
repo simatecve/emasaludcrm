@@ -54,7 +54,7 @@ const PatientManagement = () => {
   const filteredPatients = patients?.filter(patient => {
     // Filtro de búsqueda por texto
     const searchMatch = searchTerm === '' || 
-      patient.dni.includes(searchTerm) ||
+      safeIncludes(patient.dni, searchTerm) ||
       safeIncludes(patient.nombre, searchTerm) ||
       safeIncludes(patient.apellido, searchTerm) ||
       safeIncludes(patient.localidad, searchTerm) ||
