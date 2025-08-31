@@ -48,7 +48,7 @@ export const useObrasSocialesStats = () => {
         throw consultasError;
       }
 
-      // Procesar datos
+      // Procesar datos y filtrar solo las obras sociales con consultas en el mes
       const stats: ObraSocialStat[] = obrasSociales?.map(obra => {
         const consultasCount = consultas?.filter(c => 
           c.pacientes?.obra_social_id === obra.id
@@ -59,9 +59,12 @@ export const useObrasSocialesStats = () => {
           pacientes: obra.pacientes?.[0]?.count || 0,
           consultas: consultasCount
         };
-      }).slice(0, 5) || []; // Top 5
+      })
+      .filter(stat => stat.consultas > 0) // Solo mostrar obras sociales con consultas en el mes
+      .sort((a, b) => b.consultas - a.consultas) // Ordenar por número de consultas descendente
+      .slice(0, 5) || []; // Top 5
 
-      console.log('Obras sociales stats:', stats);
+      console.log('Obras sociales stats (filtered):', stats);
       return stats;
     },
   });
