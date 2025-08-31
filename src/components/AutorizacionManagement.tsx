@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,17 +117,24 @@ const AutorizacionManagement = () => {
     if (!searchTerm) return true;
     
     const searchLower = searchTerm.toLowerCase();
-    const pacienteMatch = autorizacion.pacientes?.nombre?.toLowerCase().includes(searchLower) ||
-                         autorizacion.pacientes?.apellido?.toLowerCase().includes(searchLower) ||
-                         autorizacion.pacientes?.dni?.includes(searchTerm);
-    const numeroMatch = autorizacion.numero_autorizacion?.toLowerCase().includes(searchLower);
-    const obraSocialMatch = autorizacion.obras_sociales?.nombre?.toLowerCase().includes(searchLower);
+    
+    // Safe string checking function
+    const safeIncludes = (str: string | null | undefined, searchTerm: string): boolean => {
+      return str ? str.toLowerCase().includes(searchTerm) : false;
+    };
+    
+    const pacienteMatch = safeIncludes(autorizacion.pacientes?.nombre, searchLower) ||
+                         safeIncludes(autorizacion.pacientes?.apellido, searchLower) ||
+                         safeIncludes(autorizacion.pacientes?.dni, searchTerm);
+    
+    const numeroMatch = safeIncludes(autorizacion.numero_autorizacion, searchLower);
+    const obraSocialMatch = safeIncludes(autorizacion.obras_sociales?.nombre, searchLower);
     
     // Buscar en prestaciones
     const prestacionMatch = autorizacion.prestaciones?.some(prestacion => 
-      prestacion.prestacion_codigo?.toLowerCase().includes(searchLower) ||
-      prestacion.prestacion_descripcion?.toLowerCase().includes(searchLower)
-    );
+      safeIncludes(prestacion.prestacion_codigo, searchLower) ||
+      safeIncludes(prestacion.prestacion_descripcion, searchLower)
+    ) || false;
 
     return pacienteMatch || numeroMatch || obraSocialMatch || prestacionMatch;
   }) || [];
