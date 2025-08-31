@@ -46,14 +46,19 @@ const PatientManagement = () => {
   const uniqueProvincias = Array.from(new Set(patients?.map(p => p.provincia).filter(Boolean))).sort();
   const uniqueSexos = Array.from(new Set(patients?.map(p => p.sexo).filter(Boolean))).sort();
 
+  // Helper function to safely check string includes
+  const safeIncludes = (str: string | null | undefined, searchTerm: string): boolean => {
+    return str ? str.toLowerCase().includes(searchTerm.toLowerCase()) : false;
+  };
+
   const filteredPatients = patients?.filter(patient => {
     // Filtro de búsqueda por texto
     const searchMatch = searchTerm === '' || 
       patient.dni.includes(searchTerm) ||
-      patient.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (patient.localidad && patient.localidad.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (patient.provincia && patient.provincia.toLowerCase().includes(searchTerm.toLowerCase()));
+      safeIncludes(patient.nombre, searchTerm) ||
+      safeIncludes(patient.apellido, searchTerm) ||
+      safeIncludes(patient.localidad, searchTerm) ||
+      safeIncludes(patient.provincia, searchTerm);
 
     // Filtro por obra social
     const obraSocialMatch = selectedObraSocial === 'all' || 
