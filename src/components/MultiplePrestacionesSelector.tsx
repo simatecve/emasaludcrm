@@ -6,8 +6,67 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2 } from 'lucide-react';
-import PrestacionSelector from './PrestacionSelector';
 import { AutorizacionPrestacionFormData } from '@/hooks/useAutorizacionPrestaciones';
+import { useNomecladorSearch } from '@/hooks/useNomeclador';
+
+interface SimplePrestacionInputProps {
+  index: number;
+  prestacion: AutorizacionPrestacionFormData;
+  onUpdate: (index: number, field: keyof AutorizacionPrestacionFormData, value: any) => void;
+}
+
+const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, prestacion, onUpdate }) => {
+  const [searchTerm, setSearchTerm] = useState(prestacion.prestacion_codigo || '');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const { data: suggestions } = useNomecladorSearch(searchTerm);
+
+  const handleInputChange = (value: string) => {
+    setSearchTerm(value);
+    onUpdate(index, 'prestacion_codigo', value);
+    setShowSuggestions(value.length > 0);
+    
+    // Si el código no coincide exactamente, limpiar la descripción
+    const exactMatch = suggestions?.find(s => s.codigo_practica === value);
+    if (!exactMatch) {
+      onUpdate(index, 'prestacion_descripcion', '');
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: any) => {
+    setSearchTerm(suggestion.codigo_practica);
+    onUpdate(index, 'prestacion_codigo', suggestion.codigo_practica);
+    onUpdate(index, 'prestacion_descripcion', suggestion.descripcion_practica);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative">
+      <Input
+        value={searchTerm}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => setShowSuggestions(searchTerm.length > 0)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder="Escribir código de prestación..."
+      />
+      
+      {showSuggestions && suggestions && suggestions.length > 0 && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {suggestions.slice(0, 10).map((suggestion) => (
+            <div
+              key={suggestion.id}
+              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+              onClick={() => handleSuggestionClick(suggestion)}
+            >
+              <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
+              <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface MultiplePrestacionesSelectorProps {
   prestaciones: AutorizacionPrestacionFormData[];
@@ -85,42 +144,13 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Seleccionar Prestación</Label>
-              {showPrestacionSelector === index ? (
-                <div className="space-y-2">
-                  <PrestacionSelector
-                    onSelect={(prestacionData) => handlePrestacionSelect(index, prestacionData)}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowPrestacionSelector(null)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowPrestacionSelector(index)}
-                  className="w-full"
-                >
-                  {prestacion.prestacion_codigo || prestacion.prestacion_descripcion ? 
-                    'Cambiar Prestación' : 'Seleccionar Prestación'}
-                </Button>
-              )}
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Código de Prestación</Label>
-                <Input
-                  value={prestacion.prestacion_codigo}
-                  onChange={(e) => updatePrestacion(index, 'prestacion_codigo', e.target.value)}
-                  placeholder="Código"
+                <SimplePrestacionInput
+                  index={index}
+                  prestacion={prestacion}
+                  onUpdate={updatePrestacion}
                 />
               </div>
               <div className="space-y-2">
@@ -139,7 +169,9 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
               <Input
                 value={prestacion.prestacion_descripcion}
                 onChange={(e) => updatePrestacion(index, 'prestacion_descripcion', e.target.value)}
-                placeholder="Descripción"
+                placeholder="Descripción (se completa automáticamente)"
+                disabled
+                className="bg-gray-50"
               />
             </div>
 
