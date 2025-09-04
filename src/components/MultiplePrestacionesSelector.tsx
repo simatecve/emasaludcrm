@@ -18,44 +18,80 @@ interface SimplePrestacionInputProps {
 const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, prestacion, onUpdate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [hasSelection, setHasSelection] = useState(!!prestacion.prestacion_codigo);
   
   const { data: suggestions } = useNomecladorSearch(searchTerm);
 
   const handleInputChange = (value: string) => {
     setSearchTerm(value);
     setShowSuggestions(value.length > 0);
+    setHasSelection(false);
+    // Limpiar la selección cuando se empiece a escribir de nuevo
+    if (prestacion.prestacion_codigo) {
+      onUpdate(index, 'prestacion_codigo', '');
+      onUpdate(index, 'prestacion_descripcion', '');
+    }
   };
 
   const handleSuggestionClick = (suggestion: any) => {
     setSearchTerm('');
+    setHasSelection(true);
     onUpdate(index, 'prestacion_codigo', suggestion.codigo_practica);
     onUpdate(index, 'prestacion_descripcion', suggestion.descripcion_practica);
     setShowSuggestions(false);
   };
 
+  const clearSelection = () => {
+    setSearchTerm('');
+    setHasSelection(false);
+    onUpdate(index, 'prestacion_codigo', '');
+    onUpdate(index, 'prestacion_descripcion', '');
+  };
+
   return (
     <div className="relative">
-      <Input
-        value={searchTerm}
-        onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder="Buscar prestación por código o descripción..."
-      />
-      
-      {showSuggestions && suggestions && suggestions.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {suggestions.slice(0, 10).map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
-              <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
-            </div>
-          ))}
+      {hasSelection && prestacion.prestacion_codigo ? (
+        <div className="flex items-center gap-2">
+          <Input
+            value={`${prestacion.prestacion_codigo} - ${prestacion.prestacion_descripcion}`}
+            disabled
+            className="bg-green-50 border-green-200"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearSelection}
+            className="text-red-600 hover:text-red-700"
+          >
+            Cambiar
+          </Button>
         </div>
+      ) : (
+        <>
+          <Input
+            value={searchTerm}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            placeholder="Buscar prestación por código o descripción..."
+          />
+          
+          {showSuggestions && suggestions && suggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.slice(0, 10).map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
+                  <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -157,15 +193,16 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label>Código de Prestación Seleccionado</Label>
-              <Input
-                value={prestacion.prestacion_codigo}
-                placeholder="Se completa al seleccionar una prestación"
-                disabled
-                className="bg-gray-50"
-              />
-            </div>
+            {prestacion.prestacion_codigo && (
+              <div className="space-y-2">
+                <Label>Código de Prestación Seleccionado</Label>
+                <Input
+                  value={prestacion.prestacion_codigo}
+                  disabled
+                  className="bg-gray-50 font-mono"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Descripción de la Prestación</Label>
