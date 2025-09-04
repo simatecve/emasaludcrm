@@ -175,7 +175,7 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Código de Prestación</Label>
+                <Label>Buscar Prestación</Label>
                 <SimplePrestacionInput
                   index={index}
                   prestacion={prestacion}
@@ -192,6 +192,17 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
                 />
               </div>
             </div>
+
+            {prestacion.prestacion_codigo && (
+              <div className="space-y-2">
+                <Label>Código de Prestación Seleccionado</Label>
+                <Input
+                  value={prestacion.prestacion_codigo}
+                  disabled
+                  className="bg-green-50 border-green-200 font-mono"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Descripción de la Prestación</Label>
