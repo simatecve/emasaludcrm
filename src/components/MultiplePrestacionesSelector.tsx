@@ -16,7 +16,7 @@ interface SimplePrestacionInputProps {
 }
 
 const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, prestacion, onUpdate }) => {
-  const [searchTerm, setSearchTerm] = useState(prestacion.prestacion_codigo || '');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
   const { data: suggestions } = useNomecladorSearch(searchTerm);
@@ -24,20 +24,10 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
   const handleInputChange = (value: string) => {
     setSearchTerm(value);
     setShowSuggestions(value.length > 0);
-    
-    // Solo guardar el código si coincide exactamente con el nomeclador
-    const exactMatch = suggestions?.find(s => s.codigo_practica === value);
-    if (exactMatch) {
-      onUpdate(index, 'prestacion_codigo', exactMatch.codigo_practica);
-      onUpdate(index, 'prestacion_descripcion', exactMatch.descripcion_practica);
-    } else {
-      onUpdate(index, 'prestacion_codigo', '');
-      onUpdate(index, 'prestacion_descripcion', '');
-    }
   };
 
   const handleSuggestionClick = (suggestion: any) => {
-    setSearchTerm(suggestion.codigo_practica);
+    setSearchTerm('');
     onUpdate(index, 'prestacion_codigo', suggestion.codigo_practica);
     onUpdate(index, 'prestacion_descripcion', suggestion.descripcion_practica);
     setShowSuggestions(false);
@@ -48,9 +38,9 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
       <Input
         value={searchTerm}
         onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => setShowSuggestions(searchTerm.length > 0)}
+        onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder="Escribir código de prestación..."
+        placeholder="Buscar prestación por código o descripción..."
       />
       
       {showSuggestions && suggestions && suggestions.length > 0 && (
@@ -149,7 +139,7 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Código de Prestación</Label>
+                <Label>Buscar Prestación</Label>
                 <SimplePrestacionInput
                   index={index}
                   prestacion={prestacion}
@@ -165,6 +155,16 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
                   onChange={(e) => updatePrestacion(index, 'cantidad', parseInt(e.target.value) || 1)}
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Código de Prestación Seleccionado</Label>
+              <Input
+                value={prestacion.prestacion_codigo}
+                placeholder="Se completa al seleccionar una prestación"
+                disabled
+                className="bg-gray-50"
+              />
             </div>
 
             <div className="space-y-2">
