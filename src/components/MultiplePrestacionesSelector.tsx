@@ -53,9 +53,9 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
       {hasSelection && prestacion.prestacion_codigo ? (
         <div className="flex items-center gap-2">
           <Input
-            value={`${prestacion.prestacion_codigo} - ${prestacion.prestacion_descripcion}`}
+            value={prestacion.prestacion_codigo}
             disabled
-            className="bg-green-50 border-green-200"
+            className="bg-green-50 border-green-200 font-mono"
           />
           <Button
             type="button"
@@ -175,7 +175,7 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Buscar Prestación</Label>
+                <Label>Código de Prestación</Label>
                 <SimplePrestacionInput
                   index={index}
                   prestacion={prestacion}
@@ -193,23 +193,11 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
               </div>
             </div>
 
-            {prestacion.prestacion_codigo && (
-              <div className="space-y-2">
-                <Label>Código de Prestación Seleccionado</Label>
-                <Input
-                  value={prestacion.prestacion_codigo}
-                  disabled
-                  className="bg-gray-50 font-mono"
-                />
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label>Descripción de la Prestación</Label>
               <Input
                 value={prestacion.prestacion_descripcion}
-                onChange={(e) => updatePrestacion(index, 'prestacion_descripcion', e.target.value)}
-                placeholder="Descripción (se completa automáticamente)"
+                placeholder="Se completa automáticamente al seleccionar"
                 disabled
                 className="bg-gray-50"
               />
