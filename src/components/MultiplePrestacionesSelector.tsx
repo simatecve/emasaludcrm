@@ -23,12 +23,15 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
 
   const handleInputChange = (value: string) => {
     setSearchTerm(value);
-    onUpdate(index, 'prestacion_codigo', value);
     setShowSuggestions(value.length > 0);
     
-    // Si el código no coincide exactamente, limpiar la descripción
+    // Solo guardar el código si coincide exactamente con el nomeclador
     const exactMatch = suggestions?.find(s => s.codigo_practica === value);
-    if (!exactMatch) {
+    if (exactMatch) {
+      onUpdate(index, 'prestacion_codigo', exactMatch.codigo_practica);
+      onUpdate(index, 'prestacion_descripcion', exactMatch.descripcion_practica);
+    } else {
+      onUpdate(index, 'prestacion_codigo', '');
       onUpdate(index, 'prestacion_descripcion', '');
     }
   };
