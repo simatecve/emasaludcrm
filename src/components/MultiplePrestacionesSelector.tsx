@@ -12,10 +12,16 @@ import { useNomecladorSearch } from '@/hooks/useNomeclador';
 interface SimplePrestacionInputProps {
   index: number;
   prestacion: AutorizacionPrestacionFormData;
-  onUpdate: (index: number, field: keyof AutorizacionPrestacionFormData, value: any) => void;
+  prestaciones: AutorizacionPrestacionFormData[];
+  onPrestacionesChange: (prestaciones: AutorizacionPrestacionFormData[]) => void;
 }
 
-const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, prestacion, onUpdate }) => {
+const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ 
+  index, 
+  prestacion, 
+  prestaciones, 
+  onPrestacionesChange 
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -27,12 +33,22 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
   };
 
   const handleSuggestionClick = (suggestion: any) => {
-    console.log('Selecting prestacion:', suggestion.codigo_practica, suggestion.descripcion_practica);
+    console.log('Seleccionando prestación:', suggestion.codigo_practica, suggestion.descripcion_practica);
+    
+    // Limpiar el campo de búsqueda
     setSearchTerm('');
     setShowSuggestions(false);
-    // Actualizar ambos campos simultáneamente
-    onUpdate(index, 'prestacion_codigo', suggestion.codigo_practica);
-    onUpdate(index, 'prestacion_descripcion', suggestion.descripcion_practica);
+    
+    // Actualizar la prestación en el índice específico
+    const nuevasPrestaciones = [...prestaciones];
+    nuevasPrestaciones[index] = {
+      ...nuevasPrestaciones[index],
+      prestacion_codigo: suggestion.codigo_practica,
+      prestacion_descripcion: suggestion.descripcion_practica
+    };
+    
+    // Actualizar el estado global
+    onPrestacionesChange(nuevasPrestaciones);
   };
 
   return (
@@ -40,7 +56,7 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
       <Input
         value={searchTerm}
         onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => setShowSuggestions(true)}
+        onFocus={() => setShowSuggestions(searchTerm.length > 0)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         placeholder="Buscar prestación por código o descripción..."
       />
@@ -72,8 +88,6 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
   prestaciones,
   onPrestacionesChange
 }) => {
-  const [showPrestacionSelector, setShowPrestacionSelector] = useState<number | null>(null);
-
   const addPrestacion = () => {
     const nuevaPrestacion: AutorizacionPrestacionFormData = {
       prestacion_codigo: '',
@@ -96,12 +110,6 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
       [field]: value
     };
     onPrestacionesChange(nuevasPrestaciones);
-  };
-
-  const handlePrestacionSelect = (index: number, prestacion: { codigo: string; descripcion: string }) => {
-    updatePrestacion(index, 'prestacion_codigo', prestacion.codigo);
-    updatePrestacion(index, 'prestacion_descripcion', prestacion.descripcion);
-    setShowPrestacionSelector(null);
   };
 
   return (
@@ -145,7 +153,8 @@ const MultiplePrestacionesSelector: React.FC<MultiplePrestacionesSelectorProps> 
                 <SimplePrestacionInput
                   index={index}
                   prestacion={prestacion}
-                  onUpdate={updatePrestacion}
+                  prestaciones={prestaciones}
+                  onPrestacionesChange={onPrestacionesChange}
                 />
               </div>
               <div className="space-y-2">

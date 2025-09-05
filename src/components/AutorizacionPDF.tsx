@@ -154,36 +154,86 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.setFont('helvetica', 'normal');
     
     let totalRowHeight = 0;
+    const rowData = []; // Para almacenar información de cada fila
     
     // Render prestaciones from the prestaciones array
     if (autorizacion.prestaciones && autorizacion.prestaciones.length > 0) {
-      autorizacion.prestaciones.forEach(prestacion => {
+      autorizacion.prestaciones.forEach((prestacion, index) => {
         const cantidad = prestacion.cantidad || 1;
         const codigo = prestacion.prestacion_codigo || '';
         const descripcion = prestacion.prestacion_descripcion || '';
         
-        pdf.text(cantidad.toString(), colPositions[0] + 5, yPos + 6);
-        pdf.text(codigo, colPositions[1] + 5, yPos + 6);
-        
-        // Handle long descriptions
-        const maxWidth = colWidths[2] - 10;
+        // Calcular altura de la fila basada en el texto más largo
+        // Limitar a aproximadamente 30-35 caracteres por línea
+        const maxWidth = 85; // Aproximadamente 30-35 caracteres
         const descLines = pdf.splitTextToSize(descripcion, maxWidth);
-        pdf.text(descLines, colPositions[2] + 5, yPos + 6);
+        const rowHeight = Math.max(12, (descLines.length * 5) + 8); // Espaciado mejorado
         
-        const rowHeight = Math.max(12, (descLines.length * 6) + 6);
+        // Almacenar datos de la fila
+        rowData.push({
+          cantidad: cantidad.toString(),
+          codigo: codigo,
+          descripcion: descLines,
+          height: rowHeight,
+          yStart: yPos
+        });
+        
         totalRowHeight += rowHeight;
         yPos += rowHeight;
       });
     } else {
       // Fallback si no hay prestaciones
-      pdf.text('1', colPositions[0] + 5, yPos + 6);
-      pdf.text('N/A', colPositions[1] + 5, yPos + 6);
-      pdf.text('Sin prestaciones especificadas', colPositions[2] + 5, yPos + 6);
-      totalRowHeight = 12;
-      yPos += 12;
+      const rowHeight = 12;
+      rowData.push({
+        cantidad: '1',
+        codigo: 'N/A',
+        descripcion: ['Sin prestaciones especificadas'],
+        height: rowHeight,
+        yStart: yPos
+      });
+      totalRowHeight = rowHeight;
+      yPos += rowHeight;
     }
     
-    // Table border
+    // Dibujar el contenido de las filas y los bordes
+    rowData.forEach((row, index) => {
+      const rowY = row.yStart;
+      
+      // Dibujar fondo alternado para mejor legibilidad
+      if (index % 2 === 1) {
+        pdf.setFillColor(248, 249, 250); // Gris muy claro
+        pdf.rect(20, rowY, pageWidth - 40, row.height, 'F');
+      }
+      
+      // Dibujar contenido de las celdas
+      pdf.setTextColor(0, 0, 0);
+      
+      // Cantidad - centrada verticalmente
+      const cantidadY = rowY + (row.height / 2) + 2;
+      pdf.text(row.cantidad, colPositions[0] + 5, cantidadY);
+      
+      // Código - centrado verticalmente
+      pdf.text(row.codigo, colPositions[1] + 5, cantidadY);
+      
+      // Descripción - con manejo de múltiples líneas
+      if (Array.isArray(row.descripcion)) {
+        row.descripcion.forEach((line, lineIndex) => {
+          const lineY = rowY + 8 + (lineIndex * 5); // Espaciado entre líneas
+          pdf.text(line, colPositions[2] + 5, lineY);
+        });
+      } else {
+        pdf.text(row.descripcion, colPositions[2] + 5, cantidadY);
+      }
+      
+      // Dibujar borde horizontal inferior de la fila
+      pdf.setDrawColor(200, 200, 200); // Gris claro para las líneas
+      pdf.line(20, rowY + row.height, pageWidth - 20, rowY + row.height);
+    });
+    
+    // Restablecer color de línea
+    pdf.setDrawColor(0, 0, 0);
+    
+    // Table border exterior
     const tableHeight = 12 + totalRowHeight;
     pdf.rect(20, tableStartY, pageWidth - 40, tableHeight);
     
