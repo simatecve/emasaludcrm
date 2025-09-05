@@ -32,6 +32,7 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
   };
 
   const handleSuggestionClick = (suggestion: any) => {
+    console.log('Selected prestacion:', suggestion); // Debug log
     setSearchTerm('');
     // Guardar tanto el código como la descripción
     onUpdate(index, 'prestacion_codigo', suggestion.codigo_practica);
@@ -41,27 +42,50 @@ const SimplePrestacionInput: React.FC<SimplePrestacionInputProps> = ({ index, pr
 
   return (
     <div className="relative">
-      <Input
-        value={searchTerm}
-        onChange={(e) => handleInputChange(e.target.value)}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder="Buscar prestación por código o descripción..."
-      />
-      
-      {showSuggestions && suggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
-          {suggestions.slice(0, 10).map((suggestion) => (
-            <div
-              key={suggestion.id}
-              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
-              onClick={() => handleSuggestionClick(suggestion)}
-            >
-              <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
-              <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
-            </div>
-          ))}
+      {prestacion.prestacion_codigo ? (
+        <div className="flex items-center gap-2">
+          <Input
+            value={`${prestacion.prestacion_codigo} - ${prestacion.prestacion_descripcion}`}
+            disabled
+            className="bg-green-50 border-green-200"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              onUpdate(index, 'prestacion_codigo', '');
+              onUpdate(index, 'prestacion_descripcion', '');
+            }}
+          >
+            Cambiar
+          </Button>
         </div>
+      ) : (
+        <>
+          <Input
+            value={searchTerm}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+            placeholder="Buscar prestación por código o descripción..."
+          />
+          
+          {showSuggestions && suggestions && suggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+              {suggestions.slice(0, 10).map((suggestion) => (
+                <div
+                  key={suggestion.id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
+                  <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
