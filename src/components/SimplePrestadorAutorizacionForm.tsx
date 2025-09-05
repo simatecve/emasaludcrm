@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,57 @@ import { usePatients } from '@/hooks/usePatients';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useNomecladorSearch } from '@/hooks/useNomeclador';
 import { FileText, Upload } from 'lucide-react';
+
+interface PrestacionSearchInputProps {
+  onSelect: (codigo: string, descripcion: string) => void;
+}
+
+const PrestacionSearchInput: React.FC<PrestacionSearchInputProps> = ({ onSelect }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  const { data: suggestions } = useNomecladorSearch(searchTerm);
+
+  const handleInputChange = (value: string) => {
+    setSearchTerm(value);
+    setShowSuggestions(value.length > 0);
+  };
+
+  const handleSuggestionClick = (suggestion: any) => {
+    setSearchTerm('');
+    onSelect(suggestion.codigo_practica, suggestion.descripcion_practica);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative">
+      <Input
+        value={searchTerm}
+        onChange={(e) => handleInputChange(e.target.value)}
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder="Buscar prestación por código o descripción..."
+      />
+      
+      {showSuggestions && suggestions && suggestions.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
+          {suggestions.slice(0, 10).map((suggestion) => (
+            <div
+              key={suggestion.id}
+              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+              onClick={() => handleSuggestionClick(suggestion)}
+            >
+              <div className="font-medium text-sm">{suggestion.codigo_practica}</div>
+              <div className="text-gray-600 text-xs truncate">{suggestion.descripcion_practica}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface SimplePrestadorAutorizacionFormProps {
   onClose: () => void;
@@ -168,23 +217,17 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
           {/* Prestación Simple */}
           <div className="space-y-4 border rounded-lg p-4">
             <Label className="text-lg font-semibold">Prestación</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="prestacion_codigo">Código</Label>
-                <Input
-                  id="prestacion_codigo"
-                  value={formData.prestacion_codigo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, prestacion_codigo: e.target.value }))}
-                  placeholder="Código de prestación"
-                />
-              </div>
-              <div>
-                <Label htmlFor="prestacion_descripcion">Descripción</Label>
-                <Input
-                  id="prestacion_descripcion"
-                  value={formData.prestacion_descripcion}
-                  onChange={(e) => setFormData(prev => ({ ...prev, prestacion_descripcion: e.target.value }))}
-                  placeholder="Descripción"
+                <Label>Buscar Prestación</Label>
+                <PrestacionSearchInput
+                  onSelect={(codigo, descripcion) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      prestacion_codigo: codigo,
+                      prestacion_descripcion: descripcion
+                    }));
+                  }}
                 />
               </div>
               <div>
@@ -197,6 +240,27 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
                   onChange={(e) => setFormData(prev => ({ ...prev, prestacion_cantidad: parseInt(e.target.value) || 1 }))}
                 />
               </div>
+            </div>
+
+            {formData.prestacion_codigo && (
+              <div className="space-y-2">
+                <Label>Código de Prestación Seleccionado</Label>
+                <Input
+                  value={formData.prestacion_codigo}
+                  disabled
+                  className="bg-green-50 border-green-200 font-mono"
+                />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>Descripción de la Prestación</Label>
+              <Input
+                value={formData.prestacion_descripcion}
+                placeholder="Se completa automáticamente al seleccionar"
+                disabled
+                className="bg-gray-50"
+              />
             </div>
           </div>
 
