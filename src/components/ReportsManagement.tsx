@@ -132,12 +132,12 @@ const ReportsManagement = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Médico</label>
-              <Select value={filters.medicoId?.toString() || ''} onValueChange={(value) => updateFilter('medicoId', value ? parseInt(value) : undefined)}>
+              <Select value={filters.medicoId?.toString() || 'all'} onValueChange={(value) => updateFilter('medicoId', value === 'all' ? undefined : parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar médico" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los médicos</SelectItem>
+                  <SelectItem value="all">Todos los médicos</SelectItem>
                   {medicos?.map((medico) => (
                     <SelectItem key={medico.id} value={medico.id.toString()}>
                       {medico.nombre} {medico.apellido}
@@ -148,12 +148,12 @@ const ReportsManagement = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Paciente</label>
-              <Select value={filters.pacienteId?.toString() || ''} onValueChange={(value) => updateFilter('pacienteId', value ? parseInt(value) : undefined)}>
+              <Select value={filters.pacienteId?.toString() || 'all'} onValueChange={(value) => updateFilter('pacienteId', value === 'all' ? undefined : parseInt(value))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar paciente" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los pacientes</SelectItem>
+                  <SelectItem value="all">Todos los pacientes</SelectItem>
                   {pacientes?.map((paciente) => (
                     <SelectItem key={paciente.id} value={paciente.id.toString()}>
                       {paciente.nombre} {paciente.apellido} - {paciente.dni}
@@ -164,12 +164,12 @@ const ReportsManagement = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Estado</label>
-              <Select value={filters.estado || ''} onValueChange={(value) => updateFilter('estado', value || undefined)}>
+              <Select value={filters.estado || 'all'} onValueChange={(value) => updateFilter('estado', value === 'all' ? undefined : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar estado" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los estados</SelectItem>
+                  <SelectItem value="all">Todos los estados</SelectItem>
                   <SelectItem value="pendiente">Pendiente</SelectItem>
                   <SelectItem value="aprobada">Aprobada</SelectItem>
                   <SelectItem value="rechazada">Rechazada</SelectItem>
@@ -179,12 +179,12 @@ const ReportsManagement = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Tipo Autorización</label>
-              <Select value={filters.tipoAutorizacion || ''} onValueChange={(value) => updateFilter('tipoAutorizacion', value || undefined)}>
+              <Select value={filters.tipoAutorizacion || 'all'} onValueChange={(value) => updateFilter('tipoAutorizacion', value === 'all' ? undefined : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value="consulta">Consulta</SelectItem>
                   <SelectItem value="practica">Práctica</SelectItem>
                   <SelectItem value="medicamento">Medicamento</SelectItem>
