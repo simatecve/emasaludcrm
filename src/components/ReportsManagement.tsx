@@ -1,17 +1,19 @@
 
 import React, { useState } from 'react';
-import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, Shield, UserCog, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useConsultasReport, useTurnosReport, useRevenueReport, type ReportFilters } from '@/hooks/useReports';
+import { useConsultasReport, useTurnosReport, useRevenueReport, useAutorizacionesReport, useMedicosReport, useObrasSocialesReport, type ReportFilters } from '@/hooks/useReports';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useEspecialidades } from '@/hooks/useEspecialidades';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { usePatients } from '@/hooks/usePatients';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const ReportsManagement = () => {
   const [filters, setFilters] = useState<ReportFilters>({
@@ -27,6 +29,9 @@ const ReportsManagement = () => {
   const { data: consultasReport, isLoading: consultasLoading } = useConsultasReport(filters);
   const { data: turnosReport, isLoading: turnosLoading } = useTurnosReport(filters);
   const { data: revenueReport, isLoading: revenueLoading } = useRevenueReport(filters);
+  const { data: autorizacionesReport, isLoading: autorizacionesLoading } = useAutorizacionesReport(filters);
+  const { data: medicosReport, isLoading: medicosLoading } = useMedicosReport(filters);
+  const { data: obrasSocialesReport, isLoading: obrasSocialesLoading } = useObrasSocialesReport(filters);
 
   const updateFilter = (key: keyof ReportFilters, value: string | number | undefined) => {
     setFilters(prev => ({
@@ -54,6 +59,43 @@ const ReportsManagement = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const exportToPDF = (data: any[], filename: string, title: string, columns: string[]) => {
+    if (!data || data.length === 0) return;
+    
+    const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text(title, 20, 20);
+    
+    // Add date range
+    doc.setFontSize(10);
+    doc.text(`Período: ${filters.fechaInicio || 'Inicio'} - ${filters.fechaFin || 'Fin'}`, 20, 30);
+    doc.text(`Generado: ${new Date().toLocaleDateString('es-AR')}`, 20, 35);
+    
+    // Prepare table data
+    const tableData = data.map(row => 
+      columns.map(col => {
+        const value = row[col];
+        if (typeof value === 'object' && value !== null) {
+          return Object.values(value).join(' ');
+        }
+        return value || '';
+      })
+    );
+    
+    // Add table
+    (doc as any).autoTable({
+      head: [columns],
+      body: tableData,
+      startY: 45,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [59, 130, 246] },
+    });
+    
+    doc.save(`${filename}.pdf`);
   };
 
   return (
@@ -120,12 +162,42 @@ const ReportsManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Estado</label>
+              <Select value={filters.estado || ''} onValueChange={(value) => updateFilter('estado', value || undefined)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los estados</SelectItem>
+                  <SelectItem value="pendiente">Pendiente</SelectItem>
+                  <SelectItem value="aprobada">Aprobada</SelectItem>
+                  <SelectItem value="rechazada">Rechazada</SelectItem>
+                  <SelectItem value="vencida">Vencida</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Tipo Autorización</label>
+              <Select value={filters.tipoAutorizacion || ''} onValueChange={(value) => updateFilter('tipoAutorizacion', value || undefined)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos los tipos</SelectItem>
+                  <SelectItem value="consulta">Consulta</SelectItem>
+                  <SelectItem value="practica">Práctica</SelectItem>
+                  <SelectItem value="medicamento">Medicamento</SelectItem>
+                  <SelectItem value="internacion">Internación</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Resumen de estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -167,13 +239,58 @@ const ReportsManagement = () => {
             </div>
           </CardContent>
         </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Autorizaciones</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {autorizacionesLoading ? '...' : autorizacionesReport?.length || 0}
+                </p>
+              </div>
+              <Shield className="h-8 w-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Médicos</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {medicosLoading ? '...' : medicosReport?.length || 0}
+                </p>
+              </div>
+              <UserCog className="h-8 w-8 text-cyan-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">Obras Sociales</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {obrasSocialesLoading ? '...' : obrasSocialesReport?.length || 0}
+                </p>
+              </div>
+              <Building2 className="h-8 w-8 text-teal-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Tabs de reportes */}
       <Tabs defaultValue="consultas" className="space-y-4">
-        <TabsList>
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
           <TabsTrigger value="consultas">Consultas</TabsTrigger>
           <TabsTrigger value="turnos">Turnos</TabsTrigger>
+          <TabsTrigger value="autorizaciones">Autorizaciones</TabsTrigger>
+          <TabsTrigger value="medicos">Médicos</TabsTrigger>
+          <TabsTrigger value="obras-sociales">Obras Sociales</TabsTrigger>
           <TabsTrigger value="ingresos">Ingresos</TabsTrigger>
         </TabsList>
 
@@ -182,10 +299,16 @@ const ReportsManagement = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Reporte de Consultas</CardTitle>
-                <Button onClick={() => exportToCSV(consultasReport || [], 'consultas-report')}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar CSV
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportToCSV(consultasReport || [], 'consultas-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button onClick={() => exportToPDF(consultasReport || [], 'consultas-report', 'Reporte de Consultas', ['fecha_consulta', 'paciente', 'medico', 'motivo', 'diagnostico', 'obra_social', 'precio'])}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -228,10 +351,16 @@ const ReportsManagement = () => {
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle>Reporte de Turnos</CardTitle>
-                <Button onClick={() => exportToCSV(turnosReport || [], 'turnos-report')}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Exportar CSV
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportToCSV(turnosReport || [], 'turnos-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button onClick={() => exportToPDF(turnosReport || [], 'turnos-report', 'Reporte de Turnos', ['fecha', 'hora', 'paciente', 'medico', 'especialidad', 'estado', 'motivo'])}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -268,6 +397,188 @@ const ReportsManagement = () => {
                           </span>
                         </TableCell>
                         <TableCell>{turno.motivo}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="autorizaciones">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Reporte de Autorizaciones</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportToCSV(autorizacionesReport || [], 'autorizaciones-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button onClick={() => exportToPDF(autorizacionesReport || [], 'autorizaciones-report', 'Reporte de Autorizaciones', ['numero_autorizacion', 'fecha_solicitud', 'tipo_autorizacion', 'estado', 'paciente', 'obra_social', 'prestacion_codigo'])}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {autorizacionesLoading ? (
+                <div className="text-center py-8">Cargando autorizaciones...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>N° Autorización</TableHead>
+                      <TableHead>Fecha Solicitud</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Paciente</TableHead>
+                      <TableHead>Obra Social</TableHead>
+                      <TableHead>Prestación</TableHead>
+                      <TableHead>Prestador</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {autorizacionesReport?.map((autorizacion) => (
+                      <TableRow key={autorizacion.id}>
+                        <TableCell>{autorizacion.numero_autorizacion}</TableCell>
+                        <TableCell>{new Date(autorizacion.fecha_solicitud).toLocaleDateString('es-AR')}</TableCell>
+                        <TableCell className="capitalize">{autorizacion.tipo_autorizacion}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            autorizacion.estado === 'aprobada' ? 'bg-green-100 text-green-800' :
+                            autorizacion.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {autorizacion.estado}
+                          </span>
+                        </TableCell>
+                        <TableCell>{autorizacion.paciente.nombre} {autorizacion.paciente.apellido}</TableCell>
+                        <TableCell>{autorizacion.obra_social}</TableCell>
+                        <TableCell>{autorizacion.prestacion_codigo} - {autorizacion.prestacion_descripcion}</TableCell>
+                        <TableCell>{autorizacion.prestador}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="medicos">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Reporte de Médicos</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportToCSV(medicosReport || [], 'medicos-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button onClick={() => exportToPDF(medicosReport || [], 'medicos-report', 'Reporte de Médicos', ['nombre', 'apellido', 'dni', 'matricula', 'especialidad', 'telefono', 'email', 'activo', 'total_turnos', 'total_consultas'])}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {medicosLoading ? (
+                <div className="text-center py-8">Cargando médicos...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>DNI</TableHead>
+                      <TableHead>Matrícula</TableHead>
+                      <TableHead>Especialidad</TableHead>
+                      <TableHead>Teléfono</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Turnos</TableHead>
+                      <TableHead>Consultas</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {medicosReport?.map((medico) => (
+                      <TableRow key={medico.id}>
+                        <TableCell>{medico.nombre} {medico.apellido}</TableCell>
+                        <TableCell>{medico.dni}</TableCell>
+                        <TableCell>{medico.matricula}</TableCell>
+                        <TableCell>{medico.especialidad}</TableCell>
+                        <TableCell>{medico.telefono}</TableCell>
+                        <TableCell>{medico.email}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            medico.activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {medico.activo ? 'Activo' : 'Inactivo'}
+                          </span>
+                        </TableCell>
+                        <TableCell>{medico.total_turnos}</TableCell>
+                        <TableCell>{medico.total_consultas}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="obras-sociales">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle>Reporte de Obras Sociales</CardTitle>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => exportToCSV(obrasSocialesReport || [], 'obras-sociales-report')}>
+                    <Download className="h-4 w-4 mr-2" />
+                    CSV
+                  </Button>
+                  <Button onClick={() => exportToPDF(obrasSocialesReport || [], 'obras-sociales-report', 'Reporte de Obras Sociales', ['nombre', 'codigo', 'telefono', 'email', 'activa', 'total_pacientes', 'total_autorizaciones'])}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    PDF
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {obrasSocialesLoading ? (
+                <div className="text-center py-8">Cargando obras sociales...</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Código</TableHead>
+                      <TableHead>Teléfono</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Pacientes</TableHead>
+                      <TableHead>Autorizaciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {obrasSocialesReport?.map((obraSocial) => (
+                      <TableRow key={obraSocial.id}>
+                        <TableCell>{obraSocial.nombre}</TableCell>
+                        <TableCell>{obraSocial.codigo}</TableCell>
+                        <TableCell>{obraSocial.telefono}</TableCell>
+                        <TableCell>{obraSocial.email}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            obraSocial.activa ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {obraSocial.activa ? 'Activa' : 'Inactiva'}
+                          </span>
+                        </TableCell>
+                        <TableCell>{obraSocial.total_pacientes}</TableCell>
+                        <TableCell>{obraSocial.total_autorizaciones}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

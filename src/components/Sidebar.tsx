@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2 } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
@@ -35,6 +35,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+        { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
       ];
@@ -55,6 +56,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+        { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
       ];
@@ -68,6 +70,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'obras-sociales', label: 'Obras Sociales', icon: Building2 },
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
+        { id: 'reports', label: 'Reportes', icon: TrendingUp },
       ];
     } else if (currentUser.role === 'prestador') {
       // Prestador: solo puede acceder a autorizaciones (SIN dashboard)

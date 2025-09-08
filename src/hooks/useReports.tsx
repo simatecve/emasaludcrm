@@ -9,6 +9,8 @@ export interface ReportFilters {
   especialidadId?: number;
   obraSocialId?: number;
   pacienteId?: number;
+  estado?: string;
+  tipoAutorizacion?: string;
 }
 
 export interface ConsultaReport {
@@ -213,6 +215,237 @@ export const useRevenueReport = (filters: ReportFilters) => {
         averagePrice,
         revenueByObraSocial
       };
+    },
+  });
+};
+
+export interface AutorizacionReport {
+  id: number;
+  numero_autorizacion: string;
+  fecha_solicitud: string;
+  fecha_vencimiento: string;
+  tipo_autorizacion: string;
+  estado: string;
+  paciente: {
+    nombre: string;
+    apellido: string;
+    dni: string;
+  };
+  obra_social?: string;
+  prestador?: string;
+  prestacion_codigo?: string;
+  prestacion_descripcion?: string;
+}
+
+export interface MedicoReport {
+  id: number;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  matricula: string;
+  especialidad: string;
+  telefono?: string;
+  email?: string;
+  activo: boolean;
+  total_turnos: number;
+  total_consultas: number;
+}
+
+export interface ObraSocialReport {
+  id: number;
+  nombre: string;
+  codigo?: string;
+  telefono?: string;
+  email?: string;
+  activa: boolean;
+  total_pacientes: number;
+  total_autorizaciones: number;
+}
+
+export const useAutorizacionesReport = (filters: ReportFilters) => {
+  return useQuery({
+    queryKey: ['autorizaciones-report', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('autorizaciones')
+        .select(`
+          id,
+          numero_autorizacion,
+          fecha_solicitud,
+          fecha_vencimiento,
+          tipo_autorizacion,
+          estado,
+          prestador,
+          prestacion_codigo,
+          prestacion_descripcion,
+          pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre))
+        `)
+        .order('fecha_solicitud', { ascending: false });
+
+      if (filters.fechaInicio) {
+        query = query.gte('fecha_solicitud', filters.fechaInicio);
+      }
+      if (filters.fechaFin) {
+        query = query.lte('fecha_solicitud', filters.fechaFin);
+      }
+      if (filters.pacienteId) {
+        query = query.eq('paciente_id', filters.pacienteId);
+      }
+      if (filters.estado) {
+        query = query.eq('estado', filters.estado);
+      }
+      if (filters.tipoAutorizacion) {
+        query = query.eq('tipo_autorizacion', filters.tipoAutorizacion);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching autorizaciones report:', error);
+        throw error;
+      }
+
+      const report: AutorizacionReport[] = data?.map(autorizacion => ({
+        id: autorizacion.id,
+        numero_autorizacion: autorizacion.numero_autorizacion || '',
+        fecha_solicitud: autorizacion.fecha_solicitud,
+        fecha_vencimiento: autorizacion.fecha_vencimiento || '',
+        tipo_autorizacion: autorizacion.tipo_autorizacion,
+        estado: autorizacion.estado,
+        prestador: autorizacion.prestador || '',
+        prestacion_codigo: autorizacion.prestacion_codigo || '',
+        prestacion_descripcion: autorizacion.prestacion_descripcion || '',
+        paciente: {
+          nombre: autorizacion.pacientes?.nombre || '',
+          apellido: autorizacion.pacientes?.apellido || '',
+          dni: autorizacion.pacientes?.dni || '',
+        },
+        obra_social: autorizacion.pacientes?.obras_sociales?.nombre || 'Sin obra social'
+      })) || [];
+
+      return report;
+    },
+  });
+};
+
+export const useMedicosReport = (filters: ReportFilters) => {
+  return useQuery({
+    queryKey: ['medicos-report', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('medicos')
+        .select(`
+          id,
+          nombre,
+          apellido,
+          dni,
+          matricula,
+          telefono,
+          email,
+          activo,
+          especialidades:especialidad_id(nombre)
+        `)
+        .order('apellido', { ascending: true });
+
+      const { data: medicos, error } = await query;
+
+      if (error) {
+        console.error('Error fetching medicos report:', error);
+        throw error;
+      }
+
+      // Get turnos count for each medico
+      const { data: turnosData } = await supabase
+        .from('turnos')
+        .select('medico_id');
+
+      // Get consultas count for each medico  
+      const { data: consultasData } = await supabase
+        .from('consultas')
+        .select('medico');
+
+      const turnosCount = turnosData?.reduce((acc, turno) => {
+        acc[turno.medico_id] = (acc[turno.medico_id] || 0) + 1;
+        return acc;
+      }, {} as Record<number, number>) || {};
+
+      const consultasCount = consultasData?.reduce((acc, consulta) => {
+        const medicoName = consulta.medico;
+        acc[medicoName] = (acc[medicoName] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+
+      const report: MedicoReport[] = medicos?.map(medico => ({
+        id: medico.id,
+        nombre: medico.nombre,
+        apellido: medico.apellido,
+        dni: medico.dni,
+        matricula: medico.matricula,
+        telefono: medico.telefono || '',
+        email: medico.email || '',
+        activo: medico.activo,
+        especialidad: medico.especialidades?.nombre || 'Sin especialidad',
+        total_turnos: turnosCount[medico.id] || 0,
+        total_consultas: consultasCount[`${medico.nombre} ${medico.apellido}`] || 0
+      })) || [];
+
+      return report;
+    },
+  });
+};
+
+export const useObrasSocialesReport = (filters: ReportFilters) => {
+  return useQuery({
+    queryKey: ['obras-sociales-report', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('obras_sociales')
+        .select('*')
+        .order('nombre', { ascending: true });
+
+      const { data: obrasSociales, error } = await query;
+
+      if (error) {
+        console.error('Error fetching obras sociales report:', error);
+        throw error;
+      }
+
+      // Get pacientes count for each obra social
+      const { data: pacientesData } = await supabase
+        .from('pacientes')
+        .select('obra_social_id');
+
+      // Get autorizaciones count for each obra social
+      const { data: autorizacionesData } = await supabase
+        .from('autorizaciones')
+        .select('obra_social_id');
+
+      const pacientesCount = pacientesData?.reduce((acc, paciente) => {
+        if (paciente.obra_social_id) {
+          acc[paciente.obra_social_id] = (acc[paciente.obra_social_id] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<number, number>) || {};
+
+      const autorizacionesCount = autorizacionesData?.reduce((acc, autorizacion) => {
+        if (autorizacion.obra_social_id) {
+          acc[autorizacion.obra_social_id] = (acc[autorizacion.obra_social_id] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<number, number>) || {};
+
+      const report: ObraSocialReport[] = obrasSociales?.map(obraSocial => ({
+        id: obraSocial.id,
+        nombre: obraSocial.nombre,
+        codigo: obraSocial.codigo || '',
+        telefono: obraSocial.telefono || '',
+        email: obraSocial.email || '',
+        activa: obraSocial.activa,
+        total_pacientes: pacientesCount[obraSocial.id] || 0,
+        total_autorizaciones: autorizacionesCount[obraSocial.id] || 0
+      })) || [];
+
+      return report;
     },
   });
 };
