@@ -229,7 +229,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="obra_social_id">Obra Social</Label>
-                  <Select value={selectedObraSocial?.toString()} onValueChange={(value) => setValue('obra_social_id', value ? parseInt(value) : undefined)}>
+                  <Select value={selectedObraSocial ? selectedObraSocial.toString() : ""} onValueChange={(value) => setValue('obra_social_id', value ? parseInt(value) : undefined)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar obra social" />
                     </SelectTrigger>
@@ -252,7 +252,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                 </div>
                 <div>
                   <Label htmlFor="tag_id">Etiqueta de Estado</Label>
-                  <Select value={selectedTag?.toString()} onValueChange={(value) => setValue('tag_id', value ? parseInt(value) : undefined)}>
+                  <Select value={selectedTag ? selectedTag.toString() : ""} onValueChange={(value) => setValue('tag_id', value ? parseInt(value) : undefined)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar etiqueta" />
                     </SelectTrigger>

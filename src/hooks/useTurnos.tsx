@@ -32,8 +32,8 @@ export interface Turno {
 }
 
 export interface TurnoFormData {
-  paciente_id: number;
-  medico_id: number;
+  paciente_id: number | undefined;
+  medico_id: number | undefined;
   fecha: string;
   hora: string;
   estado: 'programado' | 'confirmado' | 'cancelado' | 'completado';

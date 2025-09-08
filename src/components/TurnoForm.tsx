@@ -17,8 +17,8 @@ interface TurnoFormProps {
 
 const TurnoForm = ({ turno, onClose }: TurnoFormProps) => {
   const [formData, setFormData] = useState<TurnoFormData>({
-    paciente_id: turno?.paciente_id || 0,
-    medico_id: turno?.medico_id || 0,
+    paciente_id: turno?.paciente_id || undefined,
+    medico_id: turno?.medico_id || undefined,
     fecha: turno?.fecha || '',
     hora: turno?.hora || '',
     estado: turno?.estado || 'programado',
@@ -63,7 +63,7 @@ const TurnoForm = ({ turno, onClose }: TurnoFormProps) => {
             <div className="space-y-2">
               <Label htmlFor="paciente_id">Paciente *</Label>
               <Select
-                value={formData.paciente_id.toString()}
+                value={formData.paciente_id ? formData.paciente_id.toString() : ""}
                 onValueChange={(value) => setFormData({ ...formData, paciente_id: parseInt(value) })}
               >
                 <SelectTrigger>
@@ -86,7 +86,7 @@ const TurnoForm = ({ turno, onClose }: TurnoFormProps) => {
             <div className="space-y-2">
               <Label htmlFor="medico_id">Médico *</Label>
               <Select
-                value={formData.medico_id.toString()}
+                value={formData.medico_id ? formData.medico_id.toString() : ""}
                 onValueChange={(value) => setFormData({ ...formData, medico_id: parseInt(value) })}
               >
                 <SelectTrigger>
