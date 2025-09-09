@@ -260,6 +260,29 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     // Move yPos after table
     yPos = tableStartY + tableHeight + 20;
     
+    // Diagnóstico section
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Diagnóstico', 20, yPos);
+    yPos += 10;
+    
+    // Crear un rectángulo para el área de escritura del diagnóstico
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setFillColor(255, 255, 255);
+    const diagnosticoBoxHeight = 40;
+    pdf.rect(20, yPos, pageWidth - 40, diagnosticoBoxHeight);
+    
+    // Agregar líneas para escribir dentro del rectángulo
+    pdf.setDrawColor(200, 200, 200);
+    for (let i = 1; i <= 6; i++) {
+      const lineY = yPos + (i * 6);
+      if (lineY < yPos + diagnosticoBoxHeight - 2) {
+        pdf.line(25, lineY, pageWidth - 25, lineY);
+      }
+    }
+    
+    yPos += diagnosticoBoxHeight + 20;
+    
     // Signature section
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
@@ -283,31 +306,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.line(110, yPos + 30, 190, yPos + 30); // Name line
     pdf.text('DNI:', 110, yPos + 40);
     pdf.line(110, yPos + 45, 190, yPos + 45); // DNI line
-    
-    // Diagnóstico section
-    yPos += 60; // Espacio después de las firmas
-    
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Diagnóstico', 20, yPos);
-    yPos += 10;
-    
-    // Crear un rectángulo para el área de escritura del diagnóstico
-    pdf.setDrawColor(0, 0, 0);
-    pdf.setFillColor(255, 255, 255);
-    const diagnosticoBoxHeight = 40;
-    pdf.rect(20, yPos, pageWidth - 40, diagnosticoBoxHeight);
-    
-    // Agregar líneas para escribir dentro del rectángulo
-    pdf.setDrawColor(200, 200, 200);
-    for (let i = 1; i <= 6; i++) {
-      const lineY = yPos + (i * 6);
-      if (lineY < yPos + diagnosticoBoxHeight - 2) {
-        pdf.line(25, lineY, pageWidth - 25, lineY);
-      }
-    }
-    
-    yPos += diagnosticoBoxHeight + 10;
     
     // Footer
     const footerY = pdf.internal.pageSize.getHeight() - 30;
