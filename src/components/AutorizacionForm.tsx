@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, Search } from 'lucide-react';
 import { usePatients } from '@/hooks/usePatients';
 import { useMedicos } from '@/hooks/useMedicos';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
@@ -22,6 +22,79 @@ interface AutorizacionFormProps {
   onCancel: () => void;
   isLoading?: boolean;
 }
+
+// Componente de búsqueda de médico
+interface MedicoSearchInputProps {
+  onSelect: (medicoId: number) => void;
+  selectedMedicoId?: number;
+  medicos: any[];
+}
+
+const MedicoSearchInput = ({ onSelect, selectedMedicoId, medicos }: MedicoSearchInputProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Buscar el médico seleccionado y mostrar su nombre
+  const selectedMedico = medicos.find(m => m.id === selectedMedicoId);
+  
+  useEffect(() => {
+    if (selectedMedico) {
+      setSearchTerm(`${selectedMedico.nombre} ${selectedMedico.apellido}`);
+    }
+  }, [selectedMedico]);
+
+  const filteredMedicos = medicos?.filter(medico =>
+    medico.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    medico.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    medico.matricula.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 5) || [];
+
+  const handleSelect = (medico: any) => {
+    onSelect(medico.id);
+    setSearchTerm(`${medico.nombre} ${medico.apellido}`);
+    setShowSuggestions(false);
+  };
+
+  const handleInputChange = (value: string) => {
+    setSearchTerm(value);
+    setShowSuggestions(true);
+    // Si borra el contenido, limpiar la selección
+    if (!value.trim()) {
+      // No llamar onSelect(undefined) para evitar problemas con react-hook-form
+    }
+  };
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Buscar médico por nombre o matrícula..."
+          value={searchTerm}
+          onChange={(e) => handleInputChange(e.target.value)}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className="pl-10"
+        />
+      </div>
+      
+      {showSuggestions && filteredMedicos.length > 0 && searchTerm.trim() && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+          {filteredMedicos.map((medico) => (
+            <div
+              key={medico.id}
+              className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+              onClick={() => handleSelect(medico)}
+            >
+              <div className="font-medium">{medico.nombre} {medico.apellido}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Matrícula: {medico.matricula}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
   autorizacion,
@@ -234,18 +307,11 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="medico_id">Médico Solicitante</Label>
-                <Select onValueChange={(value) => setValue('medico_id', parseInt(value))} defaultValue={watchedValues.medico_id?.toString()}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar médico" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {medicos?.map((medico) => (
-                      <SelectItem key={medico.id} value={String(medico.id)}>
-                        {medico.nombre} {medico.apellido} - Matrícula: {medico.matricula}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <MedicoSearchInput
+                  onSelect={(medicoId) => setValue('medico_id', medicoId)}
+                  selectedMedicoId={watchedValues.medico_id}
+                  medicos={medicos || []}
+                />
               </div>
 
               <div className="space-y-2">
