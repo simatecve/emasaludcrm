@@ -192,6 +192,22 @@ const ReportsManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Obra Social</label>
+              <Select value={filters.obraSocialId?.toString() || 'all'} onValueChange={(value) => updateFilter('obraSocialId', value === 'all' ? undefined : parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar obra social" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las obras sociales</SelectItem>
+                  {obrasSociales?.map((obraSocial) => (
+                    <SelectItem key={obraSocial.id} value={obraSocial.id.toString()}>
+                      {obraSocial.nombre}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>

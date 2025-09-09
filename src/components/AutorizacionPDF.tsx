@@ -123,7 +123,23 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       
       if (autorizacion.profesional_solicitante) {
         pdf.text(`Profesional: ${autorizacion.profesional_solicitante}`, 20, yPos);
-        yPos += 10;
+        yPos += 6;
+      }
+
+      // Agregar diagnóstico si existe
+      if (autorizacion.descripcion) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Diagnóstico:', 20, yPos);
+        pdf.setFont('helvetica', 'normal');
+        yPos += 6;
+        
+        // Dividir el texto del diagnóstico en líneas si es muy largo
+        const diagnosticoLines = pdf.splitTextToSize(autorizacion.descripcion, pageWidth - 40);
+        diagnosticoLines.forEach((line: string) => {
+          pdf.text(line, 20, yPos);
+          yPos += 5;
+        });
+        yPos += 5;
       }
     }
     

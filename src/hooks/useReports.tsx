@@ -80,7 +80,8 @@ export const useConsultasReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      const report: ConsultaReport[] = data?.map(consulta => ({
+      // Filter results in memory for obra social since it's a nested relationship
+      let report: ConsultaReport[] = data?.map(consulta => ({
         id: consulta.id,
         fecha_consulta: consulta.fecha_consulta,
         motivo: consulta.motivo || '',
@@ -94,6 +95,20 @@ export const useConsultasReport = (filters: ReportFilters) => {
         },
         obra_social: consulta.pacientes?.obras_sociales?.nombre || 'Sin obra social'
       })) || [];
+
+      // Apply obra social filter if specified
+      if (filters.obraSocialId) {
+        const obraSocialQuery = await supabase
+          .from('obras_sociales')
+          .select('nombre')
+          .eq('id', filters.obraSocialId)
+          .single();
+        
+        if (obraSocialQuery.data) {
+          const obraSocialNombre = obraSocialQuery.data.nombre;
+          report = report.filter(consulta => consulta.obra_social === obraSocialNombre);
+        }
+      }
 
       console.log('Consultas report:', report);
       return report;
@@ -305,7 +320,8 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      const report: AutorizacionReport[] = data?.map(autorizacion => ({
+      // Filter results in memory for obra social since it's a nested relationship
+      let report: AutorizacionReport[] = data?.map(autorizacion => ({
         id: autorizacion.id,
         numero_autorizacion: autorizacion.numero_autorizacion || '',
         fecha_solicitud: autorizacion.fecha_solicitud,
@@ -322,6 +338,20 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         },
         obra_social: autorizacion.pacientes?.obras_sociales?.nombre || 'Sin obra social'
       })) || [];
+
+      // Apply obra social filter if specified
+      if (filters.obraSocialId) {
+        const obraSocialQuery = await supabase
+          .from('obras_sociales')
+          .select('nombre')
+          .eq('id', filters.obraSocialId)
+          .single();
+        
+        if (obraSocialQuery.data) {
+          const obraSocialNombre = obraSocialQuery.data.nombre;
+          report = report.filter(autorizacion => autorizacion.obra_social === obraSocialNombre);
+        }
+      }
 
       return report;
     },
