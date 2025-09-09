@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useCreateAutorizacion } from '@/hooks/useAutorizaciones';
 import { usePatients } from '@/hooks/usePatients';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
+import { useMedicos } from '@/hooks/useMedicos';
 import { useToast } from '@/hooks/use-toast';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useNomecladorSearch } from '@/hooks/useNomeclador';
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Upload, Search } from 'lucide-react';
 
 interface PrestacionSearchInputProps {
   onSelect: (codigo: string, descripcion: string) => void;
@@ -62,6 +63,62 @@ const PrestacionSearchInput: React.FC<PrestacionSearchInputProps> = ({ onSelect 
   );
 };
 
+// Componente de búsqueda de médico
+interface MedicoSearchInputProps {
+  onSelect: (medicoId: string, medicoNombre: string) => void;
+  selectedMedico?: string;
+}
+
+const MedicoSearchInput = ({ onSelect, selectedMedico }: MedicoSearchInputProps) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const { data: medicos } = useMedicos();
+
+  const filteredMedicos = medicos?.filter(medico =>
+    medico.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    medico.apellido.toLowerCase().includes(searchTerm.toLowerCase())
+  ).slice(0, 5) || [];
+
+  const handleSelect = (medico: any) => {
+    onSelect(medico.id.toString(), `${medico.nombre} ${medico.apellido}`);
+    setSearchTerm(`${medico.nombre} ${medico.apellido}`);
+    setShowSuggestions(false);
+  };
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Buscar médico por nombre..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => setShowSuggestions(true)}
+          className="pl-10"
+        />
+      </div>
+      
+      {showSuggestions && filteredMedicos.length > 0 && (
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-40 overflow-y-auto">
+          {filteredMedicos.map((medico) => (
+            <div
+              key={medico.id}
+              className="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 border-b border-gray-100 dark:border-gray-600 last:border-b-0"
+              onClick={() => handleSelect(medico)}
+            >
+              <div className="font-medium">{medico.nombre} {medico.apellido}</div>
+              <div className="text-sm text-gray-500 dark:text-gray-400">Matrícula: {medico.matricula}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 interface SimplePrestadorAutorizacionFormProps {
   onClose: () => void;
 }
@@ -70,6 +127,7 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
   const [formData, setFormData] = useState({
     paciente_id: '',
     obra_social_id: '',
+    medico_id: '',
     tipo_autorizacion: '',
     descripcion: '',
     prestacion_codigo: '',
@@ -192,6 +250,16 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="medico_id">Médico Solicitante</Label>
+            <MedicoSearchInput
+              onSelect={(medicoId, medicoNombre) => {
+                setFormData(prev => ({ ...prev, medico_id: medicoId }));
+              }}
+              selectedMedico={formData.medico_id}
+            />
           </div>
 
           <div>
