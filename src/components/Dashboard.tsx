@@ -170,44 +170,6 @@ const Dashboard = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Stats Overview Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              Resumen General
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <div className="text-center py-4">Cargando datos...</div>
-            ) : (
-              <ChartContainer config={statsChartConfig} className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={statsData}>
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis 
-                      tick={{ fontSize: 12 }}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <ChartTooltip 
-                      content={<ChartTooltipContent hideLabel />}
-                      cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            )}
-          </CardContent>
-        </Card>
-
         {/* Turnos Status Chart */}
         <Card>
           <CardHeader>
@@ -250,9 +212,7 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Obras Sociales Chart */}
         <Card>
           <CardHeader>
@@ -297,7 +257,9 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+      </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Appointments */}
         <Card>
           <CardHeader>
@@ -342,6 +304,42 @@ const Dashboard = () => {
                 ) : (
                   <div className="text-center py-4 text-muted-foreground">
                     No hay turnos programados para hoy
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Obras Sociales */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-green-600" />
+              Obras Sociales - Este Mes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {obrasLoading ? (
+              <div className="text-center py-4">Cargando estadísticas...</div>
+            ) : (
+              <div className="space-y-3">
+                {obrasSocialesStats && obrasSocialesStats.length > 0 ? (
+                  obrasSocialesStats.map((obra, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{obra.nombre}</p>
+                        <p className="text-sm text-muted-foreground">{obra.pacientes} pacientes</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-primary">{obra.consultas}</p>
+                        <p className="text-xs text-muted-foreground">consultas</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No hay datos de obras sociales disponibles
                   </div>
                 )}
               </div>
