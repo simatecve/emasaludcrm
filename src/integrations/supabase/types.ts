@@ -256,6 +256,42 @@ export type Database = {
           },
         ]
       }
+      credenciales: {
+        Row: {
+          created_at: string
+          estado: string
+          fecha_emision: string
+          fecha_vencimiento: string
+          id: string
+          numero_credencial: string
+          observaciones: string | null
+          paciente_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          fecha_emision?: string
+          fecha_vencimiento: string
+          id?: string
+          numero_credencial: string
+          observaciones?: string | null
+          paciente_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          fecha_emision?: string
+          fecha_vencimiento?: string
+          id?: string
+          numero_credencial?: string
+          observaciones?: string | null
+          paciente_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       diagnosticos: {
         Row: {
           created_at: string | null

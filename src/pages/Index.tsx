@@ -9,6 +9,7 @@ import AppointmentScheduler from '@/components/AppointmentScheduler';
 import MedicoManagement from '@/components/MedicoManagement';
 import ObraSocialManagement from '@/components/ObraSocialManagement';
 import AutorizacionManagement from '@/components/AutorizacionManagement';
+import CredencialGenerator from '@/components/CredencialGenerator';
 import NomecladorManagement from '@/components/NomecladorManagement';
 import UserManagement from '@/components/UserManagement';
 import AuditLogs from '@/components/AuditLogs';
@@ -57,6 +58,8 @@ const Index = () => {
         return <NomecladorManagement />;
       case 'authorizations':
         return <AutorizacionManagement />;
+      case 'credenciales':
+        return <CredencialGenerator />;
       case 'reports':
         return <ReportsManagement />;
       case 'users':
