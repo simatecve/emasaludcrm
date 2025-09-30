@@ -11,6 +11,11 @@ export interface ReportFilters {
   pacienteId?: number;
   estado?: string;
   tipoAutorizacion?: string;
+  numeroAutorizacion?: string;
+  prestador?: string;
+  prestacionCodigo?: string;
+  numeroCredencial?: string;
+  parentescoBeneficiario?: string;
 }
 
 export interface ConsultaReport {
@@ -309,11 +314,26 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
       if (filters.estado) {
         query = query.eq('estado', filters.estado);
       }
-      if (filters.tipoAutorizacion) {
-        query = query.eq('tipo_autorizacion', filters.tipoAutorizacion);
-      }
+       if (filters.tipoAutorizacion) {
+         query = query.eq('tipo_autorizacion', filters.tipoAutorizacion);
+       }
+       if (filters.numeroAutorizacion) {
+         query = query.ilike('numero_autorizacion', `%${filters.numeroAutorizacion}%`);
+       }
+       if (filters.prestador) {
+         query = query.ilike('prestador', `%${filters.prestador}%`);
+       }
+       if (filters.prestacionCodigo) {
+         query = query.ilike('prestacion_codigo', `%${filters.prestacionCodigo}%`);
+       }
+       if (filters.numeroCredencial) {
+         query = query.ilike('numero_credencial', `%${filters.numeroCredencial}%`);
+       }
+       if (filters.parentescoBeneficiario) {
+         query = query.ilike('parentesco_beneficiario', `%${filters.parentescoBeneficiario}%`);
+       }
 
-      const { data, error } = await query;
+       const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching autorizaciones report:', error);

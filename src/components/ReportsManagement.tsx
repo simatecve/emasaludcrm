@@ -209,6 +209,55 @@ const ReportsManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">N° Autorización</label>
+              <Input
+                placeholder="Número de autorización"
+                value={filters.numeroAutorizacion || ''}
+                onChange={(e) => updateFilter('numeroAutorizacion', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Prestador</label>
+              <Input
+                placeholder="Nombre del prestador"
+                value={filters.prestador || ''}
+                onChange={(e) => updateFilter('prestador', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Código Prestación</label>
+              <Input
+                placeholder="Código de prestación"
+                value={filters.prestacionCodigo || ''}
+                onChange={(e) => updateFilter('prestacionCodigo', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">N° Credencial</label>
+              <Input
+                placeholder="Número de credencial"
+                value={filters.numeroCredencial || ''}
+                onChange={(e) => updateFilter('numeroCredencial', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Parentesco</label>
+              <Select value={filters.parentescoBeneficiario || 'all'} onValueChange={(value) => updateFilter('parentescoBeneficiario', value === 'all' ? undefined : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar parentesco" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los parentescos</SelectItem>
+                  <SelectItem value="titular">Titular</SelectItem>
+                  <SelectItem value="conyuge">Cónyuge</SelectItem>
+                  <SelectItem value="hijo">Hijo/a</SelectItem>
+                  <SelectItem value="padre">Padre</SelectItem>
+                  <SelectItem value="madre">Madre</SelectItem>
+                  <SelectItem value="otro">Otro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
