@@ -229,6 +229,7 @@ const PrestadorAutorizacionForm = ({ onClose }: PrestadorAutorizacionFormProps) 
                 <SelectItem value="cirugia">Cirugía</SelectItem>
                 <SelectItem value="medicamento">Medicamento</SelectItem>
                 <SelectItem value="internacion">Internación</SelectItem>
+                <SelectItem value="laboratorio">Laboratorio</SelectItem>
               </SelectContent>
             </Select>
           </div>

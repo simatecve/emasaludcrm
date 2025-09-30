@@ -230,6 +230,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
                     <SelectItem value="cirugia">Cirugía</SelectItem>
                     <SelectItem value="medicamento">Medicamento</SelectItem>
                     <SelectItem value="internacion">Internación</SelectItem>
+                    <SelectItem value="laboratorio">Laboratorio</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.tipo_autorizacion && (
