@@ -104,12 +104,12 @@ const ReportsManagement = () => {
         <h1 className="text-3xl font-bold text-gray-900">Informes y Reportes</h1>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros Generales */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtros de Búsqueda
+            Filtros Generales
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -131,6 +131,22 @@ const ReportsManagement = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium mb-2">Paciente</label>
+              <Select value={filters.pacienteId?.toString() || 'all'} onValueChange={(value) => updateFilter('pacienteId', value === 'all' ? undefined : parseInt(value))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar paciente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los pacientes</SelectItem>
+                  {pacientes?.map((paciente) => (
+                    <SelectItem key={paciente.id} value={paciente.id.toString()}>
+                      {paciente.nombre} {paciente.apellido} - {paciente.dni}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
               <label className="block text-sm font-medium mb-2">Médico</label>
               <Select value={filters.medicoId?.toString() || 'all'} onValueChange={(value) => updateFilter('medicoId', value === 'all' ? undefined : parseInt(value))}>
                 <SelectTrigger>
@@ -146,19 +162,41 @@ const ReportsManagement = () => {
                 </SelectContent>
               </Select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Filtros Específicos de Autorizaciones */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
+            Filtros de Autorizaciones
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Paciente</label>
-              <Select value={filters.pacienteId?.toString() || 'all'} onValueChange={(value) => updateFilter('pacienteId', value === 'all' ? undefined : parseInt(value))}>
+              <label className="block text-sm font-medium mb-2">N° Autorización</label>
+              <Input
+                placeholder="Número de autorización"
+                value={filters.numeroAutorizacion || ''}
+                onChange={(e) => updateFilter('numeroAutorizacion', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Tipo Autorización</label>
+              <Select value={filters.tipoAutorizacion || 'all'} onValueChange={(value) => updateFilter('tipoAutorizacion', value === 'all' ? undefined : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar paciente" />
+                  <SelectValue placeholder="Seleccionar tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos los pacientes</SelectItem>
-                  {pacientes?.map((paciente) => (
-                    <SelectItem key={paciente.id} value={paciente.id.toString()}>
-                      {paciente.nombre} {paciente.apellido} - {paciente.dni}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">Todos los tipos</SelectItem>
+                  <SelectItem value="consulta">Consulta</SelectItem>
+                  <SelectItem value="practica">Práctica</SelectItem>
+                  <SelectItem value="medicamento">Medicamento</SelectItem>
+                  <SelectItem value="internacion">Internación</SelectItem>
+                  <SelectItem value="laboratorio">Laboratorio</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -178,22 +216,6 @@ const ReportsManagement = () => {
               </Select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Tipo Autorización</label>
-              <Select value={filters.tipoAutorizacion || 'all'} onValueChange={(value) => updateFilter('tipoAutorizacion', value === 'all' ? undefined : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los tipos</SelectItem>
-                  <SelectItem value="consulta">Consulta</SelectItem>
-                  <SelectItem value="practica">Práctica</SelectItem>
-                  <SelectItem value="medicamento">Medicamento</SelectItem>
-                  <SelectItem value="internacion">Internación</SelectItem>
-                  <SelectItem value="laboratorio">Laboratorio</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-2">Obra Social</label>
               <Select value={filters.obraSocialId?.toString() || 'all'} onValueChange={(value) => updateFilter('obraSocialId', value === 'all' ? undefined : parseInt(value))}>
                 <SelectTrigger>
@@ -208,14 +230,6 @@ const ReportsManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">N° Autorización</label>
-              <Input
-                placeholder="Número de autorización"
-                value={filters.numeroAutorizacion || ''}
-                onChange={(e) => updateFilter('numeroAutorizacion', e.target.value)}
-              />
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Prestador</label>
@@ -257,6 +271,30 @@ const ReportsManagement = () => {
                   <SelectItem value="otro">Otro</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Profesional Solicitante</label>
+              <Input
+                placeholder="Nombre del profesional"
+                value={filters.profesionalSolicitante || ''}
+                onChange={(e) => updateFilter('profesionalSolicitante', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Descripción</label>
+              <Input
+                placeholder="Descripción"
+                value={filters.descripcion || ''}
+                onChange={(e) => updateFilter('descripcion', e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Observaciones</label>
+              <Input
+                placeholder="Observaciones"
+                value={filters.observaciones || ''}
+                onChange={(e) => updateFilter('observaciones', e.target.value)}
+              />
             </div>
           </div>
         </CardContent>
@@ -493,42 +531,69 @@ const ReportsManagement = () => {
               {autorizacionesLoading ? (
                 <div className="text-center py-8">Cargando autorizaciones...</div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>N° Autorización</TableHead>
-                      <TableHead>Fecha Solicitud</TableHead>
-                      <TableHead>Tipo</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Paciente</TableHead>
-                      <TableHead>Obra Social</TableHead>
-                      <TableHead>Prestación</TableHead>
-                      <TableHead>Prestador</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {autorizacionesReport?.map((autorizacion) => (
-                      <TableRow key={autorizacion.id}>
-                        <TableCell>{autorizacion.numero_autorizacion}</TableCell>
-                        <TableCell>{new Date(autorizacion.fecha_solicitud).toLocaleDateString('es-AR')}</TableCell>
-                        <TableCell className="capitalize">{autorizacion.tipo_autorizacion}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 text-xs rounded-full ${
-                            autorizacion.estado === 'aprobada' ? 'bg-green-100 text-green-800' :
-                            autorizacion.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                          }`}>
-                            {autorizacion.estado}
-                          </span>
-                        </TableCell>
-                        <TableCell>{autorizacion.paciente.nombre} {autorizacion.paciente.apellido}</TableCell>
-                        <TableCell>{autorizacion.obra_social}</TableCell>
-                        <TableCell>{autorizacion.prestacion_codigo} - {autorizacion.prestacion_descripcion}</TableCell>
-                        <TableCell>{autorizacion.prestador}</TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>N° Autorización</TableHead>
+                        <TableHead>Fecha Solicitud</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Paciente</TableHead>
+                        <TableHead>DNI</TableHead>
+                        <TableHead>Obra Social</TableHead>
+                        <TableHead>N° Credencial</TableHead>
+                        <TableHead>Parentesco</TableHead>
+                        <TableHead>Prestación</TableHead>
+                        <TableHead>Prestador</TableHead>
+                        <TableHead>Prof. Solicitante</TableHead>
+                        <TableHead>Descripción</TableHead>
+                        <TableHead>Observaciones</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {autorizacionesReport?.map((autorizacion) => (
+                        <TableRow key={autorizacion.id}>
+                          <TableCell className="font-medium">{autorizacion.numero_autorizacion}</TableCell>
+                          <TableCell>{new Date(autorizacion.fecha_solicitud).toLocaleDateString('es-AR')}</TableCell>
+                          <TableCell className="capitalize">{autorizacion.tipo_autorizacion}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
+                              autorizacion.estado === 'aprobada' ? 'bg-green-100 text-green-800' :
+                              autorizacion.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {autorizacion.estado}
+                            </span>
+                          </TableCell>
+                          <TableCell className="whitespace-nowrap">{autorizacion.paciente.nombre} {autorizacion.paciente.apellido}</TableCell>
+                          <TableCell>{autorizacion.paciente.dni}</TableCell>
+                          <TableCell>{autorizacion.obra_social}</TableCell>
+                          <TableCell>{autorizacion.numero_credencial}</TableCell>
+                          <TableCell className="capitalize">{autorizacion.parentesco_beneficiario}</TableCell>
+                          <TableCell>
+                            <div className="max-w-xs">
+                              <div className="font-medium">{autorizacion.prestacion_codigo}</div>
+                              <div className="text-sm text-gray-500">{autorizacion.prestacion_descripcion}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{autorizacion.prestador}</TableCell>
+                          <TableCell>{autorizacion.profesional_solicitante}</TableCell>
+                          <TableCell>
+                            <div className="max-w-xs truncate" title={autorizacion.descripcion}>
+                              {autorizacion.descripcion}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="max-w-xs truncate" title={autorizacion.observaciones}>
+                              {autorizacion.observaciones}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardContent>
           </Card>

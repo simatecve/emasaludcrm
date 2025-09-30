@@ -16,6 +16,9 @@ export interface ReportFilters {
   prestacionCodigo?: string;
   numeroCredencial?: string;
   parentescoBeneficiario?: string;
+  profesionalSolicitante?: string;
+  descripcion?: string;
+  observaciones?: string;
 }
 
 export interface ConsultaReport {
@@ -255,6 +258,11 @@ export interface AutorizacionReport {
   prestador?: string;
   prestacion_codigo?: string;
   prestacion_descripcion?: string;
+  profesional_solicitante?: string;
+  descripcion?: string;
+  observaciones?: string;
+  parentesco_beneficiario?: string;
+  numero_credencial?: string;
 }
 
 export interface MedicoReport {
@@ -298,6 +306,11 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
           prestador,
           prestacion_codigo,
           prestacion_descripcion,
+          profesional_solicitante,
+          descripcion,
+          observaciones,
+          parentesco_beneficiario,
+          numero_credencial,
           pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre))
         `)
         .order('fecha_solicitud', { ascending: false });
@@ -332,6 +345,15 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
        if (filters.parentescoBeneficiario) {
          query = query.ilike('parentesco_beneficiario', `%${filters.parentescoBeneficiario}%`);
        }
+       if (filters.profesionalSolicitante) {
+         query = query.ilike('profesional_solicitante', `%${filters.profesionalSolicitante}%`);
+       }
+       if (filters.descripcion) {
+         query = query.ilike('descripcion', `%${filters.descripcion}%`);
+       }
+       if (filters.observaciones) {
+         query = query.ilike('observaciones', `%${filters.observaciones}%`);
+       }
 
        const { data, error } = await query;
 
@@ -351,6 +373,11 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         prestador: autorizacion.prestador || '',
         prestacion_codigo: autorizacion.prestacion_codigo || '',
         prestacion_descripcion: autorizacion.prestacion_descripcion || '',
+        profesional_solicitante: autorizacion.profesional_solicitante || '',
+        descripcion: autorizacion.descripcion || '',
+        observaciones: autorizacion.observaciones || '',
+        parentesco_beneficiario: autorizacion.parentesco_beneficiario || '',
+        numero_credencial: autorizacion.numero_credencial || '',
         paciente: {
           nombre: autorizacion.pacientes?.nombre || '',
           apellido: autorizacion.pacientes?.apellido || '',
