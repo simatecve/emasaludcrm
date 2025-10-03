@@ -19,69 +19,68 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginBottom = 40; // Margen inferior para evitar contenido en el footer
     
-    // Load and add logo image
-    const logoImg = new Image();
-    logoImg.crossOrigin = 'anonymous';
+    // Función para agregar header y logo (reutilizable para nuevas páginas)
+    const addPageHeader = async (isFirstPage = false) => {
+      try {
+        const logoImg = new Image();
+        logoImg.crossOrigin = 'anonymous';
+        
+        await new Promise((resolve, reject) => {
+          logoImg.onload = resolve;
+          logoImg.onerror = reject;
+          logoImg.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
+        });
+        
+        if (isFirstPage) {
+          // Add watermark logo in the center of the page (semi-transparent)
+          const watermarkSize = 120;
+          const centerX = pageWidth / 2;
+          const centerY = pageHeight / 2;
+          
+          pdf.saveGraphicsState();
+          pdf.setGState(pdf.GState({ opacity: 0.1 }));
+          
+          pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
+          pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 + 10, centerY - watermarkSize/2 - 10, watermarkSize, watermarkSize);
+          pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 - 10, centerY - watermarkSize/2 + 10, watermarkSize, watermarkSize);
+          
+          pdf.restoreGraphicsState();
+        }
+        
+        // Add logo to PDF (upper left corner)
+        const logoWidth = 40;
+        const logoHeight = 25;
+        pdf.addImage(logoImg, 'PNG', 20, 10, logoWidth, logoHeight);
+        
+        // Header with company info
+        pdf.setFontSize(18);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('EMA SALUD', 70, 20);
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text('AV. LIBERTADOR 457', 70, 27);
+        pdf.text('(e) CAPITAL', 70, 32);
+        
+        // Authorization title and number
+        pdf.setFontSize(16);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text('Autorización', pageWidth - 20, 15, { align: 'right' });
+        
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 25, { align: 'right' });
+        
+        // Horizontal line
+        pdf.line(20, 45, pageWidth - 20, 45);
+      } catch (error) {
+        console.error('Error loading logo:', error);
+      }
+    };
     
-    try {
-      await new Promise((resolve, reject) => {
-        logoImg.onload = resolve;
-        logoImg.onerror = reject;
-        logoImg.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
-      });
-      
-      // Add watermark logo in the center of the page (semi-transparent)
-      const watermarkSize = 120;
-      const centerX = pageWidth / 2;
-      const centerY = pageHeight / 2;
-      
-      // Save current graphics state
-      pdf.saveGraphicsState();
-      
-      // Set transparency for watermark (using setGState)
-      pdf.setGState(pdf.GState({ opacity: 0.1 }));
-      
-      // Add watermark image in center (we'll add multiple rotated copies to simulate rotation effect)
-      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2, centerY - watermarkSize/2, watermarkSize, watermarkSize);
-      
-      // Add additional watermark copies with slight offsets to create a subtle rotation effect
-      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 + 10, centerY - watermarkSize/2 - 10, watermarkSize, watermarkSize);
-      pdf.addImage(logoImg, 'PNG', centerX - watermarkSize/2 - 10, centerY - watermarkSize/2 + 10, watermarkSize, watermarkSize);
-      
-      // Restore graphics state
-      pdf.restoreGraphicsState();
-      
-      // Add logo to PDF (upper left corner - normal logo)
-      const logoWidth = 40;
-      const logoHeight = 25;
-      pdf.addImage(logoImg, 'PNG', 20, 10, logoWidth, logoHeight);
-    } catch (error) {
-      console.error('Error loading logo:', error);
-    }
-    
-    // Header with company info (adjusted for logo)
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    
-    // Company name (moved right to accommodate logo)
-    pdf.text('EMA SALUD', 70, 20);
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('AV. LIBERTADOR 457', 70, 27);
-    pdf.text('(e) CAPITAL', 70, 32);
-    
-    // Authorization title and number (moved to upper right)
-    pdf.setFontSize(16);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Autorización', pageWidth - 20, 15, { align: 'right' });
-    
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 25, { align: 'right' });
-    
-    // Horizontal line (moved down to accommodate logo)
-    pdf.line(20, 45, pageWidth - 20, 45);
+    // Agregar header en la primera página
+    await addPageHeader(true);
     
     let yPos = 60;
     
@@ -143,122 +142,117 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       }
     }
     
+    // Función para dibujar el header de la tabla
+    const drawTableHeader = (startY: number) => {
+      pdf.setFillColor(52, 85, 139);
+      pdf.rect(20, startY, pageWidth - 40, 12, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.text('Cant', 25, startY + 8);
+      pdf.text('Cod', 55, startY + 8);
+      pdf.text('Descripcion', 95, startY + 8);
+      
+      return startY + 12;
+    };
+    
+    // Función para verificar si necesitamos nueva página
+    const checkAndAddNewPage = async (requiredSpace: number, currentY: number) => {
+      if (currentY + requiredSpace > pageHeight - marginBottom) {
+        pdf.addPage();
+        await addPageHeader(false);
+        return 60; // Retornar nueva posición Y después del header
+      }
+      return currentY;
+    };
+    
     // Prestaciones table
     pdf.setFont('helvetica', 'bold');
     pdf.text('Detalles de Prestaciones', 20, yPos);
     yPos += 10;
     
-    // Table header
-    const tableStartY = yPos;
-    const colWidths = [30, 40, 120];
+    // Verificar espacio para el header de la tabla
+    yPos = await checkAndAddNewPage(20, yPos);
+    
+    // Table header positions
     const colPositions = [20, 50, 90];
-    
-    pdf.setFillColor(52, 85, 139); // Blue background
-    pdf.rect(20, yPos, pageWidth - 40, 12, 'F');
-    
-    pdf.setTextColor(255, 255, 255); // White text
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(10);
-    pdf.text('Cant', colPositions[0] + 5, yPos + 8);
-    pdf.text('Cod', colPositions[1] + 5, yPos + 8);
-    pdf.text('Descripcion', colPositions[2] + 5, yPos + 8);
-    
-    yPos += 12;
+    let tableStartY = yPos;
+    yPos = drawTableHeader(yPos);
     
     // Table content
-    pdf.setTextColor(0, 0, 0); // Black text
+    pdf.setTextColor(0, 0, 0);
     pdf.setFont('helvetica', 'normal');
     
-    let totalRowHeight = 0;
-    const rowData = []; // Para almacenar información de cada fila
+    // Preparar datos de prestaciones
+    const prestaciones = autorizacion.prestaciones && autorizacion.prestaciones.length > 0
+      ? autorizacion.prestaciones
+      : [{ cantidad: 1, prestacion_codigo: 'N/A', prestacion_descripcion: 'Sin prestaciones especificadas' }];
     
-    // Render prestaciones from the prestaciones array
-    if (autorizacion.prestaciones && autorizacion.prestaciones.length > 0) {
-      autorizacion.prestaciones.forEach((prestacion, index) => {
-        const cantidad = prestacion.cantidad || 1;
-        const codigo = prestacion.prestacion_codigo || '';
-        const descripcion = prestacion.prestacion_descripcion || '';
-        
-        // Calcular altura de la fila basada en el texto más largo
-        // Limitar a aproximadamente 30-35 caracteres por línea
-        const maxWidth = 85; // Aproximadamente 30-35 caracteres
-        const descLines = pdf.splitTextToSize(descripcion, maxWidth);
-        const rowHeight = Math.max(12, (descLines.length * 5) + 8); // Espaciado mejorado
-        
-        // Almacenar datos de la fila
-        rowData.push({
-          cantidad: cantidad.toString(),
-          codigo: codigo,
-          descripcion: descLines,
-          height: rowHeight,
-          yStart: yPos
-        });
-        
-        totalRowHeight += rowHeight;
-        yPos += rowHeight;
-      });
-    } else {
-      // Fallback si no hay prestaciones
-      const rowHeight = 12;
-      rowData.push({
-        cantidad: '1',
-        codigo: 'N/A',
-        descripcion: ['Sin prestaciones especificadas'],
-        height: rowHeight,
-        yStart: yPos
-      });
-      totalRowHeight = rowHeight;
-      yPos += rowHeight;
-    }
-    
-    // Dibujar el contenido de las filas y los bordes
-    rowData.forEach((row, index) => {
-      const rowY = row.yStart;
+    // Renderizar cada fila de prestación con verificación de espacio
+    for (let index = 0; index < prestaciones.length; index++) {
+      const prestacion = prestaciones[index];
+      const cantidad = prestacion.cantidad || 1;
+      const codigo = prestacion.prestacion_codigo || '';
+      const descripcion = prestacion.prestacion_descripcion || '';
       
-      // Dibujar fondo alternado para mejor legibilidad
+      // Calcular altura de la fila
+      const maxWidth = 85;
+      const descLines = pdf.splitTextToSize(descripcion, maxWidth);
+      const rowHeight = Math.max(12, (descLines.length * 5) + 8);
+      
+      // Verificar si necesitamos nueva página para esta fila
+      const newY = await checkAndAddNewPage(rowHeight + 5, yPos);
+      
+      // Si cambiamos de página, redibujamos el header de la tabla
+      if (newY !== yPos) {
+        yPos = newY;
+        tableStartY = yPos;
+        yPos = drawTableHeader(yPos);
+      }
+      
+      // Dibujar fondo alternado
       if (index % 2 === 1) {
-        pdf.setFillColor(248, 249, 250); // Gris muy claro
-        pdf.rect(20, rowY, pageWidth - 40, row.height, 'F');
+        pdf.setFillColor(248, 249, 250);
+        pdf.rect(20, yPos, pageWidth - 40, rowHeight, 'F');
       }
       
       // Dibujar contenido de las celdas
       pdf.setTextColor(0, 0, 0);
       
-      // Cantidad - centrada verticalmente
-      const cantidadY = rowY + (row.height / 2) + 2;
-      pdf.text(row.cantidad, colPositions[0] + 5, cantidadY);
+      // Cantidad y código centrados verticalmente
+      const textY = yPos + (rowHeight / 2) + 2;
+      pdf.text(cantidad.toString(), colPositions[0] + 5, textY);
+      pdf.text(codigo, colPositions[1] + 5, textY);
       
-      // Código - centrado verticalmente
-      pdf.text(row.codigo, colPositions[1] + 5, cantidadY);
+      // Descripción con múltiples líneas
+      descLines.forEach((line: string, lineIndex: number) => {
+        const lineY = yPos + 8 + (lineIndex * 5);
+        pdf.text(line, colPositions[2] + 5, lineY);
+      });
       
-      // Descripción - con manejo de múltiples líneas
-      if (Array.isArray(row.descripcion)) {
-        row.descripcion.forEach((line, lineIndex) => {
-          const lineY = rowY + 8 + (lineIndex * 5); // Espaciado entre líneas
-          pdf.text(line, colPositions[2] + 5, lineY);
-        });
-      } else {
-        pdf.text(row.descripcion, colPositions[2] + 5, cantidadY);
-      }
+      // Dibujar borde horizontal inferior
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(20, yPos + rowHeight, pageWidth - 20, yPos + rowHeight);
       
-      // Dibujar borde horizontal inferior de la fila
-      pdf.setDrawColor(200, 200, 200); // Gris claro para las líneas
-      pdf.line(20, rowY + row.height, pageWidth - 20, rowY + row.height);
-    });
+      // Líneas verticales de la fila
+      pdf.line(colPositions[1], yPos, colPositions[1], yPos + rowHeight);
+      pdf.line(colPositions[2], yPos, colPositions[2], yPos + rowHeight);
+      
+      yPos += rowHeight;
+    }
     
-    // Restablecer color de línea
+    // Bordes exteriores de la tabla (izquierdo y derecho)
     pdf.setDrawColor(0, 0, 0);
+    pdf.line(20, tableStartY, 20, yPos); // Izquierdo
+    pdf.line(pageWidth - 20, tableStartY, pageWidth - 20, yPos); // Derecho
+    pdf.line(20, tableStartY, pageWidth - 20, tableStartY); // Superior
+    pdf.line(20, yPos, pageWidth - 20, yPos); // Inferior final
     
-    // Table border exterior
-    const tableHeight = 12 + totalRowHeight;
-    pdf.rect(20, tableStartY, pageWidth - 40, tableHeight);
+    yPos += 20;
     
-    // Vertical lines for table
-    pdf.line(colPositions[1], tableStartY, colPositions[1], tableStartY + tableHeight);
-    pdf.line(colPositions[2], tableStartY, colPositions[2], tableStartY + tableHeight);
-    
-    // Move yPos after table
-    yPos = tableStartY + tableHeight + 20;
+    // Verificar espacio para sección de diagnóstico
+    yPos = await checkAndAddNewPage(60, yPos);
     
     // Diagnóstico section
     pdf.setFontSize(12);
@@ -282,6 +276,9 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     }
     
     yPos += diagnosticoBoxHeight + 20;
+    
+    // Verificar espacio para sección de firmas
+    yPos = await checkAndAddNewPage(70, yPos);
     
     // Signature section
     pdf.setFontSize(12);
