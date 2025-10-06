@@ -34,12 +34,14 @@ import { Plus, Edit, Trash2, Search, FileText, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const AutorizacionManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAutorizacion, setSelectedAutorizacion] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const { data: autorizaciones, isLoading, refetch } = useAutorizaciones();
   const { data: currentUser } = useCurrentUser();
   const updateAutorizacion = useUpdateAutorizacion();
@@ -85,6 +87,7 @@ const AutorizacionManagement = () => {
         title: "Autorización eliminada",
         description: "La autorización se ha eliminado exitosamente.",
       });
+      setSelectedIds(prev => prev.filter(id => id !== autorizacionId));
     } catch (error: any) {
       toast({
         title: "Error",
@@ -92,6 +95,39 @@ const AutorizacionManagement = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    
+    try {
+      await Promise.all(selectedIds.map(id => deleteAutorizacion.mutateAsync(id)));
+      toast({
+        title: "Autorizaciones eliminadas",
+        description: `Se eliminaron ${selectedIds.length} autorizaciones exitosamente.`,
+      });
+      setSelectedIds([]);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Error al eliminar las autorizaciones: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredAutorizaciones.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredAutorizaciones.map(a => a.id));
+    }
+  };
+
+  const toggleSelect = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(selectedId => selectedId !== id) : [...prev, id]
+    );
   };
 
   const handleFormSubmit = async (data: any) => {
@@ -147,13 +183,23 @@ const AutorizacionManagement = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">Gestión de Autorizaciones</h2>
-        <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nueva Autorización
+        <div className="flex gap-2">
+          {currentUser?.role === 'admin' && selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleDeleteSelected}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Eliminar Seleccionados ({selectedIds.length})
             </Button>
-          </DialogTrigger>
+          )}
+          <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Autorización
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
@@ -168,6 +214,7 @@ const AutorizacionManagement = () => {
             />
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -209,6 +256,14 @@ const AutorizacionManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                {currentUser?.role === 'admin' && (
+                  <TableHead className="w-12">
+                    <Checkbox
+                      checked={selectedIds.length === filteredAutorizaciones.length && filteredAutorizaciones.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Paciente</TableHead>
                 <TableHead>Obra Social</TableHead>
                 <TableHead>Tipo</TableHead>
@@ -221,6 +276,14 @@ const AutorizacionManagement = () => {
             <TableBody>
               {filteredAutorizaciones.map((autorizacion) => (
                 <TableRow key={autorizacion.id}>
+                  {currentUser?.role === 'admin' && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.includes(autorizacion.id)}
+                        onCheckedChange={() => toggleSelect(autorizacion.id)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     <div>
                       <div className="font-medium">
@@ -299,6 +362,17 @@ const AutorizacionManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
+                      {currentUser?.role === 'admin' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(autorizacion.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                      
                       <AutorizacionPDF autorizacion={autorizacion} />
                       
                       <Button
@@ -311,17 +385,6 @@ const AutorizacionManagement = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-
-                      {currentUser?.role === 'admin' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(autorizacion.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
