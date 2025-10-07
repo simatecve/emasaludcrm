@@ -146,7 +146,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     }
     
     // Usar la posición Y mayor de ambas columnas
-    yPos = Math.max(leftYPos, rightYPos) + 10;
+    yPos = Math.max(leftYPos, rightYPos) + 5;
     
     // Función para dibujar el header de la tabla
     const drawTableHeader = (startY: number) => {
@@ -176,7 +176,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     // Prestaciones table
     pdf.setFont('helvetica', 'bold');
     pdf.text('Detalles de Prestaciones', 20, yPos);
-    yPos += 10;
+    yPos += 6;
     
     // Table header positions
     const colPositions = [20, 50, 90];
@@ -252,33 +252,33 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.line(20, tableStartY, pageWidth - 20, tableStartY); // Superior
     pdf.line(20, yPos, pageWidth - 20, yPos); // Inferior final
     
-    yPos += 20;
+    yPos += 10;
     
     // Diagnóstico section
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Diagnóstico', 20, yPos);
-    yPos += 10;
+    yPos += 6;
     
     // Crear un rectángulo para el área de escritura del diagnóstico
     pdf.setDrawColor(0, 0, 0);
     pdf.setFillColor(255, 255, 255);
-    const diagnosticoBoxHeight = 40;
+    const diagnosticoBoxHeight = 30;
     pdf.rect(20, yPos, pageWidth - 40, diagnosticoBoxHeight);
     
     // Agregar líneas para escribir dentro del rectángulo
     pdf.setDrawColor(200, 200, 200);
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 4; i++) {
       const lineY = yPos + (i * 6);
       if (lineY < yPos + diagnosticoBoxHeight - 2) {
         pdf.line(25, lineY, pageWidth - 25, lineY);
       }
     }
     
-    yPos += diagnosticoBoxHeight + 20;
+    yPos += diagnosticoBoxHeight + 10;
     
-    // Verificar si hay espacio para la sección de firmas completa (necesita ~60 unidades)
-    if (yPos + 60 > pageHeight - marginBottom) {
+    // Verificar si hay espacio para la sección de firmas completa (necesita ~55 unidades)
+    if (yPos + 55 > pageHeight - marginBottom) {
       pdf.addPage();
       await addPageHeader(false);
       yPos = 60;
@@ -288,7 +288,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Firmas', 20, yPos);
-    yPos += 15;
+    yPos += 10;
     
     // Specialist signature
     pdf.setFont('helvetica', 'normal');
