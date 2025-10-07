@@ -19,7 +19,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const marginBottom = 40; // Margen inferior para evitar contenido en el footer
+    const marginBottom = 20; // Margen inferior reducido
     
     // Función para agregar header y logo (reutilizable para nuevas páginas)
     const addPageHeader = async (isFirstPage = false) => {
@@ -172,9 +172,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.text('Detalles de Prestaciones', 20, yPos);
     yPos += 10;
     
-    // Verificar espacio para el header de la tabla
-    yPos = await checkAndAddNewPage(20, yPos);
-    
     // Table header positions
     const colPositions = [20, 50, 90];
     let tableStartY = yPos;
@@ -251,9 +248,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 20;
     
-    // Verificar espacio para sección de diagnóstico
-    yPos = await checkAndAddNewPage(60, yPos);
-    
     // Diagnóstico section
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
@@ -277,8 +271,12 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += diagnosticoBoxHeight + 20;
     
-    // Verificar espacio para sección de firmas
-    yPos = await checkAndAddNewPage(70, yPos);
+    // Verificar si hay espacio para la sección de firmas completa (necesita ~60 unidades)
+    if (yPos + 60 > pageHeight - marginBottom) {
+      pdf.addPage();
+      await addPageHeader(false);
+      yPos = 60;
+    }
     
     // Signature section
     pdf.setFontSize(12);
