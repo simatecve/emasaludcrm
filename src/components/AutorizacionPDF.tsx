@@ -84,63 +84,69 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     let yPos = 60;
     
-    // Prestador and Observacion
+    // Patient information in two columns
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
+    
+    const paciente = autorizacion.pacientes;
+    const leftColumn = 20;
+    const rightColumn = pageWidth / 2 + 10;
+    const lineHeight = 6;
+    let leftYPos = yPos;
+    let rightYPos = yPos;
+    
+    // Columna izquierda
     if (autorizacion.prestador) {
-      pdf.text(`Prestador: ${autorizacion.prestador}`, 20, yPos);
-      yPos += 6;
-    }
-    if (autorizacion.observaciones) {
-      pdf.text(`Observacion: ${autorizacion.observaciones}`, 20, yPos);
-      yPos += 10;
+      pdf.text(`Prestador: ${autorizacion.prestador}`, leftColumn, leftYPos);
+      leftYPos += lineHeight;
     }
     
-    // Patient information
-    const paciente = autorizacion.pacientes;
     if (paciente) {
-      pdf.text(`Nombre y Apellido: ${paciente.apellido.toUpperCase()} ${paciente.nombre.toUpperCase()} ${paciente.apellido} ${paciente.dni ? `Dni: ${paciente.dni}` : ''}`, 20, yPos);
-      yPos += 6;
+      pdf.text(`Nombre y Apellido: ${paciente.apellido.toUpperCase()} ${paciente.nombre.toUpperCase()}`, leftColumn, leftYPos);
+      leftYPos += lineHeight;
       
       if (autorizacion.numero_credencial) {
-        pdf.text(`Nro Cred./Afil: ${autorizacion.numero_credencial}`, 20, yPos);
+        pdf.text(`Nro Cred./Afil: ${autorizacion.numero_credencial}`, leftColumn, leftYPos);
+        leftYPos += lineHeight;
       }
-      if (autorizacion.parentesco_beneficiario) {
-        pdf.text(`Parentesco: ${autorizacion.parentesco_beneficiario} < 21 años`, pageWidth - 100, yPos, { align: 'right' });
-      }
-      yPos += 6;
       
       if (autorizacion.descripcion) {
-        pdf.text(`Observaciones: ${autorizacion.descripcion}`, 20, yPos);
-        yPos += 6;
+        const obsLines = pdf.splitTextToSize(`Observaciones: ${autorizacion.descripcion}`, (pageWidth / 2) - 30);
+        obsLines.forEach((line: string) => {
+          pdf.text(line, leftColumn, leftYPos);
+          leftYPos += lineHeight;
+        });
       }
       
       if (autorizacion.obras_sociales) {
-        pdf.text(`Obra Social: ${autorizacion.obras_sociales.nombre}`, 20, yPos);
-        yPos += 6;
-      }
-      
-      if (autorizacion.profesional_solicitante) {
-        pdf.text(`Profesional: ${autorizacion.profesional_solicitante}`, 20, yPos);
-        yPos += 6;
-      }
-
-      // Agregar diagnóstico si existe
-      if (autorizacion.descripcion) {
-        pdf.setFont('helvetica', 'bold');
-        pdf.text('Diagnóstico:', 20, yPos);
-        pdf.setFont('helvetica', 'normal');
-        yPos += 6;
-        
-        // Dividir el texto del diagnóstico en líneas si es muy largo
-        const diagnosticoLines = pdf.splitTextToSize(autorizacion.descripcion, pageWidth - 40);
-        diagnosticoLines.forEach((line: string) => {
-          pdf.text(line, 20, yPos);
-          yPos += 5;
-        });
-        yPos += 5;
+        pdf.text(`Obra Social: ${autorizacion.obras_sociales.nombre}`, leftColumn, leftYPos);
+        leftYPos += lineHeight;
       }
     }
+    
+    // Columna derecha
+    if (autorizacion.observaciones) {
+      pdf.text(`Observacion: ${autorizacion.observaciones}`, rightColumn, rightYPos);
+      rightYPos += lineHeight;
+    }
+    
+    if (paciente?.dni) {
+      pdf.text(`DNI: ${paciente.dni}`, rightColumn, rightYPos);
+      rightYPos += lineHeight;
+    }
+    
+    if (autorizacion.parentesco_beneficiario) {
+      pdf.text(`Parentesco: ${autorizacion.parentesco_beneficiario} < 21 años`, rightColumn, rightYPos);
+      rightYPos += lineHeight;
+    }
+    
+    if (autorizacion.profesional_solicitante) {
+      pdf.text(`Profesional: ${autorizacion.profesional_solicitante}`, rightColumn, rightYPos);
+      rightYPos += lineHeight;
+    }
+    
+    // Usar la posición Y mayor de ambas columnas
+    yPos = Math.max(leftYPos, rightYPos) + 10;
     
     // Función para dibujar el header de la tabla
     const drawTableHeader = (startY: number) => {
