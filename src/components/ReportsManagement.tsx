@@ -256,44 +256,11 @@ const ReportsManagement = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Parentesco</label>
-              <Select value={filters.parentescoBeneficiario || 'all'} onValueChange={(value) => updateFilter('parentescoBeneficiario', value === 'all' ? undefined : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar parentesco" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los parentescos</SelectItem>
-                  <SelectItem value="titular">Titular</SelectItem>
-                  <SelectItem value="conyuge">Cónyuge</SelectItem>
-                  <SelectItem value="hijo">Hijo/a</SelectItem>
-                  <SelectItem value="padre">Padre</SelectItem>
-                  <SelectItem value="madre">Madre</SelectItem>
-                  <SelectItem value="otro">Otro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <label className="block text-sm font-medium mb-2">Profesional Solicitante</label>
               <Input
                 placeholder="Nombre del profesional"
                 value={filters.profesionalSolicitante || ''}
                 onChange={(e) => updateFilter('profesionalSolicitante', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Descripción</label>
-              <Input
-                placeholder="Descripción"
-                value={filters.descripcion || ''}
-                onChange={(e) => updateFilter('descripcion', e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Observaciones</label>
-              <Input
-                placeholder="Observaciones"
-                value={filters.observaciones || ''}
-                onChange={(e) => updateFilter('observaciones', e.target.value)}
               />
             </div>
           </div>

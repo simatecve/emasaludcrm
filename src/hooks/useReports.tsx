@@ -263,6 +263,10 @@ export interface AutorizacionReport {
   observaciones?: string;
   parentesco_beneficiario?: string;
   numero_credencial?: string;
+  autorizacion_prestaciones?: Array<{
+    prestacion_codigo: string;
+    prestacion_descripcion: string;
+  }>;
 }
 
 export interface MedicoReport {
@@ -307,11 +311,9 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
           prestacion_codigo,
           prestacion_descripcion,
           profesional_solicitante,
-          descripcion,
-          observaciones,
-          parentesco_beneficiario,
           numero_credencial,
-          pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre))
+          pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre)),
+          autorizacion_prestaciones(prestacion_codigo, prestacion_descripcion)
         `)
         .order('fecha_solicitud', { ascending: false });
 
@@ -336,23 +338,11 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
        if (filters.prestador) {
          query = query.ilike('prestador', `%${filters.prestador}%`);
        }
-       if (filters.prestacionCodigo) {
-         query = query.ilike('prestacion_codigo', `%${filters.prestacionCodigo}%`);
-       }
        if (filters.numeroCredencial) {
          query = query.ilike('numero_credencial', `%${filters.numeroCredencial}%`);
        }
-       if (filters.parentescoBeneficiario) {
-         query = query.ilike('parentesco_beneficiario', `%${filters.parentescoBeneficiario}%`);
-       }
        if (filters.profesionalSolicitante) {
          query = query.ilike('profesional_solicitante', `%${filters.profesionalSolicitante}%`);
-       }
-       if (filters.descripcion) {
-         query = query.ilike('descripcion', `%${filters.descripcion}%`);
-       }
-       if (filters.observaciones) {
-         query = query.ilike('observaciones', `%${filters.observaciones}%`);
        }
 
        const { data, error } = await query;
@@ -362,7 +352,7 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         throw error;
       }
 
-      // Filter results in memory for obra social since it's a nested relationship
+      // Filter results in memory for obra social and prestacion codigo
       let report: AutorizacionReport[] = data?.map(autorizacion => ({
         id: autorizacion.id,
         numero_autorizacion: autorizacion.numero_autorizacion || '',
@@ -374,16 +364,17 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         prestacion_codigo: autorizacion.prestacion_codigo || '',
         prestacion_descripcion: autorizacion.prestacion_descripcion || '',
         profesional_solicitante: autorizacion.profesional_solicitante || '',
-        descripcion: autorizacion.descripcion || '',
-        observaciones: autorizacion.observaciones || '',
-        parentesco_beneficiario: autorizacion.parentesco_beneficiario || '',
+        descripcion: '',
+        observaciones: '',
+        parentesco_beneficiario: '',
         numero_credencial: autorizacion.numero_credencial || '',
         paciente: {
           nombre: autorizacion.pacientes?.nombre || '',
           apellido: autorizacion.pacientes?.apellido || '',
           dni: autorizacion.pacientes?.dni || '',
         },
-        obra_social: autorizacion.pacientes?.obras_sociales?.nombre || 'Sin obra social'
+        obra_social: autorizacion.pacientes?.obras_sociales?.nombre || 'Sin obra social',
+        autorizacion_prestaciones: autorizacion.autorizacion_prestaciones || []
       })) || [];
 
       // Apply obra social filter if specified
@@ -398,6 +389,17 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
           const obraSocialNombre = obraSocialQuery.data.nombre;
           report = report.filter(autorizacion => autorizacion.obra_social === obraSocialNombre);
         }
+      }
+
+      // Apply prestacion codigo filter if specified (search in both prestacion_codigo and autorizacion_prestaciones)
+      if (filters.prestacionCodigo) {
+        report = report.filter(autorizacion => {
+          const codigoInPrestacion = autorizacion.prestacion_codigo?.toLowerCase().includes(filters.prestacionCodigo!.toLowerCase());
+          const codigoInPrestaciones = autorizacion.autorizacion_prestaciones?.some(
+            (p: any) => p.prestacion_codigo?.toLowerCase().includes(filters.prestacionCodigo!.toLowerCase())
+          );
+          return codigoInPrestacion || codigoInPrestaciones;
+        });
       }
 
       return report;

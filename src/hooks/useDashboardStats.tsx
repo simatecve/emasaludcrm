@@ -41,17 +41,28 @@ export const useDashboardStats = () => {
         throw turnosHoyError;
       }
 
-      // Consultas del mes
-      const { data: consultasMes, error: consultasMesError } = await supabase
-        .from('consultas')
-        .select('id')
-        .gte('fecha_consulta', startOfMonth)
-        .lte('fecha_consulta', endOfMonth);
+      // Consultas del mes (autorizaciones con tipo "consulta" o prestación "Consulta")
+      const { data: autorizacionesConsulta, error: consultasMesError } = await supabase
+        .from('autorizaciones')
+        .select('id, tipo_autorizacion, autorizacion_prestaciones(prestacion_descripcion)')
+        .gte('fecha_solicitud', startOfMonth)
+        .lte('fecha_solicitud', endOfMonth);
 
       if (consultasMesError) {
         console.error('Error fetching consultas mes:', consultasMesError);
         throw consultasMesError;
       }
+
+      // Filtrar autorizaciones que son de tipo "consulta" o tienen prestaciones de consulta
+      const consultasMes = autorizacionesConsulta?.filter(auth => {
+        if (auth.tipo_autorizacion?.toLowerCase() === 'consulta') return true;
+        if (Array.isArray(auth.autorizacion_prestaciones)) {
+          return auth.autorizacion_prestaciones.some(
+            (p: any) => p.prestacion_descripcion?.toLowerCase().includes('consulta')
+          );
+        }
+        return false;
+      }) || [];
 
       // Autorizaciones pendientes
       const { data: autorizaciones, error: autorizacionesError } = await supabase
