@@ -16,7 +16,6 @@ interface NomecladorFormProps {
 interface FormData {
   codigo_practica: string;
   descripcion_practica: string;
-  modulo: string;
   valor_resultante_unidades: string;
 }
 
@@ -24,7 +23,6 @@ const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     codigo_practica: nomenclador?.codigo_practica || '',
     descripcion_practica: nomenclador?.descripcion_practica || '',
-    modulo: nomenclador?.modulo || '',
     valor_resultante_unidades: nomenclador?.valor_resultante_unidades || '',
   });
 
@@ -34,7 +32,7 @@ const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.codigo_practica || !formData.descripcion_practica || !formData.modulo) {
+    if (!formData.codigo_practica || !formData.descripcion_practica) {
       return;
     }
 
@@ -63,30 +61,16 @@ const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="codigo_practica">Código de Práctica *</Label>
-              <Input
-                id="codigo_practica"
-                type="text"
-                value={formData.codigo_practica}
-                onChange={(e) => setFormData({ ...formData, codigo_practica: e.target.value })}
-                placeholder="Ej: 160101"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="modulo">Módulo *</Label>
-              <Input
-                id="modulo"
-                type="text"
-                value={formData.modulo}
-                onChange={(e) => setFormData({ ...formData, modulo: e.target.value })}
-                placeholder="Ej: ANESTESIA"
-                required
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="codigo_practica">Código de Práctica *</Label>
+            <Input
+              id="codigo_practica"
+              type="text"
+              value={formData.codigo_practica}
+              onChange={(e) => setFormData({ ...formData, codigo_practica: e.target.value })}
+              placeholder="Ej: 160101"
+              required
+            />
           </div>
 
           <div className="space-y-2">
@@ -123,7 +107,7 @@ const NomecladorForm = ({ nomenclador, onClose }: NomecladorFormProps) => {
             </Button>
             <Button
               type="submit"
-              disabled={isLoading || !formData.codigo_practica || !formData.descripcion_practica || !formData.modulo}
+              disabled={isLoading || !formData.codigo_practica || !formData.descripcion_practica}
             >
               {isLoading ? 'Guardando...' : nomenclador ? 'Actualizar' : 'Crear'}
             </Button>

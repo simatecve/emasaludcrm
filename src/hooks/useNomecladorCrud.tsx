@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 export interface NomecladorFormData {
   codigo_practica: string;
   descripcion_practica: string;
-  modulo: string;
   valor_resultante_unidades?: string;
 }
 

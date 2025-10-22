@@ -362,16 +362,14 @@ const AutorizacionManagement = () => {
                   </TableCell>
                   <TableCell>
                     <div className="flex gap-2">
-                      {currentUser?.role === 'admin' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(autorizacion.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(autorizacion.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                       
                       <AutorizacionPDF autorizacion={autorizacion} />
                       

@@ -193,8 +193,8 @@ const ReportsManagement = () => {
                 <SelectContent>
                   <SelectItem value="all">Todos los tipos</SelectItem>
                   <SelectItem value="consulta">Consulta</SelectItem>
-                  <SelectItem value="practica">Práctica</SelectItem>
-                  <SelectItem value="medicamento">Medicamento</SelectItem>
+                  <SelectItem value="estudio">Estudio</SelectItem>
+                  <SelectItem value="tratamiento">Tratamiento</SelectItem>
                   <SelectItem value="internacion">Internación</SelectItem>
                   <SelectItem value="laboratorio">Laboratorio</SelectItem>
                 </SelectContent>
