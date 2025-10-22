@@ -6,7 +6,6 @@ export interface Nomenclador {
   id: number;
   codigo_practica: string;
   descripcion_practica: string;
-  modulo: string;
   valor_resultante_unidades: string | null;
   created_at: string | null;
   updated_at: string | null;

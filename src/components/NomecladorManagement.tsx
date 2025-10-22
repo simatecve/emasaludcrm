@@ -26,8 +26,7 @@ const NomecladorManagement = () => {
 
     return nomencladores.filter(nom =>
       nom.codigo_practica.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nom.descripcion_practica.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      nom.modulo.toLowerCase().includes(searchTerm.toLowerCase())
+      nom.descripcion_practica.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [nomencladores, searchTerm]);
 
@@ -78,7 +77,7 @@ const NomecladorManagement = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar por código, descripción o módulo..."
+                placeholder="Buscar por código o descripción..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -99,7 +98,6 @@ const NomecladorManagement = () => {
                   <TableRow>
                     <TableHead>Código</TableHead>
                     <TableHead>Descripción</TableHead>
-                    <TableHead>Módulo</TableHead>
                     <TableHead>Valor/Unidades</TableHead>
                     <TableHead className="w-[100px]">Acciones</TableHead>
                   </TableRow>
@@ -115,7 +113,6 @@ const NomecladorManagement = () => {
                           {nomenclador.descripcion_practica}
                         </div>
                       </TableCell>
-                      <TableCell>{nomenclador.modulo}</TableCell>
                       <TableCell>
                         {nomenclador.valor_resultante_unidades || '-'}
                       </TableCell>

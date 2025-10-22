@@ -32,7 +32,7 @@ export const useCreateNomeclador = () => {
     mutationFn: async (data: NomecladorFormData) => {
       const { data: result, error } = await supabase
         .from('nomeclador')
-        .insert([data])
+        .insert([data as any])
         .select()
         .single();
 
@@ -73,7 +73,7 @@ export const useUpdateNomeclador = () => {
     mutationFn: async ({ id, data }: { id: number; data: NomecladorFormData }) => {
       const { error } = await supabase
         .from('nomeclador')
-        .update(data)
+        .update(data as any)
         .eq('id', id);
 
       if (error) throw error;
