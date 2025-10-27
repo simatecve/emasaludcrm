@@ -14,6 +14,7 @@ import NomecladorManagement from '@/components/NomecladorManagement';
 import UserManagement from '@/components/UserManagement';
 import AuditLogs from '@/components/AuditLogs';
 import ReportsManagement from '@/components/ReportsManagement';
+import { RecetarioManagement } from '@/components/RecetarioManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -60,6 +61,8 @@ const Index = () => {
         return <AutorizacionManagement />;
       case 'credenciales':
         return <CredencialGenerator />;
+      case 'recetarios':
+        return <RecetarioManagement />;
       case 'reports':
         return <ReportsManagement />;
       case 'users':

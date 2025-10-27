@@ -656,6 +656,127 @@ export type Database = {
         }
         Relationships: []
       }
+      recetarios_emitidos: {
+        Row: {
+          created_at: string | null
+          fecha_emision: string
+          id: string
+          mes_control: string
+          obra_social_id: number
+          observaciones: string | null
+          paciente_id: number
+          tipo_recetario: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          fecha_emision?: string
+          id?: string
+          mes_control: string
+          obra_social_id: number
+          observaciones?: string | null
+          paciente_id: number
+          tipo_recetario: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          fecha_emision?: string
+          id?: string
+          mes_control?: string
+          obra_social_id?: number
+          observaciones?: string | null
+          paciente_id?: number
+          tipo_recetario?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recetarios_emitidos_obra_social_id_fkey"
+            columns: ["obra_social_id"]
+            isOneToOne: false
+            referencedRelation: "obras_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recetarios_emitidos_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recetarios_emitidos_tipo_recetario_fkey"
+            columns: ["tipo_recetario"]
+            isOneToOne: false
+            referencedRelation: "recetarios_tipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recetarios_obra_social_config: {
+        Row: {
+          activo: boolean | null
+          created_at: string | null
+          id: number
+          obra_social_id: number
+          tipo_recetario: number
+          updated_at: string | null
+        }
+        Insert: {
+          activo?: boolean | null
+          created_at?: string | null
+          id?: number
+          obra_social_id: number
+          tipo_recetario: number
+          updated_at?: string | null
+        }
+        Update: {
+          activo?: boolean | null
+          created_at?: string | null
+          id?: number
+          obra_social_id?: number
+          tipo_recetario?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recetarios_obra_social_config_obra_social_id_fkey"
+            columns: ["obra_social_id"]
+            isOneToOne: true
+            referencedRelation: "obras_sociales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recetarios_obra_social_config_tipo_recetario_fkey"
+            columns: ["tipo_recetario"]
+            isOneToOne: false
+            referencedRelation: "recetarios_tipos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recetarios_tipos: {
+        Row: {
+          created_at: string | null
+          descripcion: string | null
+          id: number
+          nombre: string
+        }
+        Insert: {
+          created_at?: string | null
+          descripcion?: string | null
+          id: number
+          nombre: string
+        }
+        Update: {
+          created_at?: string | null
+          descripcion?: string | null
+          id?: number
+          nombre?: string
+        }
+        Relationships: []
+      }
       system_config: {
         Row: {
           copyright: string
@@ -743,6 +864,27 @@ export type Database = {
           },
         ]
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string | null
@@ -751,7 +893,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean | null
-          password_hash: string
+          password_hash: string | null
           patient_id: number | null
           role: string
           updated_at: string | null
@@ -764,7 +906,7 @@ export type Database = {
           full_name: string
           id?: string
           is_active?: boolean | null
-          password_hash: string
+          password_hash?: string | null
           patient_id?: number | null
           role?: string
           updated_at?: string | null
@@ -777,7 +919,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean | null
-          password_hash?: string
+          password_hash?: string | null
           patient_id?: number | null
           role?: string
           updated_at?: string | null
@@ -803,9 +945,16 @@ export type Database = {
         }
         Returns: undefined
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "usuario_normal" | "prestador" | "paciente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -932,6 +1081,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "usuario_normal", "prestador", "paciente"],
+    },
   },
 } as const

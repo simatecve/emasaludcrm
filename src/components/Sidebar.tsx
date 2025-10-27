@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2, TrendingUp, CreditCard } from 'lucide-react';
+import { Calendar, Users, FileText, Settings, BarChart3, Shield, Activity, ChevronLeft, LogOut, UserCog, Stethoscope, Building2, BookOpen, UsersIcon, ClipboardList, Loader2, TrendingUp, CreditCard, Pill } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
@@ -36,6 +36,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
         { id: 'credenciales', label: 'Credenciales', icon: CreditCard },
+        { id: 'recetarios', label: 'Recetarios', icon: Pill },
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
@@ -58,6 +59,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
         { id: 'credenciales', label: 'Credenciales', icon: CreditCard },
+        { id: 'recetarios', label: 'Recetarios', icon: Pill },
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
@@ -73,6 +75,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'nomenclador', label: 'Nomenclador', icon: BookOpen },
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
         { id: 'credenciales', label: 'Credenciales', icon: CreditCard },
+        { id: 'recetarios', label: 'Recetarios', icon: Pill },
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
       ];
     } else if (currentUser.role === 'prestador') {
