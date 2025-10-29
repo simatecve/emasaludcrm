@@ -17,7 +17,227 @@ interface RecetarioPDFData {
   observaciones?: string;
 }
 
-export const generarRecetarioPDF = (data: RecetarioPDFData) => {
+const generarRecetarioOSPSIP = (data: RecetarioPDFData) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  // Header - OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, 15, { align: 'center' });
+  
+  // HISTORIA CLINICA title
+  doc.setFontSize(16);
+  doc.text('HISTORIA CLINICA', pageWidth / 2, 25, { align: 'center' });
+  
+  // Second header line
+  doc.setFontSize(10);
+  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, 32, { align: 'center' });
+  
+  // Subtitle
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('(DATOS A COMPLETAR POR EL PROFESIONAL EN PATOLOGIAS CRONICAS)', pageWidth / 2, 38, { align: 'center' });
+  
+  // INDUSTRIAL E INVESTIGACIONES PRIVADAS
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('INDUSTRIAL E INVESTIGACIONES PRIVADAS', pageWidth / 2, 44, { align: 'center' });
+
+  // NOMBRE Y APELLIDO BENEFICIARIO section
+  doc.setFontSize(8);
+  doc.text('NOMBRE Y APELLIDO BENEFICIARIO', 20, 52);
+  
+  // Right side info
+  doc.setFontSize(7);
+  doc.text('RNOS 1-1970-8', pageWidth - 60, 52);
+  doc.text('PARANÁ 717 . CABA.', pageWidth - 60, 57);
+  doc.text('TUCUMÁN 3685/89 C.A. DE BUENOS AIRES', pageWidth - 60, 62);
+  doc.text('Tel.: 0800-333-6777', pageWidth - 60, 67);
+
+  // Patient name
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${data.paciente.nombre} ${data.paciente.apellido}`, 20, 60);
+
+  // Main table
+  let yPos = 75;
+  
+  // DIAGNOSTICO section
+  doc.setFillColor(240, 240, 240);
+  doc.rect(20, yPos, pageWidth - 40, 8, 'F');
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DIAGNOSTICO:', 22, yPos + 5);
+  
+  // Table headers row 1
+  yPos += 8;
+  const colWidths = [35, 25, 25, 25, 30, 30];
+  let xPos = 20;
+  
+  doc.setFontSize(7);
+  const headers1 = ['FECHA DE EMISION', 'N° DE OBRA SOCIAL', 'N° SINDICAL', 'EDAD', 'SINTOMAS Y/O SIGNOS', 'PRINCIPALES:'];
+  
+  headers1.forEach((header, i) => {
+    doc.rect(xPos, yPos, colWidths[i], 8);
+    doc.text(header, xPos + 2, yPos + 5);
+    xPos += colWidths[i];
+  });
+  
+  // Table data row 1
+  yPos += 8;
+  xPos = 20;
+  
+  // Fill fecha emision
+  doc.rect(xPos, yPos, colWidths[0], 8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(format(new Date(data.fecha), 'dd/MM/yyyy'), xPos + 2, yPos + 5);
+  xPos += colWidths[0];
+  
+  // Empty cells
+  for (let i = 1; i < colWidths.length; i++) {
+    doc.rect(xPos, yPos, colWidths[i], 8);
+    xPos += colWidths[i];
+  }
+  
+  // Table headers row 2
+  yPos += 8;
+  xPos = 20;
+  const headers2 = ['NOMBRE Y APELLIDO', 'SEXO', 'CANTIDAD RECETADA', 'TIEMPO DE EVOLUCION:', 'TAMAÑO', 'NRO LETRAS'];
+  
+  doc.setFont('helvetica', 'bold');
+  headers2.forEach((header, i) => {
+    doc.rect(xPos, yPos, colWidths[i], 8);
+    doc.text(header, xPos + 2, yPos + 5);
+    xPos += colWidths[i];
+  });
+  
+  // Medication rows
+  for (let row = 0; row < 2; row++) {
+    yPos += 8;
+    xPos = 20;
+    
+    doc.setFont('helvetica', 'normal');
+    doc.rect(xPos, yPos, colWidths[0], 8);
+    doc.text(`GENERICO Rp/${row + 1}`, xPos + 2, yPos + 5);
+    xPos += colWidths[0];
+    
+    if (row === 1) {
+      doc.rect(xPos, yPos, colWidths[1], 8);
+      doc.text('RA', xPos + 2, yPos + 5);
+      xPos += colWidths[1];
+    } else {
+      doc.rect(xPos, yPos, colWidths[1], 8);
+      xPos += colWidths[1];
+    }
+    
+    for (let i = 2; i < 5; i++) {
+      doc.rect(xPos, yPos, colWidths[i], 8);
+      xPos += colWidths[i];
+    }
+    
+    doc.rect(xPos, yPos, colWidths[5], 8);
+    doc.text(`DOSIS DIARIA GENERICO ${row + 1}`, xPos + 2, yPos + 5);
+  }
+
+  // COMPLETAR LO QUE CORRESPONDA section
+  yPos += 12;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('COMPLETAR LO QUE CORRESPONDA', 20, yPos);
+  
+  // Three columns section
+  yPos += 5;
+  const col1Width = 60;
+  const col2Width = 60;
+  const col3Width = pageWidth - 40 - col1Width - col2Width;
+  
+  // Column 1 - DIAGNOSTICO
+  doc.rect(20, yPos, col1Width, 30);
+  doc.text('DIAGNOSTICO', 22, yPos + 5);
+  
+  // Column 2 - EMBARAZO/PARTO
+  doc.rect(20 + col1Width, yPos, col2Width, 15);
+  doc.text('EMBARAZO', 22 + col1Width, yPos + 5);
+  doc.text('PARTO CESAREA.', 22 + col1Width, yPos + 10);
+  
+  doc.rect(20 + col1Width, yPos + 15, col2Width, 15);
+  doc.text('R.N', 22 + col1Width, yPos + 20);
+  doc.text('DIAS         SEMANAS', 22 + col1Width, yPos + 25);
+  
+  // Column 3 - Firma profesional
+  doc.rect(20 + col1Width + col2Width, yPos, col3Width, 15);
+  doc.text('FIRMA Y SELLO DEL PROFESIONAL', 22 + col1Width + col2Width, yPos + 8);
+  
+  doc.rect(20 + col1Width + col2Width, yPos + 15, col3Width, 15);
+  doc.text('FIRMA Y SELLO DEL PROFESIONAL', 22 + col1Width + col2Width, yPos + 23);
+  
+  // NIÑO/A MESES
+  yPos += 30;
+  doc.rect(20, yPos, col1Width, 8);
+  doc.text('NIÑO/A                 MESES', 22, yPos + 5);
+
+  // FECHA DE VENTA / FARMACIA section
+  yPos += 12;
+  doc.rect(20, yPos, col1Width + col2Width, 8);
+  doc.text('FECHA DE VENTA', 22, yPos + 5);
+  doc.rect(20 + col1Width + col2Width, yPos, col3Width, 8);
+  doc.text('FARMACIA', 22 + col1Width + col2Width, yPos + 5);
+  
+  // Discount table
+  yPos += 8;
+  const halfWidth = (col1Width + col2Width) / 2;
+  
+  doc.rect(20, yPos, halfWidth, 6);
+  doc.text('DESCUENTO OSPSIP', 22, yPos + 4);
+  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
+  doc.text('DESCUENTO UPSRA', 22 + halfWidth, yPos + 4);
+  
+  yPos += 6;
+  doc.rect(20, yPos, halfWidth, 6);
+  doc.text('40% AMBULATORIO', 22, yPos + 4);
+  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
+  doc.text('60% AMBULATORIO', 22 + halfWidth, yPos + 4);
+  
+  yPos += 6;
+  doc.rect(20, yPos, halfWidth, 6);
+  doc.text('70% AMBULATORIO', 22, yPos + 4);
+  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
+  doc.text('90% AMBULATORIO', 22 + halfWidth, yPos + 4);
+  
+  yPos += 6;
+  doc.rect(20, yPos, col1Width + col2Width, 6);
+  doc.text('100% PMI Y ESPECIFICOS', 22, yPos + 4);
+
+  // Bottom section - DNI and contact info
+  yPos += 10;
+  doc.setFont('helvetica', 'normal');
+  doc.text(`DNI DEL TITULAR: ${data.paciente.dni}`, 20, yPos);
+  
+  yPos += 6;
+  doc.text('DN.I DE QUIEN RETIRA:', 20, yPos);
+  
+  yPos += 6;
+  doc.text('DOMICILIO:', 20, yPos);
+  
+  yPos += 6;
+  doc.text('TELEFONO:', 20, yPos);
+  
+  yPos += 6;
+  doc.text('FIRMA Y ACLARACION', 20, yPos);
+
+  // Footer
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, pageHeight - 10, { align: 'center' });
+
+  // Generate filename and save
+  const nombreArchivo = `Recetario_OSPSIP_${data.paciente.apellido}_${format(new Date(), 'yyyyMMdd')}.pdf`;
+  doc.save(nombreArchivo);
+};
+
+const generarRecetarioGenerico = (data: RecetarioPDFData) => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -105,4 +325,14 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   // Generar y descargar el PDF
   const nombreArchivo = `Recetario_${data.paciente.apellido}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   doc.save(nombreArchivo);
+};
+
+export const generarRecetarioPDF = (data: RecetarioPDFData) => {
+  // Si la obra social es OSPSIP, usar formato específico
+  if (data.obraSocial.nombre.toUpperCase().includes('OSPSIP')) {
+    return generarRecetarioOSPSIP(data);
+  }
+  
+  // Para otras obras sociales, usar formato genérico
+  return generarRecetarioGenerico(data);
 };
