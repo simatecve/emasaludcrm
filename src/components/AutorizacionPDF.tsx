@@ -277,6 +277,8 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       pdf.text(formattedCopago, boxX + 3, yPos);
     }
     
+    yPos += 15; // Espacio después del copago antes de la siguiente sección
+    
     // Diagnóstico section
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');
