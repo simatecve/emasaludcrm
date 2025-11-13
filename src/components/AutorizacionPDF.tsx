@@ -60,7 +60,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         pdf.text('EMA SALUD', 70, 20);
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        pdf.text('AV. LIBERTADOR 457', 70, 27);
+        pdf.text('San Luis 713 este, esquina calle Guemes', 70, 27);
         pdf.text('(e) CAPITAL', 70, 32);
         
         // Authorization title and number
