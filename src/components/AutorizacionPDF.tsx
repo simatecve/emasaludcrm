@@ -254,17 +254,27 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 10;
     
-    // Copago section - debajo de las prestaciones
-    if (autorizacion.copago !== null && autorizacion.copago !== undefined) {
-      yPos = await checkAndAddNewPage(15, yPos);
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Copago / A cargo del paciente:', 20, yPos);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`$ ${autorizacion.copago.toFixed(2)}`, 90, yPos);
-      
-      yPos += 10;
+    // Copago section - siempre debajo de las prestaciones
+    yPos = await checkAndAddNewPage(18, yPos);
+    const formattedCopago = (autorizacion.copago !== null && autorizacion.copago !== undefined)
+      ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(autorizacion.copago)
+      : '';
+    
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Copago / A cargo del paciente:', 20, yPos);
+    
+    // Caja para el importe
+    const boxX = 90;
+    const boxY = yPos - 6;
+    const boxW = 50;
+    const boxH = 8;
+    pdf.setDrawColor(150, 150, 150);
+    pdf.rect(boxX, boxY, boxW, boxH);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    if (formattedCopago) {
+      pdf.text(formattedCopago, boxX + 3, yPos);
     }
     
     // Diagnóstico section
