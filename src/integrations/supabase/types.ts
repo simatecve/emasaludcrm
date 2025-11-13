@@ -94,6 +94,7 @@ export type Database = {
       autorizaciones: {
         Row: {
           activa: boolean | null
+          copago: number | null
           created_at: string | null
           descripcion: string | null
           documento_url: string | null
@@ -119,6 +120,7 @@ export type Database = {
         }
         Insert: {
           activa?: boolean | null
+          copago?: number | null
           created_at?: string | null
           descripcion?: string | null
           documento_url?: string | null
@@ -144,6 +146,7 @@ export type Database = {
         }
         Update: {
           activa?: boolean | null
+          copago?: number | null
           created_at?: string | null
           descripcion?: string | null
           documento_url?: string | null

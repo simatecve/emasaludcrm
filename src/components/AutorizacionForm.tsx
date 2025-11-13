@@ -120,6 +120,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
       parentesco_beneficiario: autorizacion?.parentesco_beneficiario || '',
       profesional_solicitante: autorizacion?.profesional_solicitante || '',
       prestador: autorizacion?.prestador || '',
+      copago: autorizacion?.copago || undefined,
     }
   });
 
@@ -359,11 +360,23 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
           <CardHeader>
             <CardTitle className="text-lg">Prestaciones</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <MultiplePrestacionesSelector
               prestaciones={prestaciones}
               onPrestacionesChange={setPrestaciones}
             />
+            
+            <div className="space-y-2 pt-4 border-t">
+              <Label htmlFor="copago">Copago / A cargo del paciente</Label>
+              <Input
+                type="number"
+                id="copago"
+                step="0.01"
+                min="0"
+                {...register('copago', { valueAsNumber: true })}
+                placeholder="Ingrese el monto del copago"
+              />
+            </div>
           </CardContent>
         </Card>
 

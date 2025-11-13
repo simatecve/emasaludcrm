@@ -254,6 +254,19 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 10;
     
+    // Copago section - debajo de las prestaciones
+    if (autorizacion.copago !== null && autorizacion.copago !== undefined) {
+      yPos = await checkAndAddNewPage(15, yPos);
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Copago / A cargo del paciente:', 20, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`$ ${autorizacion.copago.toFixed(2)}`, 90, yPos);
+      
+      yPos += 10;
+    }
+    
     // Diagnóstico section
     pdf.setFontSize(12);
     pdf.setFont('helvetica', 'bold');

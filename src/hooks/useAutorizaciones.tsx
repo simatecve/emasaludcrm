@@ -22,6 +22,7 @@ export interface Autorizacion {
   parentesco_beneficiario?: string;
   profesional_solicitante?: string;
   prestador?: string;
+  copago?: number;
   pacientes?: { nombre: string; apellido: string; dni: string };
   medicos?: { nombre: string; apellido: string; matricula: string };
   obras_sociales?: { nombre: string };
@@ -49,6 +50,7 @@ export interface AutorizacionFormData {
   parentesco_beneficiario?: string;
   profesional_solicitante?: string;
   prestador?: string;
+  copago?: number;
   prestaciones: AutorizacionPrestacionFormData[];
 }
 
