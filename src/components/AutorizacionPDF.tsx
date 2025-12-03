@@ -19,7 +19,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const marginBottom = 20; // Margen inferior reducido
+    const marginBottom = 20;
     
     // Función para agregar header y logo (reutilizable para nuevas páginas)
     const addPageHeader = async (isFirstPage = false) => {
@@ -73,7 +73,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         pdf.text(`No Autorización: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - 20, 25, { align: 'right' });
         
         // Horizontal line
-        pdf.line(20, 45, pageWidth - 20, 45);
+        pdf.line(20, 40, pageWidth - 20, 40);
       } catch (error) {
         console.error('Error loading logo:', error);
       }
@@ -82,16 +82,16 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     // Agregar header en la primera página
     await addPageHeader(true);
     
-    let yPos = 60;
+    let yPos = 50;
     
     // Patient information in two columns
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
     
     const paciente = autorizacion.pacientes;
     const leftColumn = 20;
     const rightColumn = pageWidth / 2 + 10;
-    const lineHeight = 6;
+    const lineHeight = 5;
     let leftYPos = yPos;
     let rightYPos = yPos;
     
@@ -146,21 +146,21 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     }
     
     // Usar la posición Y mayor de ambas columnas
-    yPos = Math.max(leftYPos, rightYPos) + 5;
+    yPos = Math.max(leftYPos, rightYPos) + 3;
     
     // Función para dibujar el header de la tabla
     const drawTableHeader = (startY: number) => {
       pdf.setFillColor(52, 85, 139);
-      pdf.rect(20, startY, pageWidth - 40, 12, 'F');
+      pdf.rect(20, startY, pageWidth - 40, 10, 'F');
       
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(10);
-      pdf.text('Cant', 25, startY + 8);
-      pdf.text('Cod', 55, startY + 8);
-      pdf.text('Descripcion', 95, startY + 8);
+      pdf.setFontSize(9);
+      pdf.text('Cant', 25, startY + 7);
+      pdf.text('Cod', 55, startY + 7);
+      pdf.text('Descripcion', 95, startY + 7);
       
-      return startY + 12;
+      return startY + 10;
     };
     
     // Función para verificar si necesitamos nueva página
@@ -168,15 +168,16 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       if (currentY + requiredSpace > pageHeight - marginBottom) {
         pdf.addPage();
         await addPageHeader(false);
-        return 60; // Retornar nueva posición Y después del header
+        return 50;
       }
       return currentY;
     };
     
     // Prestaciones table
     pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
     pdf.text('Detalles de Prestaciones', 20, yPos);
-    yPos += 6;
+    yPos += 4;
     
     // Table header positions
     const colPositions = [20, 50, 90];
@@ -202,7 +203,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       // Calcular altura de la fila
       const maxWidth = 85;
       const descLines = pdf.splitTextToSize(descripcion, maxWidth);
-      const rowHeight = Math.max(12, (descLines.length * 5) + 8);
+      const rowHeight = Math.max(8, (descLines.length * 4) + 6);
       
       // Verificar si necesitamos nueva página para esta fila
       const newY = await checkAndAddNewPage(rowHeight + 5, yPos);
@@ -222,15 +223,16 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       
       // Dibujar contenido de las celdas
       pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(9);
       
       // Cantidad y código centrados verticalmente
-      const textY = yPos + (rowHeight / 2) + 2;
+      const textY = yPos + (rowHeight / 2) + 1;
       pdf.text(cantidad.toString(), colPositions[0] + 5, textY);
       pdf.text(codigo, colPositions[1] + 5, textY);
       
       // Descripción con múltiples líneas
       descLines.forEach((line: string, lineIndex: number) => {
-        const lineY = yPos + 8 + (lineIndex * 5);
+        const lineY = yPos + 5 + (lineIndex * 4);
         pdf.text(line, colPositions[2] + 5, lineY);
       });
       
@@ -252,86 +254,86 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.line(20, tableStartY, pageWidth - 20, tableStartY); // Superior
     pdf.line(20, yPos, pageWidth - 20, yPos); // Inferior final
     
-    yPos += 10;
+    yPos += 6;
     
     // Copago section - siempre debajo de las prestaciones
-    yPos = await checkAndAddNewPage(18, yPos);
+    yPos = await checkAndAddNewPage(15, yPos);
     const formattedCopago = (autorizacion.copago !== null && autorizacion.copago !== undefined)
       ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(autorizacion.copago)
       : '';
     
-    pdf.setFontSize(11);
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Copago / A cargo del paciente:', 20, yPos);
     
     // Caja para el importe
     const boxX = 90;
-    const boxY = yPos - 6;
+    const boxY = yPos - 5;
     const boxW = 50;
-    const boxH = 8;
+    const boxH = 7;
     pdf.setDrawColor(150, 150, 150);
     pdf.rect(boxX, boxY, boxW, boxH);
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
     if (formattedCopago) {
       pdf.text(formattedCopago, boxX + 3, yPos);
     }
     
-    yPos += 15; // Espacio después del copago antes de la siguiente sección
+    yPos += 8;
     
     // Diagnóstico section
-    pdf.setFontSize(12);
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Diagnóstico', 20, yPos);
-    yPos += 6;
+    yPos += 4;
     
     // Crear un rectángulo para el área de escritura del diagnóstico
     pdf.setDrawColor(0, 0, 0);
     pdf.setFillColor(255, 255, 255);
-    const diagnosticoBoxHeight = 30;
+    const diagnosticoBoxHeight = 20;
     pdf.rect(20, yPos, pageWidth - 40, diagnosticoBoxHeight);
     
     // Agregar líneas para escribir dentro del rectángulo
     pdf.setDrawColor(200, 200, 200);
-    for (let i = 1; i <= 4; i++) {
-      const lineY = yPos + (i * 6);
+    for (let i = 1; i <= 3; i++) {
+      const lineY = yPos + (i * 5);
       if (lineY < yPos + diagnosticoBoxHeight - 2) {
         pdf.line(25, lineY, pageWidth - 25, lineY);
       }
     }
     
-    yPos += diagnosticoBoxHeight + 10;
+    yPos += diagnosticoBoxHeight + 6;
     
-    // Verificar si hay espacio para la sección de firmas completa (necesita ~55 unidades)
-    if (yPos + 55 > pageHeight - marginBottom) {
+    // Verificar si hay espacio para la sección de firmas completa
+    if (yPos + 40 > pageHeight - marginBottom) {
       pdf.addPage();
       await addPageHeader(false);
-      yPos = 60;
+      yPos = 50;
     }
     
     // Signature section
-    pdf.setFontSize(12);
+    pdf.setFontSize(10);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Firmas', 20, yPos);
-    yPos += 10;
+    yPos += 6;
     
     // Specialist signature
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(10);
+    pdf.setFontSize(9);
     pdf.text('Firma del Especialista:', 20, yPos);
-    pdf.line(20, yPos + 15, 100, yPos + 15); // Signature line
-    pdf.text('Aclaración:', 20, yPos + 25);
-    pdf.line(20, yPos + 30, 100, yPos + 30); // Name line
-    pdf.text('Matrícula:', 20, yPos + 40);
-    pdf.line(20, yPos + 45, 100, yPos + 45); // License line
+    pdf.line(20, yPos + 10, 100, yPos + 10); // Signature line
+    pdf.text('Aclaración:', 20, yPos + 18);
+    pdf.line(20, yPos + 22, 100, yPos + 22); // Name line
+    pdf.text('Matrícula:', 20, yPos + 30);
+    pdf.line(20, yPos + 34, 100, yPos + 34); // License line
     
     // Patient signature
     pdf.text('Firma del Paciente:', 110, yPos);
-    pdf.line(110, yPos + 15, 190, yPos + 15); // Signature line
-    pdf.text('Aclaración:', 110, yPos + 25);
-    pdf.line(110, yPos + 30, 190, yPos + 30); // Name line
-    pdf.text('DNI:', 110, yPos + 40);
-    pdf.line(110, yPos + 45, 190, yPos + 45); // DNI line
+    pdf.line(110, yPos + 10, 190, yPos + 10); // Signature line
+    pdf.text('Aclaración:', 110, yPos + 18);
+    pdf.line(110, yPos + 22, 190, yPos + 22); // Name line
+    pdf.text('DNI:', 110, yPos + 30);
+    pdf.line(110, yPos + 34, 190, yPos + 34); // DNI line
     
     // Footer
     const footerY = pdf.internal.pageSize.getHeight() - 30;
