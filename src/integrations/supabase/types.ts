@@ -440,6 +440,24 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_chat_histories_capibet: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       n8n_chat_histories_ema: {
         Row: {
           id: number
