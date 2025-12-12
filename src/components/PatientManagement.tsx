@@ -16,6 +16,7 @@ import PatientTable from './PatientTable';
 import DiagnosticosList from './DiagnosticosList';
 import DiagnosticoForm from './DiagnosticoForm';
 import PatientImport from './PatientImport';
+import DeletePatientsByObraSocialDialog from './DeletePatientsByObraSocialDialog';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,6 +191,7 @@ const PatientManagement = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          <DeletePatientsByObraSocialDialog />
           <Button 
             variant="outline" 
             className="flex items-center gap-2"
