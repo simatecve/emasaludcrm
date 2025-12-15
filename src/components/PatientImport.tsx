@@ -1,12 +1,13 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Download, FileText, CheckCircle, XCircle, Info, AlertTriangle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Upload, Download, FileText, CheckCircle, XCircle, Info, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCreatePatient, PatientFormData } from '@/hooks/usePatients';
+import PadronConverter from './PadronConverter';
 
 interface PatientImportProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
     errors: { row: number; error: string }[];
   } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activeTab, setActiveTab] = useState('csv');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const createPatient = useCreatePatient();
@@ -310,16 +312,33 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Importación Masiva de Pacientes desde CSV
+            Importación Masiva de Pacientes
           </DialogTitle>
           <DialogDescription>
-            Importe múltiples pacientes de una sola vez usando un archivo CSV. Esta herramienta está optimizada para datos de OSPL y otros sistemas similares.
+            Importe múltiples pacientes desde archivos CSV o Excel
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Critical Warning Alert */}
-          <Alert variant="destructive">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="csv" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              CSV Directo
+            </TabsTrigger>
+            <TabsTrigger value="excel" className="flex items-center gap-2">
+              <FileSpreadsheet className="h-4 w-4" />
+              Conversor Excel
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="excel" className="mt-4">
+            <PadronConverter onClose={onClose} />
+          </TabsContent>
+
+          <TabsContent value="csv" className="mt-4">
+            <div className="space-y-6">
+              {/* Critical Warning Alert */}
+              <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-2">
@@ -663,7 +682,9 @@ const PatientImport: React.FC<PatientImportProps> = ({ isOpen, onClose }) => {
               </div>
             </AlertDescription>
           </Alert>
-        </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
