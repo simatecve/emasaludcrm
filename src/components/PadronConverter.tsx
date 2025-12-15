@@ -147,9 +147,18 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     return mapping;
   };
 
+  // Columnas predefinidas del sistema para cuando no se usa plantilla o está vacía
+  const defaultTemplateColumns = [
+    'dni', 'nombre', 'apellido', 'fecha_nacimiento', 'telefono', 'email',
+    'direccion', 'obra_social_id', 'numero_afiliado', 'consultas_maximas',
+    'cuil_titular', 'cuil_beneficiario', 'tipo_doc', 'nro_doc',
+    'descripcion_paciente', 'parentesco', 'apellido_y_nombre', 'sexo',
+    'estado_civil', 'nacionalidad', 'localidad', 'provincia', 'observaciones'
+  ];
+
   const analyzeFiles = async () => {
-    if (!templateFile || !padronFile) {
-      setError('Por favor sube ambos archivos primero');
+    if (!padronFile) {
+      setError('Por favor sube el archivo del padrón primero');
       return;
     }
 
@@ -158,13 +167,29 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     setResult(null);
 
     try {
-      // Read CSV template
-      const templateText = await templateFile.text();
-      const templateParsed = Papa.parse<Record<string, any>>(templateText, { 
-        header: true,
-        skipEmptyLines: true,
-        dynamicTyping: false
-      });
+      let templateColumns: string[] = [];
+
+      // Si hay plantilla, intentar leerla
+      if (templateFile) {
+        const templateText = await templateFile.text();
+        const templateParsed = Papa.parse<Record<string, any>>(templateText, { 
+          header: true,
+          skipEmptyLines: true,
+          dynamicTyping: false
+        });
+
+        // Obtener columnas del header del CSV (meta.fields contiene los headers)
+        if (templateParsed.meta && templateParsed.meta.fields && templateParsed.meta.fields.length > 0) {
+          templateColumns = templateParsed.meta.fields;
+        } else if (templateParsed.data[0]) {
+          templateColumns = Object.keys(templateParsed.data[0]);
+        }
+      }
+      
+      // Si no hay columnas de la plantilla, usar las predefinidas
+      if (templateColumns.length === 0) {
+        templateColumns = defaultTemplateColumns;
+      }
 
       // Read Excel padron
       const padronBuffer = await padronFile.arrayBuffer();
@@ -172,13 +197,12 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const padronData = XLSX.utils.sheet_to_json<Record<string, any>>(firstSheet);
 
-      const templateColumns = Object.keys(templateParsed.data[0] || {});
       const padronColumns = padronData.length > 0 ? Object.keys(padronData[0]) : [];
 
       setResult({
         template: {
           columns: templateColumns,
-          sample: templateParsed.data.slice(0, 2)
+          sample: []
         },
         padron: {
           columns: padronColumns,
@@ -187,7 +211,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
         }
       });
 
-      const mapping = createAutomaticMapping(templateColumns, padronColumns, padronData[0]);
+      const mapping = createAutomaticMapping(templateColumns, padronColumns, padronData[0] || {});
       setMappingData({
         mapping,
         templateColumns,
@@ -221,37 +245,37 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
 
     setProcessing(true);
     try {
-      const { mapping, padronData, templateColumns } = mappingData;
+      const { mapping, padronData } = mappingData;
       
       const converted = padronData.map(row => {
         const newRow: Record<string, any> = {};
         
-        for (const templateCol of templateColumns) {
-          if (mapping[templateCol]) {
-            newRow[templateCol] = row[mapping[templateCol]] || '';
-          } else {
-            switch(templateCol) {
-              case 'obra_social_id':
-                newRow[templateCol] = selectedObraSocial ? parseInt(selectedObraSocial) : 1;
-                break;
-              case 'consultas_maximas':
-                newRow[templateCol] = 999;
-                break;
-              case 'descripcion_paciente':
-              case 'observaciones':
-                newRow[templateCol] = '';
-                break;
-              case 'apellido_y_nombre':
-                if (mapping.apellido && mapping.nombre && row[mapping.apellido] && row[mapping.nombre]) {
-                  newRow[templateCol] = `${row[mapping.apellido]}, ${row[mapping.nombre]}`;
-                } else {
-                  newRow[templateCol] = '';
-                }
-                break;
-              default:
-                newRow[templateCol] = '';
-            }
+        // Usar las columnas mapeadas directamente
+        for (const [destCol, srcCol] of Object.entries(mapping)) {
+          if (srcCol && row[srcCol] !== undefined) {
+            newRow[destCol] = row[srcCol];
           }
+        }
+        
+        // Establecer valores por defecto
+        newRow.obra_social_id = selectedObraSocial ? parseInt(selectedObraSocial) : 1;
+        newRow.consultas_maximas = newRow.consultas_maximas || 999;
+        newRow.descripcion_paciente = newRow.descripcion_paciente || '';
+        newRow.observaciones = newRow.observaciones || '';
+        
+        // Construir apellido_y_nombre si tenemos apellido y nombre
+        if (!newRow.apellido_y_nombre && newRow.apellido && newRow.nombre) {
+          newRow.apellido_y_nombre = `${newRow.apellido}, ${newRow.nombre}`;
+        }
+        
+        // Asegurar tipo_doc por defecto
+        if (!newRow.tipo_doc) {
+          newRow.tipo_doc = 'DNI';
+        }
+        
+        // Si no hay nro_doc pero hay dni, usar dni
+        if (!newRow.nro_doc && newRow.dni) {
+          newRow.nro_doc = newRow.dni;
         }
         
         return newRow;
@@ -474,10 +498,10 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
         </Card>
       </div>
 
-      {/* Analyze Button */}
+      {/* Analyze Button - Solo requiere padrón, plantilla es opcional */}
       <Button
         onClick={analyzeFiles}
-        disabled={!templateFile || !padronFile || processing}
+        disabled={!padronFile || processing}
         className="w-full"
         size="lg"
       >
@@ -493,6 +517,12 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
           </>
         )}
       </Button>
+      
+      {!templateFile && (
+        <p className="text-xs text-muted-foreground text-center">
+          La plantilla es opcional. Si no se sube, se usarán las columnas predefinidas del sistema.
+        </p>
+      )}
 
       {/* Error */}
       {error && (
