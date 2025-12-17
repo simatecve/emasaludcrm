@@ -17,6 +17,7 @@ import DiagnosticosList from './DiagnosticosList';
 import DiagnosticoForm from './DiagnosticoForm';
 import PatientImport from './PatientImport';
 import DeletePatientsByObraSocialDialog from './DeletePatientsByObraSocialDialog';
+import UpdateConsultasMaximasDialog from './UpdateConsultasMaximasDialog';
 
 const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,7 +191,8 @@ const PatientManagement = () => {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <UpdateConsultasMaximasDialog />
           <DeletePatientsByObraSocialDialog />
           <Button 
             variant="outline" 
