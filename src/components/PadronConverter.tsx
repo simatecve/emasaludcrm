@@ -120,35 +120,61 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     };
   };
 
-  // Convertir fechas "21-Nov-67" o "1-Apr-24" a "YYYY-MM-DD"
+  // Convertir fechas de varios formatos a "YYYY-MM-DD"
   const parseFecha = (fechaStr: string): string => {
     if (!fechaStr) return '';
     
+    const str = String(fechaStr).trim();
+    
+    // 1. Si es un número serial de Excel (solo dígitos)
+    if (/^\d+$/.test(str)) {
+      const excelSerial = parseInt(str);
+      // Excel usa 1/1/1900 como día 1 (con bug del año bisiesto 1900)
+      const excelEpoch = new Date(1899, 11, 30); // 30 de diciembre de 1899
+      const date = new Date(excelEpoch.getTime() + excelSerial * 24 * 60 * 60 * 1000);
+      
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      
+      return `${year}-${month}-${day}`;
+    }
+    
+    // 2. Si ya está en formato ISO (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+      return str;
+    }
+    
+    // 3. Formato texto "21-Nov-67" o "1-Apr-24"
     const meses: Record<string, string> = {
       'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
       'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
       'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
     };
     
-    const str = String(fechaStr).trim();
     const parts = str.split('-');
-    
     if (parts.length === 3) {
       const dia = parts[0].padStart(2, '0');
       const mesStr = parts[1].toLowerCase().substring(0, 3);
-      const mes = meses[mesStr] || '01';
-      let año = parseInt(parts[2]);
+      const mes = meses[mesStr];
       
-      // Ajustar año de 2 dígitos: 00-30 = 2000s, 31-99 = 1900s
-      if (año < 100) {
-        año = año <= 30 ? 2000 + año : 1900 + año;
+      if (mes) {
+        let año = parseInt(parts[2]);
+        if (año < 100) {
+          año = año <= 30 ? 2000 + año : 1900 + año;
+        }
+        return `${año}-${mes}-${dia}`;
       }
-      
-      return `${año}-${mes}-${dia}`;
     }
     
-    // Si ya está en formato YYYY-MM-DD o similar, devolverlo
-    return str;
+    // 4. Fallback: intentar con Date.parse
+    const parsed = Date.parse(str);
+    if (!isNaN(parsed)) {
+      const date = new Date(parsed);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+    
+    return '';
   };
 
   const createAutomaticMapping = (templateCols: string[], padronCols: string[], sampleRow: Record<string, any>): Record<string, string> => {
