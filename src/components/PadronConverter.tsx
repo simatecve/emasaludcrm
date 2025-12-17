@@ -101,31 +101,85 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     });
   };
 
+  // Parsear "APELLIDO, NOMBRE" o "APELLIDO APELLIDO2, NOMBRE NOMBRE2"
+  const parseApellidoYNombre = (nombreCompleto: string): { apellido: string; nombre: string } => {
+    if (!nombreCompleto) return { apellido: '', nombre: '' };
+    
+    const parts = nombreCompleto.split(',');
+    if (parts.length >= 2) {
+      return {
+        apellido: parts[0].trim(),
+        nombre: parts.slice(1).join(',').trim()
+      };
+    }
+    // Si no hay coma, intentar dividir por el último espacio
+    const words = nombreCompleto.trim().split(' ');
+    return {
+      apellido: words[0] || '',
+      nombre: words.slice(1).join(' ') || ''
+    };
+  };
+
+  // Convertir fechas "21-Nov-67" o "1-Apr-24" a "YYYY-MM-DD"
+  const parseFecha = (fechaStr: string): string => {
+    if (!fechaStr) return '';
+    
+    const meses: Record<string, string> = {
+      'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
+      'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
+      'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12'
+    };
+    
+    const str = String(fechaStr).trim();
+    const parts = str.split('-');
+    
+    if (parts.length === 3) {
+      const dia = parts[0].padStart(2, '0');
+      const mesStr = parts[1].toLowerCase().substring(0, 3);
+      const mes = meses[mesStr] || '01';
+      let año = parseInt(parts[2]);
+      
+      // Ajustar año de 2 dígitos: 00-30 = 2000s, 31-99 = 1900s
+      if (año < 100) {
+        año = año <= 30 ? 2000 + año : 1900 + año;
+      }
+      
+      return `${año}-${mes}-${dia}`;
+    }
+    
+    // Si ya está en formato YYYY-MM-DD o similar, devolverlo
+    return str;
+  };
+
   const createAutomaticMapping = (templateCols: string[], padronCols: string[], sampleRow: Record<string, any>): Record<string, string> => {
     const mapping: Record<string, string> = {};
     
+    // Mapeos conocidos incluyendo columnas específicas de OSPSIP
     const knownMappings: Record<string, string[]> = {
-      'dni': ['DNI', 'Nro Doc', 'Numero Documento', 'nro_doc', 'Documento', 'NroDocumento'],
+      'dni': ['DNI', 'NUM_DOC', 'Nro Doc', 'Numero Documento', 'nro_doc', 'Documento', 'NroDocumento'],
       'nombre': ['Nombre', 'Nombres', 'PrimerNombre', 'Primer Nombre'],
       'apellido': ['Apellido', 'Apellidos', 'PrimerApellido', 'Primer Apellido'],
-      'fecha_nacimiento': ['Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'],
+      'fecha_nacimiento': ['F_NAC', 'Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'],
       'telefono': ['Telefono', 'Tel', 'Celular', 'Teléfono', 'Movil', 'Móvil'],
       'email': ['Email', 'Mail', 'Correo', 'CorreoElectronico', 'E-mail'],
       'direccion': ['Direccion', 'Domicilio', 'Calle', 'Dirección', 'Dir'],
-      'numero_afiliado': ['Nro Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'],
-      'cuil_titular': ['CUIL Titular', 'CuilTitular', 'Cuil_Titular'],
-      'cuil_beneficiario': ['CUIL Beneficiario', 'CuilBeneficiario', 'CUIL', 'Cuil_Beneficiario', 'CuilBenef'],
-      'tipo_doc': ['Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'],
-      'nro_doc': ['Nro Doc', 'NroDoc', 'Numero Doc', 'NumeroDoc'],
-      'parentesco': ['Parentesco', 'Vinculo', 'Vínculo', 'Relacion'],
-      'sexo': ['Sexo', 'Genero', 'Género', 'Gen'],
+      'numero_afiliado': ['NUM_FAM', 'Nro Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'],
+      'cuil_titular': ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'],
+      'cuil_beneficiario': ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'],
+      'tipo_doc': ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'],
+      'nro_doc': ['NUM_DOC', 'Nro Doc', 'NroDoc', 'Numero Doc', 'NumeroDoc'],
+      'parentesco': ['PARENTESCO', 'Parentesco', 'Vinculo', 'Vínculo', 'Relacion'],
+      'sexo': ['SEXO', 'Sexo', 'Genero', 'Género', 'Gen'],
       'estado_civil': ['Estado Civil', 'EstadoCivil', 'Estado_Civil'],
       'nacionalidad': ['Nacionalidad', 'Nac', 'Pais', 'País'],
-      'localidad': ['Localidad', 'Ciudad', 'Loc'],
-      'provincia': ['Provincia', 'Prov', 'Estado'],
-      'apellido_y_nombre': ['Apellido y Nombre', 'ApellidoYNombre', 'NombreCompleto', 'Nombre Completo'],
+      'localidad': ['LOCALID', 'Localidad', 'Ciudad', 'Loc'],
+      'provincia': ['PCIA', 'Provincia', 'Prov', 'Estado'],
+      'apellido_y_nombre': ['NOMBRE', 'Apellido y Nombre', 'ApellidoYNombre', 'NombreCompleto', 'Nombre Completo'],
       'descripcion_paciente': ['Descripcion', 'Descripción', 'Descripcion Paciente'],
-      'observaciones': ['Observaciones', 'Obs', 'Notas', 'Comentarios']
+      'observaciones': ['Observaciones', 'Obs', 'Notas', 'Comentarios'],
+      'fecha_alta': ['F_ALTA', 'Fecha Alta', 'FechaAlta'],
+      'nro_doc_familiar': ['NUM_DOC_FAM', 'Nro Doc Familiar'],
+      'tipo_doc_familiar': ['TD_FAM', 'Tipo Doc Familiar']
     };
 
     for (const [templateCol, possibleNames] of Object.entries(knownMappings)) {
@@ -250,33 +304,64 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       const converted = padronData.map(row => {
         const newRow: Record<string, any> = {};
         
-        // Usar las columnas mapeadas directamente
-        for (const [destCol, srcCol] of Object.entries(mapping)) {
-          if (srcCol && row[srcCol] !== undefined) {
-            newRow[destCol] = row[srcCol];
+        // Obtener valores usando el mapeo
+        const getValue = (field: string) => {
+          const srcCol = mapping[field];
+          return srcCol && row[srcCol] !== undefined ? String(row[srcCol]).trim() : '';
+        };
+        
+        // Procesar apellido_y_nombre (campo NOMBRE del padrón contiene "APELLIDO, NOMBRE")
+        const nombreCompleto = getValue('apellido_y_nombre');
+        if (nombreCompleto) {
+          const parsed = parseApellidoYNombre(nombreCompleto);
+          newRow.apellido = parsed.apellido;
+          newRow.nombre = parsed.nombre;
+          newRow.apellido_y_nombre = nombreCompleto;
+        } else {
+          // Si no hay nombre completo, usar campos individuales
+          newRow.nombre = getValue('nombre');
+          newRow.apellido = getValue('apellido');
+          if (newRow.apellido && newRow.nombre) {
+            newRow.apellido_y_nombre = `${newRow.apellido}, ${newRow.nombre}`;
           }
         }
         
-        // Establecer valores por defecto
+        // DNI - puede venir de NUM_DOC o DNI
+        newRow.dni = getValue('dni') || getValue('nro_doc');
+        newRow.nro_doc = newRow.dni;
+        
+        // Fecha de nacimiento - convertir formato
+        const fechaNac = getValue('fecha_nacimiento');
+        newRow.fecha_nacimiento = parseFecha(fechaNac);
+        
+        // Otros campos con mapeo directo
+        newRow.telefono = getValue('telefono');
+        newRow.email = getValue('email');
+        newRow.direccion = getValue('direccion');
+        newRow.numero_afiliado = getValue('numero_afiliado');
+        newRow.cuil_titular = getValue('cuil_titular');
+        newRow.cuil_beneficiario = getValue('cuil_beneficiario');
+        newRow.parentesco = getValue('parentesco');
+        newRow.sexo = getValue('sexo');
+        newRow.estado_civil = getValue('estado_civil');
+        newRow.nacionalidad = getValue('nacionalidad');
+        newRow.localidad = getValue('localidad');
+        newRow.provincia = getValue('provincia');
+        newRow.observaciones = getValue('observaciones');
+        newRow.nro_doc_familiar = getValue('nro_doc_familiar');
+        newRow.tipo_doc_familiar = getValue('tipo_doc_familiar');
+        
+        // Fecha de alta si existe
+        const fechaAlta = getValue('fecha_alta');
+        if (fechaAlta) {
+          newRow.fecha_alta = parseFecha(fechaAlta);
+        }
+        
+        // Valores por defecto
         newRow.obra_social_id = selectedObraSocial ? parseInt(selectedObraSocial) : 1;
-        newRow.consultas_maximas = newRow.consultas_maximas || 999;
-        newRow.descripcion_paciente = newRow.descripcion_paciente || '';
-        newRow.observaciones = newRow.observaciones || '';
-        
-        // Construir apellido_y_nombre si tenemos apellido y nombre
-        if (!newRow.apellido_y_nombre && newRow.apellido && newRow.nombre) {
-          newRow.apellido_y_nombre = `${newRow.apellido}, ${newRow.nombre}`;
-        }
-        
-        // Asegurar tipo_doc por defecto
-        if (!newRow.tipo_doc) {
-          newRow.tipo_doc = 'DNI';
-        }
-        
-        // Si no hay nro_doc pero hay dni, usar dni
-        if (!newRow.nro_doc && newRow.dni) {
-          newRow.nro_doc = newRow.dni;
-        }
+        newRow.consultas_maximas = 999;
+        newRow.descripcion_paciente = getValue('descripcion_paciente') || '';
+        newRow.tipo_doc = getValue('tipo_doc') || 'DNI';
         
         return newRow;
       });
@@ -354,8 +439,15 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
           observaciones: row.observaciones || ''
         };
 
-        if (!patientData.dni || !patientData.nombre || !patientData.apellido || !patientData.fecha_nacimiento) {
-          throw new Error('Faltan campos requeridos: dni, nombre, apellido, fecha_nacimiento');
+        // Validar campos requeridos con mensajes específicos
+        const missingFields: string[] = [];
+        if (!patientData.dni) missingFields.push('DNI');
+        if (!patientData.nombre) missingFields.push('Nombre');
+        if (!patientData.apellido) missingFields.push('Apellido');
+        if (!patientData.fecha_nacimiento) missingFields.push('Fecha Nacimiento');
+        
+        if (missingFields.length > 0) {
+          throw new Error(`Faltan: ${missingFields.join(', ')}`);
         }
 
         await createPatient.mutateAsync(patientData as PatientFormData);
