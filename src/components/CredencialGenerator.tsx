@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { usePatients } from '@/hooks/usePatients';
 import { useSystemConfig } from '@/hooks/useSystemConfig';
 import { useCreateCredencial, useCredencialByPaciente } from '@/hooks/useCredenciales';
 import PatientSelector from '@/components/PatientSelector';
-
+import html2canvas from 'html2canvas';
 const CredencialCard: React.FC<{ 
   paciente: any; 
   credencial: any;
@@ -96,6 +96,7 @@ const CredencialGenerator: React.FC = () => {
   const [dni, setDni] = useState('');
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [showCredencial, setShowCredencial] = useState(false);
+  const credencialRef = useRef<HTMLDivElement>(null);
   
   const { data: patients, isLoading: patientsLoading } = usePatients();
   const { data: systemConfig } = useSystemConfig();
@@ -140,9 +141,23 @@ const CredencialGenerator: React.FC = () => {
     setShowCredencial(true);
   };
 
-  const handleDownloadCredencial = () => {
-    // This would implement the download functionality
-    console.log('Download credential');
+  const handleDownloadCredencial = async () => {
+    if (!credencialRef.current || !selectedPatient) return;
+    
+    try {
+      const canvas = await html2canvas(credencialRef.current, {
+        scale: 2,
+        backgroundColor: null,
+        useCORS: true,
+      });
+      
+      const link = document.createElement('a');
+      link.download = `credencial-${selectedPatient.dni}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Error al descargar credencial:', error);
+    }
   };
 
   const currentCredencial = existingCredencial || {
@@ -251,12 +266,14 @@ const CredencialGenerator: React.FC = () => {
           <CardContent>
             {selectedPatient && showCredencial ? (
               <div className="space-y-4">
-                <CredencialCard 
-                  paciente={selectedPatient}
-                  credencial={currentCredencial}
-                  logoUrl={systemConfig?.logo_url}
-                  systemName={systemConfig?.name}
-                />
+                <div ref={credencialRef}>
+                  <CredencialCard 
+                    paciente={selectedPatient}
+                    credencial={currentCredencial}
+                    logoUrl={systemConfig?.logo_url}
+                    systemName={systemConfig?.name}
+                  />
+                </div>
                 
                 <div className="flex gap-2">
                   <Button 
