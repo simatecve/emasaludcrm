@@ -81,6 +81,7 @@ const PatientTable: React.FC<PatientTableProps> = ({
             <TableHead>Fecha Nac.</TableHead>
             <TableHead>Localidad</TableHead>
             <TableHead>Obra Social</TableHead>
+            <TableHead>Plan</TableHead>
             <TableHead>Consultas</TableHead>
             <TableHead>Estado</TableHead>
             <TableHead className="text-right">Acciones</TableHead>
@@ -131,6 +132,13 @@ const PatientTable: React.FC<PatientTableProps> = ({
                     </div>
                   )}
                 </div>
+              </TableCell>
+              <TableCell>
+                {patient.plan ? (
+                  <Badge variant="outline">{patient.plan}</Badge>
+                ) : (
+                  <span className="text-muted-foreground text-sm">-</span>
+                )}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
