@@ -130,6 +130,18 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     };
   };
 
+  // Extraer DNI del CUIL (8 dígitos centrales)
+  const extractDniFromCuil = (cuil: string): string => {
+    if (!cuil) return '';
+    // CUIL formato: XX-DDDDDDDD-D o XXDDDDDDDDD (11 dígitos)
+    const cuilClean = cuil.toString().replace(/[-.\s]/g, '');
+    // DNI son los 8 dígitos centrales (posiciones 2-9)
+    if (cuilClean.length === 11 && /^\d+$/.test(cuilClean)) {
+      return cuilClean.substring(2, 10);
+    }
+    return '';
+  };
+
   // Convertir fechas de varios formatos a "YYYY-MM-DD"
   const parseFecha = (fechaStr: string): string => {
     if (!fechaStr) return '';
@@ -155,7 +167,21 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       return str;
     }
     
-    // 3. Formato texto "21-Nov-67" o "1-Apr-24"
+    // 3. Formato DD/MM/YYYY o DD/MM/YY (común en OSCERA)
+    const partsSlash = str.split('/');
+    if (partsSlash.length === 3) {
+      const dia = partsSlash[0].padStart(2, '0');
+      const mes = partsSlash[1].padStart(2, '0');
+      let año = parseInt(partsSlash[2]);
+      if (!isNaN(año)) {
+        if (año < 100) {
+          año = año <= 30 ? 2000 + año : 1900 + año;
+        }
+        return `${año}-${mes}-${dia}`;
+      }
+    }
+    
+    // 4. Formato texto "21-Nov-67" o "1-Apr-24"
     const meses: Record<string, string> = {
       'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04',
       'may': '05', 'jun': '06', 'jul': '07', 'aug': '08',
@@ -177,7 +203,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       }
     }
     
-    // 4. Fallback: intentar con Date.parse
+    // 5. Fallback: intentar con Date.parse
     const parsed = Date.parse(str);
     if (!isNaN(parsed)) {
       const date = new Date(parsed);
@@ -202,8 +228,8 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       { field: 'nro_doc', patterns: ['NUM_DOC', 'Nro Doc', 'Nro. Doc.', 'NroDoc', 'Numero Doc', 'NumeroDoc'] },
       // Campo combinado - DESPUÉS de los campos separados
       { field: 'apellido_y_nombre', patterns: ['NOMBRE', 'Apellido y Nombre', 'ApellidoYNombre', 'NombreCompleto', 'Nombre Completo', 'Apellido, Nombre'] },
-      // Fechas
-      { field: 'fecha_nacimiento', patterns: ['F_NAC', 'Fecha Nac', 'Fecha Nac.', 'Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'] },
+      // Fechas - incluir F. Nacimiento para OSCERA
+      { field: 'fecha_nacimiento', patterns: ['F_NAC', 'Fecha Nac', 'Fecha Nac.', 'F. Nacimiento', 'F Nacimiento', 'Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'] },
       { field: 'fecha_alta', patterns: ['F_ALTA', 'Fecha Alta', 'FechaAlta'] },
       // Contacto
       { field: 'telefono', patterns: ['Telefono', 'Tel', 'Celular', 'Teléfono', 'Movil', 'Móvil'] },
@@ -213,6 +239,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       { field: 'numero_afiliado', patterns: ['NUM_FAM', 'Nro Afiliado', 'Nº Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'] },
       { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'] },
       { field: 'cuil_beneficiario', patterns: ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'] },
+      { field: 'cuil', patterns: ['CUIL'] },  // OSCERA usa solo "CUIL"
       { field: 'tipo_doc', patterns: ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'] },
       { field: 'parentesco', patterns: ['PARENTESCO', 'Parentesco', 'Vinculo', 'Vínculo', 'Relacion'] },
       // Datos personales
@@ -426,9 +453,19 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
           newRow.apellido_y_nombre = nombreCompleto;
         }
         
-        // DNI - puede venir de NUM_DOC o DNI
-        newRow.dni = getValue('dni') || getValue('nro_doc');
-        newRow.nro_doc = newRow.dni;
+        // DNI - puede venir de DNI, NUM_DOC, o extraerse del CUIL
+        let dniValue = getValue('dni') || getValue('nro_doc');
+        if (!dniValue) {
+          // Si no hay DNI directo, intentar extraer del CUIL
+          const cuil = getValue('cuil_beneficiario') || getValue('cuil');
+          dniValue = extractDniFromCuil(cuil);
+        }
+        newRow.dni = dniValue;
+        newRow.nro_doc = dniValue;
+        
+        // Guardar CUIL si existe
+        const cuilBenef = getValue('cuil_beneficiario') || getValue('cuil');
+        if (cuilBenef) newRow.cuil_beneficiario = cuilBenef;
         
         // Fecha de nacimiento - convertir formato
         const fechaNac = getValue('fecha_nacimiento');
