@@ -476,6 +476,24 @@ export type Database = {
         }
         Relationships: []
       }
+      n8n_chat_histories1: {
+        Row: {
+          id: number
+          message: Json
+          session_id: string
+        }
+        Insert: {
+          id?: number
+          message: Json
+          session_id: string
+        }
+        Update: {
+          id?: number
+          message?: Json
+          session_id?: string
+        }
+        Relationships: []
+      }
       n8n_chat_histories2: {
         Row: {
           id: number

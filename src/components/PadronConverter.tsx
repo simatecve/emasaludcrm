@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Download, FileText, CheckCircle, AlertCircle, ArrowRight, Database, Loader2 } from 'lucide-react';
+import { Upload, Download, FileText, CheckCircle, AlertCircle, ArrowRight, Database, Loader2, Users, RefreshCw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { useCreatePatient, PatientFormData } from '@/hooks/usePatients';
+import { useCreatePatient, useUpdatePatient, PatientFormData } from '@/hooks/usePatients';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PadronConverterProps {
   onClose?: () => void;
@@ -34,6 +35,12 @@ interface AnalysisResult {
   };
 }
 
+interface DuplicateCheckResult {
+  newRecords: Record<string, any>[];
+  existingRecords: { record: Record<string, any>; existingId: number }[];
+  existingDnis: Map<string, number>;
+}
+
 const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
   const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [padronFile, setPadronFile] = useState<File | null>(null);
@@ -43,6 +50,8 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
   const [mappingData, setMappingData] = useState<MappingData | null>(null);
   const [convertedData, setConvertedData] = useState<Record<string, any>[] | null>(null);
   const [selectedObraSocial, setSelectedObraSocial] = useState<string>('');
+  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateCheckResult | null>(null);
+  const [importMode, setImportMode] = useState<'new_only' | 'update_existing' | 'all'>('new_only');
   const [importProgress, setImportProgress] = useState<{ current: number; total: number; errors: { row: number; error: string }[] } | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -51,6 +60,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
 
   const { toast } = useToast();
   const createPatient = useCreatePatient();
+  const updatePatient = useUpdatePatient();
   const { data: obrasSociales } = useObrasSociales();
 
   const handleTemplateUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,47 +189,77 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
 
   const createAutomaticMapping = (templateCols: string[], padronCols: string[], sampleRow: Record<string, any>): Record<string, string> => {
     const mapping: Record<string, string> = {};
+    const usedPadronCols = new Set<string>();
     
-    // Mapeos conocidos incluyendo columnas específicas de OSPSIP
-    const knownMappings: Record<string, string[]> = {
-      'dni': ['DNI', 'NUM_DOC', 'Nro Doc', 'Numero Documento', 'nro_doc', 'Documento', 'NroDocumento'],
-      'nombre': ['Nombre', 'Nombres', 'PrimerNombre', 'Primer Nombre'],
-      'apellido': ['Apellido', 'Apellidos', 'PrimerApellido', 'Primer Apellido'],
-      'fecha_nacimiento': ['F_NAC', 'Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'],
-      'telefono': ['Telefono', 'Tel', 'Celular', 'Teléfono', 'Movil', 'Móvil'],
-      'email': ['Email', 'Mail', 'Correo', 'CorreoElectronico', 'E-mail'],
-      'direccion': ['Direccion', 'Domicilio', 'Calle', 'Dirección', 'Dir'],
-      'numero_afiliado': ['NUM_FAM', 'Nro Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'],
-      'cuil_titular': ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'],
-      'cuil_beneficiario': ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'],
-      'tipo_doc': ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'],
-      'nro_doc': ['NUM_DOC', 'Nro Doc', 'NroDoc', 'Numero Doc', 'NumeroDoc'],
-      'parentesco': ['PARENTESCO', 'Parentesco', 'Vinculo', 'Vínculo', 'Relacion'],
-      'sexo': ['SEXO', 'Sexo', 'Genero', 'Género', 'Gen'],
-      'estado_civil': ['Estado Civil', 'EstadoCivil', 'Estado_Civil'],
-      'nacionalidad': ['Nacionalidad', 'Nac', 'Pais', 'País'],
-      'localidad': ['LOCALID', 'Localidad', 'Ciudad', 'Loc'],
-      'provincia': ['PCIA', 'Provincia', 'Prov', 'Estado'],
-      'apellido_y_nombre': ['NOMBRE', 'Apellido y Nombre', 'ApellidoYNombre', 'NombreCompleto', 'Nombre Completo'],
-      'descripcion_paciente': ['Descripcion', 'Descripción', 'Descripcion Paciente'],
-      'observaciones': ['Observaciones', 'Obs', 'Notas', 'Comentarios'],
-      'fecha_alta': ['F_ALTA', 'Fecha Alta', 'FechaAlta'],
-      'nro_doc_familiar': ['NUM_DOC_FAM', 'Nro Doc Familiar'],
-      'tipo_doc_familiar': ['TD_FAM', 'Tipo Doc Familiar']
-    };
+    // Mapeos conocidos - ORDEN IMPORTANTE: campos específicos primero, combinados después
+    // Prioridad: nombre y apellido ANTES que apellido_y_nombre para evitar conflictos
+    const knownMappings: { field: string; patterns: string[]; exactOnly?: boolean }[] = [
+      // Campos de nombre separados - PRIORIDAD ALTA con matching exacto
+      { field: 'nombre', patterns: ['Nombre', 'Nombres', 'PrimerNombre', 'Primer Nombre'], exactOnly: true },
+      { field: 'apellido', patterns: ['Apellido', 'Apellidos', 'PrimerApellido', 'Primer Apellido'], exactOnly: true },
+      // DNI y documentos
+      { field: 'dni', patterns: ['DNI', 'NUM_DOC', 'Nro Doc', 'Nro. Doc.', 'Numero Documento', 'nro_doc', 'Documento', 'NroDocumento'] },
+      { field: 'nro_doc', patterns: ['NUM_DOC', 'Nro Doc', 'Nro. Doc.', 'NroDoc', 'Numero Doc', 'NumeroDoc'] },
+      // Campo combinado - DESPUÉS de los campos separados
+      { field: 'apellido_y_nombre', patterns: ['NOMBRE', 'Apellido y Nombre', 'ApellidoYNombre', 'NombreCompleto', 'Nombre Completo', 'Apellido, Nombre'] },
+      // Fechas
+      { field: 'fecha_nacimiento', patterns: ['F_NAC', 'Fecha Nac', 'Fecha Nac.', 'Fecha Nacimiento', 'Fec Nac', 'FechaNac', 'Fecha de Nacimiento', 'FechaNacimiento', 'Nacimiento'] },
+      { field: 'fecha_alta', patterns: ['F_ALTA', 'Fecha Alta', 'FechaAlta'] },
+      // Contacto
+      { field: 'telefono', patterns: ['Telefono', 'Tel', 'Celular', 'Teléfono', 'Movil', 'Móvil'] },
+      { field: 'email', patterns: ['Email', 'Mail', 'Correo', 'CorreoElectronico', 'E-mail'] },
+      { field: 'direccion', patterns: ['Direccion', 'Domicilio', 'Calle', 'Dirección', 'Dir'] },
+      // Afiliación
+      { field: 'numero_afiliado', patterns: ['NUM_FAM', 'Nro Afiliado', 'Nº Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'] },
+      { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'] },
+      { field: 'cuil_beneficiario', patterns: ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'] },
+      { field: 'tipo_doc', patterns: ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'] },
+      { field: 'parentesco', patterns: ['PARENTESCO', 'Parentesco', 'Vinculo', 'Vínculo', 'Relacion'] },
+      // Datos personales
+      { field: 'sexo', patterns: ['SEXO', 'Sexo', 'Genero', 'Género', 'Gen'] },
+      { field: 'estado_civil', patterns: ['Estado Civil', 'EstadoCivil', 'Estado_Civil'] },
+      { field: 'nacionalidad', patterns: ['Nacionalidad', 'Nac', 'Pais', 'País'] },
+      { field: 'localidad', patterns: ['LOCALID', 'Localidad', 'Ciudad', 'Loc'] },
+      { field: 'provincia', patterns: ['PCIA', 'Provincia', 'Prov', 'Estado'] },
+      // Otros
+      { field: 'descripcion_paciente', patterns: ['Descripcion', 'Descripción', 'Descripcion Paciente'] },
+      { field: 'observaciones', patterns: ['Observaciones', 'Obs', 'Notas', 'Comentarios'] },
+      { field: 'nro_doc_familiar', patterns: ['NUM_DOC_FAM', 'Nro Doc Familiar'] },
+      { field: 'tipo_doc_familiar', patterns: ['TD_FAM', 'Tipo Doc Familiar'] }
+    ];
 
-    for (const [templateCol, possibleNames] of Object.entries(knownMappings)) {
+    for (const { field, patterns, exactOnly } of knownMappings) {
+      if (mapping[field]) continue; // Ya mapeado
+      
       for (const padronCol of padronCols) {
-        const padronColLower = padronCol.toLowerCase().trim();
-        if (possibleNames.some(name => 
-          padronColLower === name.toLowerCase() ||
-          padronColLower.includes(name.toLowerCase()) ||
-          name.toLowerCase().includes(padronColLower)
-        )) {
-          if (!mapping[templateCol]) {
-            mapping[templateCol] = padronCol;
-          }
+        if (usedPadronCols.has(padronCol)) continue; // Ya usado para otro campo
+        
+        const padronColNormalized = padronCol.toLowerCase().trim().replace(/[.\s]+/g, ' ');
+        
+        // Primero intentar matching exacto
+        const exactMatch = patterns.some(pattern => 
+          padronColNormalized === pattern.toLowerCase().replace(/[.\s]+/g, ' ')
+        );
+        
+        if (exactMatch) {
+          mapping[field] = padronCol;
+          usedPadronCols.add(padronCol);
           break;
+        }
+        
+        // Si no es exactOnly, intentar matching parcial
+        if (!exactOnly) {
+          const partialMatch = patterns.some(pattern => {
+            const patternNormalized = pattern.toLowerCase().replace(/[.\s]+/g, ' ');
+            return padronColNormalized.includes(patternNormalized) || 
+                   patternNormalized.includes(padronColNormalized);
+          });
+          
+          if (partialMatch) {
+            mapping[field] = padronCol;
+            usedPadronCols.add(padronCol);
+            break;
+          }
         }
       }
     }
@@ -317,13 +357,41 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     });
   };
 
-  const convertData = () => {
+  // Verificar DNIs duplicados en la base de datos
+  const checkExistingPatients = async (dniList: string[]): Promise<Map<string, number>> => {
+    const existingDnis = new Map<string, number>();
+    
+    // Filtrar DNIs válidos y dividir en lotes de 100
+    const validDnis = dniList.filter(dni => dni && dni.trim() !== '');
+    const batchSize = 100;
+    
+    for (let i = 0; i < validDnis.length; i += batchSize) {
+      const batch = validDnis.slice(i, i + batchSize);
+      const { data } = await supabase
+        .from('pacientes')
+        .select('id, dni')
+        .in('dni', batch)
+        .eq('activo', true);
+      
+      if (data) {
+        data.forEach(p => {
+          if (p.dni) existingDnis.set(p.dni, p.id);
+        });
+      }
+    }
+    
+    return existingDnis;
+  };
+
+  const convertData = async () => {
     if (!mappingData) {
       setError('Primero analiza los archivos');
       return;
     }
 
     setProcessing(true);
+    setDuplicateCheck(null);
+    
     try {
       const { mapping, padronData } = mappingData;
       
@@ -336,20 +404,26 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
           return srcCol && row[srcCol] !== undefined ? String(row[srcCol]).trim() : '';
         };
         
-        // Procesar apellido_y_nombre (campo NOMBRE del padrón contiene "APELLIDO, NOMBRE")
+        // PRIORIDAD: Usar campos separados nombre y apellido si existen
+        const nombreDirecto = getValue('nombre');
+        const apellidoDirecto = getValue('apellido');
         const nombreCompleto = getValue('apellido_y_nombre');
-        if (nombreCompleto) {
+        
+        if (nombreDirecto || apellidoDirecto) {
+          // Usar campos separados si existen
+          newRow.nombre = nombreDirecto;
+          newRow.apellido = apellidoDirecto;
+          if (apellidoDirecto && nombreDirecto) {
+            newRow.apellido_y_nombre = `${apellidoDirecto}, ${nombreDirecto}`;
+          } else {
+            newRow.apellido_y_nombre = nombreCompleto || '';
+          }
+        } else if (nombreCompleto) {
+          // Solo parsear campo combinado si NO hay campos separados
           const parsed = parseApellidoYNombre(nombreCompleto);
           newRow.apellido = parsed.apellido;
           newRow.nombre = parsed.nombre;
           newRow.apellido_y_nombre = nombreCompleto;
-        } else {
-          // Si no hay nombre completo, usar campos individuales
-          newRow.nombre = getValue('nombre');
-          newRow.apellido = getValue('apellido');
-          if (newRow.apellido && newRow.nombre) {
-            newRow.apellido_y_nombre = `${newRow.apellido}, ${newRow.nombre}`;
-          }
         }
         
         // DNI - puede venir de NUM_DOC o DNI
@@ -393,10 +467,29 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       });
 
       setConvertedData(converted);
+      
+      // Verificar DNIs duplicados
+      const dniList = converted.map(r => r.dni).filter(Boolean);
+      const existingDnis = await checkExistingPatients(dniList);
+      
+      const newRecords: Record<string, any>[] = [];
+      const existingRecords: { record: Record<string, any>; existingId: number }[] = [];
+      
+      for (const record of converted) {
+        const existingId = existingDnis.get(record.dni);
+        if (existingId) {
+          existingRecords.push({ record, existingId });
+        } else {
+          newRecords.push(record);
+        }
+      }
+      
+      setDuplicateCheck({ newRecords, existingRecords, existingDnis });
       setError(null);
+      
       toast({
         title: "Datos convertidos",
-        description: `${converted.length} registros listos para importar o descargar.`,
+        description: `${newRecords.length} nuevos, ${existingRecords.length} ya existen en la BD.`,
       });
     } catch (err: any) {
       setError(`Error convirtiendo datos: ${err.message}`);
@@ -427,16 +520,34 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
   };
 
   const importToDatabase = async () => {
-    if (!convertedData || convertedData.length === 0) return;
+    if (!convertedData || convertedData.length === 0 || !duplicateCheck) return;
 
     setIsImporting(true);
-    setImportProgress({ current: 0, total: convertedData.length, errors: [] });
+    
+    // Determinar qué registros procesar según el modo
+    let recordsToCreate: Record<string, any>[] = [];
+    let recordsToUpdate: { record: Record<string, any>; existingId: number }[] = [];
+    
+    if (importMode === 'new_only') {
+      recordsToCreate = duplicateCheck.newRecords;
+    } else if (importMode === 'update_existing') {
+      recordsToUpdate = duplicateCheck.existingRecords;
+    } else {
+      recordsToCreate = duplicateCheck.newRecords;
+      recordsToUpdate = duplicateCheck.existingRecords;
+    }
+    
+    const totalOperations = recordsToCreate.length + recordsToUpdate.length;
+    setImportProgress({ current: 0, total: totalOperations, errors: [] });
 
     const errors: { row: number; error: string }[] = [];
     let successCount = 0;
+    let currentOp = 0;
 
-    for (let i = 0; i < convertedData.length; i++) {
-      const row = convertedData[i];
+    // Crear nuevos pacientes
+    for (const row of recordsToCreate) {
+      currentOp++;
+      const rowIndex = convertedData.indexOf(row) + 2;
       
       try {
         const patientData: Partial<PatientFormData> = {
@@ -479,17 +590,52 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
         await createPatient.mutateAsync(patientData as PatientFormData);
         successCount++;
       } catch (err: any) {
-        errors.push({ row: i + 2, error: err.message || 'Error desconocido' });
+        errors.push({ row: rowIndex, error: err.message || 'Error desconocido' });
       }
 
-      setImportProgress({ current: i + 1, total: convertedData.length, errors });
+      setImportProgress({ current: currentOp, total: totalOperations, errors });
+    }
+    
+    // Actualizar pacientes existentes
+    for (const { record: row, existingId } of recordsToUpdate) {
+      currentOp++;
+      const rowIndex = convertedData.indexOf(row) + 2;
+      
+      try {
+        const updateData: Record<string, any> = {};
+        
+        // Solo actualizar campos no vacíos
+        if (row.nombre) updateData.nombre = row.nombre;
+        if (row.apellido) updateData.apellido = row.apellido;
+        if (row.fecha_nacimiento) updateData.fecha_nacimiento = row.fecha_nacimiento;
+        if (row.telefono) updateData.telefono = row.telefono;
+        if (row.email) updateData.email = row.email;
+        if (row.direccion) updateData.direccion = row.direccion;
+        if (selectedObraSocial) updateData.obra_social_id = parseInt(selectedObraSocial);
+        if (row.numero_afiliado) updateData.numero_afiliado = row.numero_afiliado;
+        if (row.cuil_titular) updateData.cuil_titular = row.cuil_titular;
+        if (row.cuil_beneficiario) updateData.cuil_beneficiario = row.cuil_beneficiario;
+        if (row.parentesco) updateData.parentesco = row.parentesco;
+        if (row.apellido_y_nombre) updateData.apellido_y_nombre = row.apellido_y_nombre;
+        if (row.sexo) updateData.sexo = row.sexo;
+        if (row.localidad) updateData.localidad = row.localidad;
+        if (row.provincia) updateData.provincia = row.provincia;
+
+        await updatePatient.mutateAsync({ id: existingId, data: updateData });
+        successCount++;
+      } catch (err: any) {
+        errors.push({ row: rowIndex, error: `Actualización: ${err.message || 'Error desconocido'}` });
+      }
+
+      setImportProgress({ current: currentOp, total: totalOperations, errors });
     }
 
     setIsImporting(false);
 
+    const actionText = importMode === 'update_existing' ? 'actualizados' : 'importados';
     toast({
       title: "Importación completada",
-      description: `${successCount} pacientes importados. ${errors.length} errores.`,
+      description: `${successCount} pacientes ${actionText}. ${errors.length} errores.`,
       variant: errors.length > 0 ? "destructive" : "default",
     });
   };
@@ -503,6 +649,8 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     setError(null);
     setImportProgress(null);
     setSelectedObraSocial('');
+    setDuplicateCheck(null);
+    setImportMode('new_only');
   };
 
   return (
@@ -721,7 +869,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
           )}
 
           {/* Converted Data Actions */}
-          {convertedData && (
+          {convertedData && duplicateCheck && (
             <Card className="border-green-200 bg-green-50/50">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-green-800 flex items-center gap-2">
@@ -729,12 +877,57 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
                   Conversión Exitosa - {convertedData.length} registros
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
+                {/* Resumen de duplicados */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-blue-50 p-3 rounded-lg text-center border border-blue-200">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <Users className="w-4 h-4 text-blue-600" />
+                      <span className="text-2xl font-bold text-blue-600">{duplicateCheck.newRecords.length}</span>
+                    </div>
+                    <div className="text-xs text-blue-700">Pacientes nuevos</div>
+                  </div>
+                  <div className="bg-amber-50 p-3 rounded-lg text-center border border-amber-200">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <RefreshCw className="w-4 h-4 text-amber-600" />
+                      <span className="text-2xl font-bold text-amber-600">{duplicateCheck.existingRecords.length}</span>
+                    </div>
+                    <div className="text-xs text-amber-700">Ya existen en BD</div>
+                  </div>
+                </div>
+                
+                {/* Selector de modo de importación */}
+                {(duplicateCheck.newRecords.length > 0 || duplicateCheck.existingRecords.length > 0) && (
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-muted-foreground">Modo de importación:</label>
+                    <Select value={importMode} onValueChange={(v) => setImportMode(v as any)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="new_only">
+                          Solo nuevos ({duplicateCheck.newRecords.length} pacientes)
+                        </SelectItem>
+                        {duplicateCheck.existingRecords.length > 0 && (
+                          <SelectItem value="update_existing">
+                            Solo actualizar existentes ({duplicateCheck.existingRecords.length} pacientes)
+                          </SelectItem>
+                        )}
+                        {duplicateCheck.newRecords.length > 0 && duplicateCheck.existingRecords.length > 0 && (
+                          <SelectItem value="all">
+                            Importar nuevos + actualizar existentes ({convertedData.length} total)
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 {isImporting && importProgress && (
                   <div className="space-y-2">
                     <Progress value={(importProgress.current / importProgress.total) * 100} />
                     <p className="text-xs text-muted-foreground text-center">
-                      Importando {importProgress.current} de {importProgress.total}...
+                      Procesando {importProgress.current} de {importProgress.total}...
                     </p>
                   </div>
                 )}
@@ -761,7 +954,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
                   </Button>
                   <Button 
                     onClick={importToDatabase} 
-                    disabled={isImporting}
+                    disabled={isImporting || (importMode === 'new_only' && duplicateCheck.newRecords.length === 0) || (importMode === 'update_existing' && duplicateCheck.existingRecords.length === 0)}
                     className="flex-1"
                   >
                     {isImporting ? (
@@ -769,7 +962,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
                     ) : (
                       <Database className="w-4 h-4 mr-2" />
                     )}
-                    Importar a BD
+                    {importMode === 'update_existing' ? 'Actualizar' : 'Importar'}
                   </Button>
                 </div>
               </CardContent>
