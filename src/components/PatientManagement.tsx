@@ -592,6 +592,11 @@ const PatientManagement = () => {
                         Nº Afiliado: {selectedPatient.numero_afiliado}
                       </p>
                     )}
+                    {selectedPatient.plan && (
+                      <p className="text-sm text-gray-600">
+                        Plan: <Badge variant="outline">{selectedPatient.plan}</Badge>
+                      </p>
+                    )}
                   </div>
 
                   {(selectedPatient.cuil_titular || selectedPatient.cuil_beneficiario) && (
