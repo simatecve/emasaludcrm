@@ -33,6 +33,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       direccion: '',
       obra_social_id: undefined,
       numero_afiliado: '',
+      plan: '',
       consultas_maximas: 2,
       observaciones: '',
       tag_id: undefined,
@@ -65,6 +66,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       setValue('direccion', patient.direccion || '');
       setValue('obra_social_id', patient.obra_social_id);
       setValue('numero_afiliado', patient.numero_afiliado || '');
+      setValue('plan', patient.plan || '');
       setValue('consultas_maximas', patient.consultas_maximas);
       setValue('observaciones', patient.observaciones || '');
       setValue('tag_id', patient.tag_id);
@@ -89,6 +91,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
 
   const selectedObraSocial = watch('obra_social_id');
   const selectedTag = watch('tag_id');
+  const selectedPlan = watch('plan');
   const selectedSexo = watch('sexo');
   const selectedEstadoCivil = watch('estado_civil');
   const selectedTipoDoc = watch('tipo_doc');
@@ -115,6 +118,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
       
       // Other optional fields - keep them as they are, empty strings will be handled in the hook
       numero_afiliado: data.numero_afiliado,
+      plan: data.plan || undefined,
       observaciones: data.observaciones,
       cuil_titular: data.cuil_titular,
       cuil_beneficiario: data.cuil_beneficiario,
@@ -226,7 +230,7 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                 {errors.direccion && <p className="text-red-500 text-sm">{errors.direccion.message}</p>}
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div>
                   <Label htmlFor="obra_social_id">Obra Social</Label>
                   <Select value={selectedObraSocial ? selectedObraSocial.toString() : ""} onValueChange={(value) => setValue('obra_social_id', value ? parseInt(value) : undefined)}>
@@ -249,6 +253,19 @@ const PatientForm: React.FC<PatientFormProps> = ({ patient, onSubmit, onCancel, 
                     {...register('numero_afiliado')}
                     placeholder="Número de afiliado"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="plan">Plan</Label>
+                  <Select value={selectedPlan || ""} onValueChange={(value) => setValue('plan', value || '')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar plan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PMO">PMO (Común)</SelectItem>
+                      <SelectItem value="PMO SD">PMO SD (Serv. Doméstico)</SelectItem>
+                      <SelectItem value="PMO MT">PMO MT (Monotributistas)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="tag_id">Etiqueta de Estado</Label>
