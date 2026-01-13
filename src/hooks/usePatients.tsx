@@ -36,6 +36,7 @@ export interface Patient {
   localidad?: string;
   provincia?: string;
   fecha_alta?: string;
+  plan?: string;
   obra_social?: {
     nombre: string;
   };
@@ -75,6 +76,7 @@ export interface PatientFormData {
   nro_doc_familiar?: string;
   localidad?: string;
   provincia?: string;
+  plan?: string;
 }
 
 export const usePatients = () => {
@@ -132,7 +134,7 @@ export const useCreatePatient = () => {
         'numero_afiliado', 'observaciones', 'cuil_titular', 'cuil_beneficiario',
         'tipo_doc', 'nro_doc', 'descripcion_paciente', 'parentesco', 
         'apellido_y_nombre', 'sexo', 'estado_civil', 'nacionalidad',
-        'tipo_doc_familiar', 'nro_doc_familiar', 'localidad', 'provincia'
+        'tipo_doc_familiar', 'nro_doc_familiar', 'localidad', 'provincia', 'plan'
       ];
       
       optionalFields.forEach(field => {
