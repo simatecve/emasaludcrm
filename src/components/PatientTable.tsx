@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -10,7 +9,7 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, User } from 'lucide-react';
+import { Edit, Trash2, User, Loader2 } from 'lucide-react';
 import { Patient } from '@/hooks/usePatients';
 
 interface PatientTableProps {
@@ -21,6 +20,8 @@ interface PatientTableProps {
   selectedPatient?: Patient | null;
 }
 
+const ITEMS_PER_PAGE = 50;
+
 const PatientTable: React.FC<PatientTableProps> = ({ 
   patients, 
   onEdit, 
@@ -28,8 +29,50 @@ const PatientTable: React.FC<PatientTableProps> = ({
   onSelect, 
   selectedPatient 
 }) => {
+  const [displayedCount, setDisplayedCount] = useState(ITEMS_PER_PAGE);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Reset displayed count when patients change (e.g., when filtering)
+  useEffect(() => {
+    setDisplayedCount(ITEMS_PER_PAGE);
+  }, [patients]);
+
+  const displayedPatients = patients.slice(0, displayedCount);
+  const hasMore = displayedCount < patients.length;
+
+  const loadMore = useCallback(() => {
+    if (isLoadingMore || !hasMore) return;
+    
+    setIsLoadingMore(true);
+    // Small delay to show loading state for smooth UX
+    setTimeout(() => {
+      setDisplayedCount(prev => Math.min(prev + ITEMS_PER_PAGE, patients.length));
+      setIsLoadingMore(false);
+    }, 150);
+  }, [isLoadingMore, hasMore, patients.length]);
+
+  // Intersection Observer for infinite scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, loadMore]);
+
   return (
-    <div className="border rounded-lg">
+    <div ref={containerRef} className="border rounded-lg">
       <Table>
         <TableHeader>
           <TableRow>
@@ -44,7 +87,7 @@ const PatientTable: React.FC<PatientTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {patients.map((patient) => (
+          {displayedPatients.map((patient) => (
             <TableRow 
               key={patient.id}
               className={`cursor-pointer hover:bg-gray-50 ${
@@ -135,6 +178,26 @@ const PatientTable: React.FC<PatientTableProps> = ({
           ))}
         </TableBody>
       </Table>
+      
+      {/* Load more trigger and indicator */}
+      <div ref={loadMoreRef} className="py-4 text-center">
+        {isLoadingMore && (
+          <div className="flex items-center justify-center gap-2 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Cargando más pacientes...</span>
+          </div>
+        )}
+        {hasMore && !isLoadingMore && (
+          <p className="text-sm text-muted-foreground">
+            Mostrando {displayedCount} de {patients.length} pacientes
+          </p>
+        )}
+        {!hasMore && patients.length > ITEMS_PER_PAGE && (
+          <p className="text-sm text-muted-foreground">
+            Se han cargado todos los {patients.length} pacientes
+          </p>
+        )}
+      </div>
     </div>
   );
 };
