@@ -91,7 +91,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       'direccion', 'obra_social_id', 'numero_afiliado', 'consultas_maximas',
       'cuil_titular', 'cuil_beneficiario', 'tipo_doc', 'nro_doc',
       'descripcion_paciente', 'parentesco', 'apellido_y_nombre', 'sexo',
-      'estado_civil', 'nacionalidad', 'localidad', 'provincia', 'observaciones'
+      'estado_civil', 'nacionalidad', 'localidad', 'provincia', 'observaciones', 'plan'
     ];
 
     const csvContent = headers.join(',');
@@ -252,7 +252,8 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       { field: 'descripcion_paciente', patterns: ['Descripcion', 'Descripción', 'Descripcion Paciente'] },
       { field: 'observaciones', patterns: ['Observaciones', 'Obs', 'Notas', 'Comentarios'] },
       { field: 'nro_doc_familiar', patterns: ['NUM_DOC_FAM', 'Nro Doc Familiar'] },
-      { field: 'tipo_doc_familiar', patterns: ['TD_FAM', 'Tipo Doc Familiar'] }
+      { field: 'tipo_doc_familiar', patterns: ['TD_FAM', 'Tipo Doc Familiar'] },
+      { field: 'plan', patterns: ['Plan', 'PLAN', 'P.M.O.', 'PMO', 'Tipo Plan', 'TipoPlan'] }
     ];
 
     for (const { field, patterns, exactOnly } of knownMappings) {
@@ -300,7 +301,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
     'direccion', 'obra_social_id', 'numero_afiliado', 'consultas_maximas',
     'cuil_titular', 'cuil_beneficiario', 'tipo_doc', 'nro_doc',
     'descripcion_paciente', 'parentesco', 'apellido_y_nombre', 'sexo',
-    'estado_civil', 'nacionalidad', 'localidad', 'provincia', 'observaciones'
+    'estado_civil', 'nacionalidad', 'localidad', 'provincia', 'observaciones', 'plan'
   ];
 
   const analyzeFiles = async () => {
@@ -487,6 +488,21 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
         newRow.observaciones = getValue('observaciones');
         newRow.nro_doc_familiar = getValue('nro_doc_familiar');
         newRow.tipo_doc_familiar = getValue('tipo_doc_familiar');
+        
+        // Plan de obra social - normalizar valores
+        const planRaw = getValue('plan');
+        if (planRaw) {
+          const planNormalized = planRaw.toUpperCase().replace(/[.\s]/g, '');
+          if (planNormalized.includes('SD')) {
+            newRow.plan = 'PMO SD';
+          } else if (planNormalized.includes('MT')) {
+            newRow.plan = 'PMO MT';
+          } else if (planNormalized.includes('PMO') || planNormalized.includes('COMUN')) {
+            newRow.plan = 'PMO';
+          } else {
+            newRow.plan = planRaw.trim();
+          }
+        }
         
         // Fecha de alta si existe
         const fechaAlta = getValue('fecha_alta');

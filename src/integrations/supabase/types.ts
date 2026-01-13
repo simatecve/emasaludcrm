@@ -603,6 +603,7 @@ export type Database = {
           obra_social_id: number | null
           observaciones: string | null
           parentesco: string | null
+          plan: string | null
           provincia: string | null
           sexo: string | null
           tag_id: number | null
@@ -639,6 +640,7 @@ export type Database = {
           obra_social_id?: number | null
           observaciones?: string | null
           parentesco?: string | null
+          plan?: string | null
           provincia?: string | null
           sexo?: string | null
           tag_id?: number | null
@@ -675,6 +677,7 @@ export type Database = {
           obra_social_id?: number | null
           observaciones?: string | null
           parentesco?: string | null
+          plan?: string | null
           provincia?: string | null
           sexo?: string | null
           tag_id?: number | null
