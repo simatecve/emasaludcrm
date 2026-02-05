@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, Shield, UserCog, Building2 } from 'lucide-react';
+import { FileText, Download, Filter, Calendar, DollarSign, Users, TrendingUp, Shield, UserCog, Building2, UserCheck } from 'lucide-react';
+import PatientHistoryTab from './reports/PatientHistoryTab';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -356,7 +357,11 @@ const ReportsManagement = () => {
 
       {/* Tabs de reportes */}
       <Tabs defaultValue="consultas" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
+          <TabsTrigger value="historial" className="flex items-center gap-1">
+            <UserCheck className="h-4 w-4" />
+            Historial Paciente
+          </TabsTrigger>
           <TabsTrigger value="consultas">Consultas</TabsTrigger>
           <TabsTrigger value="turnos">Turnos</TabsTrigger>
           <TabsTrigger value="autorizaciones">Autorizaciones</TabsTrigger>
@@ -364,6 +369,18 @@ const ReportsManagement = () => {
           <TabsTrigger value="obras-sociales">Obras Sociales</TabsTrigger>
           <TabsTrigger value="ingresos">Ingresos</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="historial">
+          <PatientHistoryTab
+            pacienteId={filters.pacienteId}
+            pacientes={pacientes}
+            consultasReport={consultasReport}
+            turnosReport={turnosReport}
+            autorizacionesReport={autorizacionesReport}
+            isLoading={consultasLoading || turnosLoading || autorizacionesLoading}
+            filters={filters}
+          />
+        </TabsContent>
 
         <TabsContent value="consultas">
           <Card>
