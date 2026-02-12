@@ -14,6 +14,13 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useNomecladorSearch } from '@/hooks/useNomeclador';
 import { FileText, Upload, Search } from 'lucide-react';
 
+// Prestadores restringidos: solo pueden emitir consultas con código 420101
+const RESTRICTED_PRESTADOR_EMAILS = [
+  'ceac@ema.com',
+  'cimyn@ema-salud.com',
+  'sanatoriodemayo@ema.com',
+];
+
 interface PrestacionSearchInputProps {
   onSelect: (codigo: string, descripcion: string) => void;
 }
@@ -124,14 +131,18 @@ interface SimplePrestadorAutorizacionFormProps {
 }
 
 const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacionFormProps) => {
+  const { data: currentUser } = useCurrentUser();
+  
+  const isRestricted = currentUser?.email ? RESTRICTED_PRESTADOR_EMAILS.includes(currentUser.email.toLowerCase()) : false;
+
   const [formData, setFormData] = useState({
     paciente_id: '',
     obra_social_id: '',
     medico_id: '',
-    tipo_autorizacion: '',
+    tipo_autorizacion: isRestricted ? 'consulta' : '',
     descripcion: '',
-    prestacion_codigo: '',
-    prestacion_descripcion: '',
+    prestacion_codigo: isRestricted ? '420101' : '',
+    prestacion_descripcion: isRestricted ? 'CONSULTA MEDICA DIURNA' : '',
     prestacion_cantidad: 1,
     numero_credencial: '',
     parentesco_beneficiario: '',
@@ -140,7 +151,6 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
     documento: null as File | null,
   });
 
-  const { data: currentUser } = useCurrentUser();
   const { data: patients } = usePatients();
   const { data: obrasSociales } = useObrasSociales();
   const createAutorizacion = useCreateAutorizacion();
@@ -264,73 +274,102 @@ const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacio
 
           <div>
             <Label htmlFor="tipo_autorizacion">Tipo de Autorización *</Label>
-            <Select 
-              value={formData.tipo_autorizacion} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_autorizacion: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="consulta">Consulta</SelectItem>
-                <SelectItem value="estudio">Estudio</SelectItem>
-                <SelectItem value="tratamiento">Tratamiento</SelectItem>
-                <SelectItem value="cirugia">Cirugía</SelectItem>
-                <SelectItem value="medicamento">Medicamento</SelectItem>
-                <SelectItem value="internacion">Internación</SelectItem>
-                <SelectItem value="laboratorio">Laboratorio</SelectItem>
-              </SelectContent>
-            </Select>
+            {isRestricted ? (
+              <Input value="Consulta" disabled className="bg-muted" />
+            ) : (
+              <Select 
+                value={formData.tipo_autorizacion} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tipo_autorizacion: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consulta">Consulta</SelectItem>
+                  <SelectItem value="estudio">Estudio</SelectItem>
+                  <SelectItem value="tratamiento">Tratamiento</SelectItem>
+                  <SelectItem value="cirugia">Cirugía</SelectItem>
+                  <SelectItem value="medicamento">Medicamento</SelectItem>
+                  <SelectItem value="internacion">Internación</SelectItem>
+                  <SelectItem value="laboratorio">Laboratorio</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Prestación Simple */}
           <div className="space-y-4 border rounded-lg p-4">
             <Label className="text-lg font-semibold">Prestación</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Buscar Prestación</Label>
-                <PrestacionSearchInput
-                  onSelect={(codigo, descripcion) => {
-                    setFormData(prev => ({
-                      ...prev,
-                      prestacion_codigo: codigo,
-                      prestacion_descripcion: descripcion
-                    }));
-                  }}
-                />
-              </div>
-              <div>
-                <Label htmlFor="prestacion_cantidad">Cantidad</Label>
-                <Input
-                  id="prestacion_cantidad"
-                  type="number"
-                  min="1"
-                  value={formData.prestacion_cantidad}
-                  onChange={(e) => setFormData(prev => ({ ...prev, prestacion_cantidad: parseInt(e.target.value) || 1 }))}
-                />
-              </div>
-            </div>
-
-            {formData.prestacion_codigo && (
+            {isRestricted ? (
               <div className="space-y-2">
-                <Label>Código de Prestación Seleccionado</Label>
-                <Input
-                  value={formData.prestacion_codigo}
-                  disabled
-                  className="bg-green-50 border-green-200 font-mono"
-                />
+                <div>
+                  <Label>Código de Prestación</Label>
+                  <Input value="420101" disabled className="bg-muted font-mono" />
+                </div>
+                <div>
+                  <Label>Descripción</Label>
+                  <Input value="CONSULTA MEDICA DIURNA" disabled className="bg-muted" />
+                </div>
+                <div>
+                  <Label htmlFor="prestacion_cantidad">Cantidad</Label>
+                  <Input
+                    id="prestacion_cantidad"
+                    type="number"
+                    min="1"
+                    value={formData.prestacion_cantidad}
+                    onChange={(e) => setFormData(prev => ({ ...prev, prestacion_cantidad: parseInt(e.target.value) || 1 }))}
+                  />
+                </div>
               </div>
-            )}
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Buscar Prestación</Label>
+                    <PrestacionSearchInput
+                      onSelect={(codigo, descripcion) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          prestacion_codigo: codigo,
+                          prestacion_descripcion: descripcion
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="prestacion_cantidad">Cantidad</Label>
+                    <Input
+                      id="prestacion_cantidad"
+                      type="number"
+                      min="1"
+                      value={formData.prestacion_cantidad}
+                      onChange={(e) => setFormData(prev => ({ ...prev, prestacion_cantidad: parseInt(e.target.value) || 1 }))}
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Descripción de la Prestación</Label>
-              <Input
-                value={formData.prestacion_descripcion}
-                placeholder="Se completa automáticamente al seleccionar"
-                disabled
-                className="bg-gray-50"
-              />
-            </div>
+                {formData.prestacion_codigo && (
+                  <div className="space-y-2">
+                    <Label>Código de Prestación Seleccionado</Label>
+                    <Input
+                      value={formData.prestacion_codigo}
+                      disabled
+                      className="bg-green-50 border-green-200 font-mono"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Descripción de la Prestación</Label>
+                  <Input
+                    value={formData.prestacion_descripcion}
+                    placeholder="Se completa automáticamente al seleccionar"
+                    disabled
+                    className="bg-muted"
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           <div>
