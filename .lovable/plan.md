@@ -1,111 +1,68 @@
 
 
-## Plan: Historial Unificado de Paciente en Reportes
+## Plan: Restringir Clínicas CEAC, CIMYN y Sanatorio Mayo a Solo Consultas (420101)
 
 ### Objetivo
-Agregar una nueva pestaña "Historial Paciente" en la sección de Reportes que muestre toda la actividad de un paciente seleccionado: consultas, turnos y autorizaciones en una vista cronológica unificada.
+Que los perfiles de prestador de CEAC, CIMYN y Sanatorio de Mayo solo puedan emitir autorizaciones de tipo "consulta" con el codigo de prestacion 420101 (consulta diurna). No deben poder elegir otros tipos de autorizacion ni otras prestaciones.
 
-### Estado Actual
-- La sección de Reportes tiene pestañas separadas: Consultas, Turnos, Autorizaciones, Médicos, Obras Sociales, Ingresos
-- Ya existe un selector de paciente en los filtros generales
-- Los hooks de reportes (`useConsultasReport`, `useTurnosReport`, `useAutorizacionesReport`) ya filtran por `pacienteId`
+### Usuarios Afectados
+
+| Clinica | Email | Username |
+|---------|-------|----------|
+| CEAC | ceac@ema.com | CEAAC |
+| CIMYN | cimyn@ema-salud.com | CIMYN |
+| Sanatorio de Mayo | sanatoriodemayo@ema.com | Sanatorio de mayo |
 
 ### Cambios a Realizar
 
-#### 1. Modificar ReportsManagement.tsx
+#### 1. Crear lista de prestadores restringidos
 
-**Agregar nueva pestaña "Historial Paciente":**
+Definir una constante con los emails de los prestadores que solo pueden emitir consultas. Esto se usara para verificar si el usuario logueado es uno de estos prestadores.
 
-| Elemento | Cambio |
-|----------|--------|
-| TabsList | Agregar `<TabsTrigger value="historial">Historial Paciente</TabsTrigger>` |
-| TabsContent | Agregar nueva sección con vista unificada |
+#### 2. Modificar AutorizacionManagement.tsx
 
-**Contenido de la nueva pestaña:**
+- Cuando el usuario es un prestador restringido, el formulario que se abre pre-carga automaticamente:
+  - **Tipo de autorizacion**: "consulta" (bloqueado, no editable)
+  - **Prestacion**: codigo 420101 - "consulta diurna" (bloqueado, no editable)
+- Se ocultan los campos de busqueda de prestacion y selector de tipo, mostrando solo los valores fijos
 
+#### 3. Modificar SimplePrestadorAutorizacionForm.tsx
+
+Este es el formulario que usan los prestadores. Los cambios:
+
+- Detectar si el `currentUser` es un prestador restringido (por email)
+- Si es restringido:
+  - Pre-cargar `tipo_autorizacion = "consulta"` y hacerlo no editable
+  - Pre-cargar `prestacion_codigo = "420101"` y `prestacion_descripcion = "consulta diurna"` y hacerlos no editables
+  - Ocultar el buscador de prestaciones y mostrar los valores fijos
+  - Ocultar el selector de tipo de autorizacion y mostrar "Consulta" como texto fijo
+
+### Detalle Tecnico
+
+**Constante de prestadores restringidos:**
 ```text
-+------------------------------------------+
-|  FICHA DEL PACIENTE (si hay uno selec.)  |
-|  +--------------------------------------+|
-|  | Nombre: Juan Pérez    DNI: 12345678 ||
-|  | Obra Social: OSPIV    Plan: PMO     ||
-|  | Teléfono: 2612345678  Email: ...    ||
-|  +--------------------------------------+|
-+------------------------------------------+
-|  LÍNEA TEMPORAL DE ACTIVIDAD             |
-|  +--------------------------------------+|
-|  | 25/01/2025 | CONSULTA  | Control... ||
-|  | 20/01/2025 | AUTORIZACIÓN | Estudio ||
-|  | 15/01/2025 | TURNO | Cardiología    ||
-|  | ...                                   ||
-|  +--------------------------------------+|
-+------------------------------------------+
+RESTRICTED_PRESTADOR_EMAILS = [
+  'ceac@ema.com',
+  'cimyn@ema-salud.com',
+  'sanatoriodemayo@ema.com'
+]
 ```
 
-**Lógica de la vista unificada:**
-
-1. Combinar datos de los 3 hooks existentes en un solo array
-2. Agregar un campo `tipo` a cada registro (Consulta/Turno/Autorización)
-3. Ordenar por fecha descendente
-4. Mostrar en una tabla con columnas: Fecha, Tipo, Detalle, Estado/Médico
-
-**Mostrar mensaje si no hay paciente seleccionado:**
-- Si `filters.pacienteId` está vacío, mostrar un mensaje indicando que debe seleccionar un paciente
-
-#### 2. Estructura de la Vista
-
-**Ficha del Paciente (Card superior):**
-- Nombre completo y DNI
-- Obra Social y Plan
-- Teléfono y Email
-- Localidad/Provincia
-
-**Tabla de Historial:**
-
-| Fecha | Tipo | Detalle | Estado/Info |
-|-------|------|---------|-------------|
-| 25/01/2025 | Consulta | Motivo: Control anual - Dx: Normal | Dr. García |
-| 20/01/2025 | Autorización | Ecografía (N° 2025-001) | Aprobada |
-| 15/01/2025 | Turno | Cardiología - 10:30 hs | Completado |
-
-**Badges de colores por tipo:**
-- Consulta: azul
-- Turno: verde
-- Autorización: naranja
+**Logica en SimplePrestadorAutorizacionForm:**
+- Comparar `currentUser.email` contra la lista
+- Si coincide: valores fijos, campos deshabilitados
+- Si no coincide: comportamiento actual sin cambios
 
 ### Archivos a Modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| src/components/ReportsManagement.tsx | Agregar pestaña "Historial Paciente" con vista unificada |
+| src/components/SimplePrestadorAutorizacionForm.tsx | Detectar prestador restringido, bloquear tipo y prestacion a "consulta" / 420101 |
+| src/components/AutorizacionManagement.tsx | Pasar la restriccion al formulario cuando aplique |
 
-### Detalles Técnicos
+### Resultado
 
-1. Usar los hooks existentes que ya filtran por `pacienteId`:
-   - `useConsultasReport(filters)` - ya implementado
-   - `useTurnosReport(filters)` - ya implementado
-   - `useAutorizacionesReport(filters)` - ya implementado
-
-2. Buscar el paciente seleccionado en el array `pacientes` para mostrar sus datos completos en la ficha
-
-3. Crear función helper para combinar y ordenar los registros:
-```typescript
-const combinePatientHistory = () => {
-  const history = [];
-  // Agregar consultas con tipo 'consulta'
-  // Agregar turnos con tipo 'turno'
-  // Agregar autorizaciones con tipo 'autorizacion'
-  // Ordenar por fecha descendente
-  return history;
-};
-```
-
-4. Agregar botones de exportar CSV/PDF con todos los datos del historial
-
-### Resultado Visual
-
-Cuando el usuario seleccione un paciente en el filtro y vaya a la pestaña "Historial Paciente":
-- Verá la ficha completa del paciente en la parte superior
-- Debajo, una tabla cronológica con TODA su actividad en el sistema
-- Podrá exportar el historial completo a CSV o PDF
-
+Cuando CEAC, CIMYN o Sanatorio de Mayo inicien sesion y creen una autorizacion:
+- El tipo sera siempre "consulta" sin opcion de cambiarlo
+- La prestacion sera siempre "420101 - consulta diurna" sin opcion de buscar otra
+- Solo deben completar: paciente, obra social, medico y observaciones
