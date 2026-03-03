@@ -96,6 +96,7 @@ export type Database = {
           activa: boolean | null
           copago: number | null
           created_at: string | null
+          created_by_user_id: string | null
           descripcion: string | null
           documento_url: string | null
           estado: string | null
@@ -122,6 +123,7 @@ export type Database = {
           activa?: boolean | null
           copago?: number | null
           created_at?: string | null
+          created_by_user_id?: string | null
           descripcion?: string | null
           documento_url?: string | null
           estado?: string | null
@@ -148,6 +150,7 @@ export type Database = {
           activa?: boolean | null
           copago?: number | null
           created_at?: string | null
+          created_by_user_id?: string | null
           descripcion?: string | null
           documento_url?: string | null
           estado?: string | null
