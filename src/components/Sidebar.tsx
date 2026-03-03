@@ -199,6 +199,9 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
           <LogOut className="h-5 w-5" />
           {!isCollapsed && <span className="ml-2">Cerrar Sesión</span>}
         </Button>
+        {!isCollapsed && (
+          <p className="text-xs text-slate-500 text-center mt-3">v1.503-03-26</p>
+        )}
       </div>
     </div>
   );

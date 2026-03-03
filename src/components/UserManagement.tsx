@@ -9,12 +9,14 @@ import { Plus, Edit, Shield, User, Building2, Loader2 } from 'lucide-react';
 import { useUsers, useUpdateUser } from '@/hooks/useUsers';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import UserForm from './UserForm';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const UserManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(undefined);
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const { data: users, isLoading, error } = useUsers();
   const { data: currentUser } = useCurrentUser();
   const updateUser = useUpdateUser();
@@ -112,10 +114,23 @@ const UserManagement = () => {
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
           <p className="text-gray-600">Administrar usuarios del sistema</p>
         </div>
-        <Button onClick={() => openForm()} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nuevo Usuario
-        </Button>
+        <div className="flex items-center gap-3">
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[200px] bg-white">
+              <SelectValue placeholder="Filtrar por rol" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los roles</SelectItem>
+              <SelectItem value="admin">Administrador</SelectItem>
+              <SelectItem value="usuario_normal">Usuario Normal</SelectItem>
+              <SelectItem value="prestador">Prestador</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={() => openForm()} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Nuevo Usuario
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -126,6 +141,9 @@ const UserManagement = () => {
           {isLoading ? (
             <div className="text-center py-8">Cargando usuarios...</div>
           ) : users && users.length > 0 ? (
+            (() => {
+              const filteredUsers = roleFilter === 'all' ? users : users.filter(u => u.role === roleFilter);
+              return filteredUsers.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -139,7 +157,7 @@ const UserManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.full_name}</TableCell>
                     <TableCell>{user.email}</TableCell>
@@ -182,8 +200,14 @@ const UserManagement = () => {
                 ))}
               </TableBody>
             </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  No hay usuarios con el rol seleccionado
+                </div>
+              );
+            })()
           ) : (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-muted-foreground">
               No hay usuarios registrados
             </div>
           )}
