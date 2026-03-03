@@ -14,12 +14,7 @@ import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useNomecladorSearch } from '@/hooks/useNomeclador';
 import { FileText, Upload, Search } from 'lucide-react';
 
-// Prestadores restringidos: solo pueden emitir consultas con código 420101
-const RESTRICTED_PRESTADOR_EMAILS = [
-  'ceac@ema.com',
-  'cimyn@ema-salud.com',
-  'sanatoriodemayo@ema.com',
-];
+// Todos los prestadores solo pueden emitir consultas con código 420101
 
 interface PrestacionSearchInputProps {
   onSelect: (codigo: string, descripcion: string) => void;
@@ -133,7 +128,8 @@ interface SimplePrestadorAutorizacionFormProps {
 const SimplePrestadorAutorizacionForm = ({ onClose }: SimplePrestadorAutorizacionFormProps) => {
   const { data: currentUser } = useCurrentUser();
   
-  const isRestricted = currentUser?.email ? RESTRICTED_PRESTADOR_EMAILS.includes(currentUser.email.toLowerCase()) : false;
+  // Todos los prestadores están restringidos a solo consultas con código 420101
+  const isRestricted = currentUser?.role === 'prestador';
 
   const [formData, setFormData] = useState({
     paciente_id: '',

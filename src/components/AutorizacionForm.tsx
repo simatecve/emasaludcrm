@@ -13,6 +13,7 @@ import { useMedicos } from '@/hooks/useMedicos';
 import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { AutorizacionFormData, Autorizacion } from '@/hooks/useAutorizaciones';
 import { AutorizacionPrestacionFormData } from '@/hooks/useAutorizacionPrestaciones';
+import { useCurrentUser } from '@/hooks/useCurrentUser';
 import PatientSelector from './PatientSelector';
 import MultiplePrestacionesSelector from './MultiplePrestacionesSelector';
 
@@ -104,6 +105,8 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [prestaciones, setPrestaciones] = useState<AutorizacionPrestacionFormData[]>([]);
+  const { data: currentUser } = useCurrentUser();
+  const isAdmin = currentUser?.role === 'admin';
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Omit<AutorizacionFormData, 'prestaciones'>>({
     defaultValues: {
@@ -153,10 +156,21 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
   };
 
   const onFormSubmit = (data: Omit<AutorizacionFormData, 'prestaciones'>) => {
-    const formData: AutorizacionFormData = {
+    // Para no-admin, forzar tipo consulta y prestación 420101
+    const finalData = isAdmin ? data : {
       ...data,
+      tipo_autorizacion: 'consulta',
+    };
+    const finalPrestaciones = isAdmin ? prestaciones : [{
+      prestacion_codigo: '420101',
+      prestacion_descripcion: 'CONSULTA MEDICA DIURNA',
+      cantidad: 1,
+      observaciones: '',
+    }];
+    const formData: AutorizacionFormData = {
+      ...finalData,
       documento: selectedFile || undefined,
-      prestaciones: prestaciones
+      prestaciones: finalPrestaciones
     };
     onSubmit(formData);
   };
@@ -220,20 +234,24 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="tipo_autorizacion">Tipo de Autorización *</Label>
-                <Select onValueChange={(value) => setValue('tipo_autorizacion', value)} defaultValue={watchedValues.tipo_autorizacion}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="consulta">Consulta</SelectItem>
-                    <SelectItem value="estudio">Estudio</SelectItem>
-                    <SelectItem value="tratamiento">Tratamiento</SelectItem>
-                    <SelectItem value="cirugia">Cirugía</SelectItem>
-                    <SelectItem value="medicamento">Medicamento</SelectItem>
-                    <SelectItem value="internacion">Internación</SelectItem>
-                    <SelectItem value="laboratorio">Laboratorio</SelectItem>
-                  </SelectContent>
-                </Select>
+                {isAdmin ? (
+                  <Select onValueChange={(value) => setValue('tipo_autorizacion', value)} defaultValue={watchedValues.tipo_autorizacion}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccionar tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="consulta">Consulta</SelectItem>
+                      <SelectItem value="estudio">Estudio</SelectItem>
+                      <SelectItem value="tratamiento">Tratamiento</SelectItem>
+                      <SelectItem value="cirugia">Cirugía</SelectItem>
+                      <SelectItem value="medicamento">Medicamento</SelectItem>
+                      <SelectItem value="internacion">Internación</SelectItem>
+                      <SelectItem value="laboratorio">Laboratorio</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input value="Consulta" disabled className="bg-muted" />
+                )}
                 {errors.tipo_autorizacion && (
                   <p className="text-sm text-red-600">Debe seleccionar un tipo de autorización</p>
                 )}
@@ -361,10 +379,24 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
             <CardTitle className="text-lg">Prestaciones</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <MultiplePrestacionesSelector
-              prestaciones={prestaciones}
-              onPrestacionesChange={setPrestaciones}
-            />
+            {isAdmin ? (
+              <MultiplePrestacionesSelector
+                prestaciones={prestaciones}
+                onPrestacionesChange={setPrestaciones}
+              />
+            ) : (
+              <div className="space-y-2">
+                <div>
+                  <Label>Código de Prestación</Label>
+                  <Input value="420101" disabled className="bg-muted font-mono" />
+                </div>
+                <div>
+                  <Label>Descripción</Label>
+                  <Input value="CONSULTA MEDICA DIURNA" disabled className="bg-muted" />
+                </div>
+                <p className="text-sm text-muted-foreground">Solo se permite la prestación de consulta médica (420101).</p>
+              </div>
+            )}
             
             <div className="space-y-2 pt-4 border-t">
               <Label htmlFor="copago">Copago / A cargo del paciente</Label>
