@@ -25,7 +25,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({
   const selectedPatient = patients.find(p => p.id === selectedPatientId);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={true}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -36,7 +36,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({
           {selectedPatient ? (
             <div className="flex flex-col items-start">
               <span>{selectedPatient.nombre} {selectedPatient.apellido}</span>
-              <span className="text-xs text-gray-500">DNI: {selectedPatient.dni}</span>
+              <span className="text-xs text-muted-foreground">DNI: {selectedPatient.dni}</span>
             </div>
           ) : (
             placeholder
@@ -44,13 +44,13 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999]" align="start" sideOffset={4}>
         <Command>
           <CommandInput 
             placeholder="Buscar por nombre, apellido o DNI..." 
             className="h-9"
           />
-          <CommandList>
+          <CommandList className="max-h-[300px]">
             <CommandEmpty>No se encontraron pacientes.</CommandEmpty>
             <CommandGroup>
               {patients.map((patient) => (
@@ -74,7 +74,7 @@ const PatientSelector: React.FC<PatientSelectorProps> = ({
                         )}
                       />
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span>DNI: {patient.dni}</span>
                       {patient.obra_social?.nombre && (
                         <span>OS: {patient.obra_social.nombre}</span>
