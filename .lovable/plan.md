@@ -1,68 +1,35 @@
 
 
-## Plan: Restringir Clínicas CEAC, CIMYN y Sanatorio Mayo a Solo Consultas (420101)
+## Plan: Switch de activar/desactivar usuarios + Fix visibilidad admin en autorizaciones
 
-### Objetivo
-Que los perfiles de prestador de CEAC, CIMYN y Sanatorio de Mayo solo puedan emitir autorizaciones de tipo "consulta" con el codigo de prestacion 420101 (consulta diurna). No deben poder elegir otros tipos de autorizacion ni otras prestaciones.
+### Problema 1: Falta switch de activar/desactivar en la tabla de usuarios
+Actualmente la tabla de usuarios muestra un Badge de estado pero no permite cambiar el estado directamente. Se necesita un Switch inline.
 
-### Usuarios Afectados
+### Problema 2: Admin no ve autorizaciones
+La politica RLS y el rol admin estan correctamente configurados en la base de datos (verificado: `has_role` retorna `true` para el admin). El problema puede ser de sesion o cache del cliente. Agregaremos un mecanismo de verificacion y nos aseguraremos de que el flujo de autenticacion bloquee usuarios inactivos.
 
-| Clinica | Email | Username |
-|---------|-------|----------|
-| CEAC | ceac@ema.com | CEAAC |
-| CIMYN | cimyn@ema-salud.com | CIMYN |
-| Sanatorio de Mayo | sanatoriodemayo@ema.com | Sanatorio de mayo |
+---
 
-### Cambios a Realizar
+### Cambios a realizar
 
-#### 1. Crear lista de prestadores restringidos
+#### 1. Agregar Switch de activar/desactivar en UserManagement.tsx
+- Reemplazar el Badge de estado por un componente `Switch` de Radix UI
+- Al togglear, llamar a `useUpdateUser` para cambiar `is_active`
+- Mostrar feedback visual inmediato
 
-Definir una constante con los emails de los prestadores que solo pueden emitir consultas. Esto se usara para verificar si el usuario logueado es uno de estos prestadores.
+#### 2. Bloquear login de usuarios inactivos
+- En `Login.tsx` o `Index.tsx`, despues de autenticarse, verificar si `is_active === false` en la tabla `users`
+- Si esta inactivo, cerrar sesion automaticamente y mostrar mensaje "Su cuenta ha sido desactivada"
 
-#### 2. Modificar AutorizacionManagement.tsx
+#### 3. Verificar visibilidad admin en autorizaciones
+- Agregar log de debug temporal en `useAutorizaciones` para verificar que la query no tenga errores silenciosos
+- Asegurar que el hook no filtre datos del lado del cliente innecesariamente
 
-- Cuando el usuario es un prestador restringido, el formulario que se abre pre-carga automaticamente:
-  - **Tipo de autorizacion**: "consulta" (bloqueado, no editable)
-  - **Prestacion**: codigo 420101 - "consulta diurna" (bloqueado, no editable)
-- Se ocultan los campos de busqueda de prestacion y selector de tipo, mostrando solo los valores fijos
-
-#### 3. Modificar SimplePrestadorAutorizacionForm.tsx
-
-Este es el formulario que usan los prestadores. Los cambios:
-
-- Detectar si el `currentUser` es un prestador restringido (por email)
-- Si es restringido:
-  - Pre-cargar `tipo_autorizacion = "consulta"` y hacerlo no editable
-  - Pre-cargar `prestacion_codigo = "420101"` y `prestacion_descripcion = "consulta diurna"` y hacerlos no editables
-  - Ocultar el buscador de prestaciones y mostrar los valores fijos
-  - Ocultar el selector de tipo de autorizacion y mostrar "Consulta" como texto fijo
-
-### Detalle Tecnico
-
-**Constante de prestadores restringidos:**
-```text
-RESTRICTED_PRESTADOR_EMAILS = [
-  'ceac@ema.com',
-  'cimyn@ema-salud.com',
-  'sanatoriodemayo@ema.com'
-]
-```
-
-**Logica en SimplePrestadorAutorizacionForm:**
-- Comparar `currentUser.email` contra la lista
-- Si coincide: valores fijos, campos deshabilitados
-- Si no coincide: comportamiento actual sin cambios
-
-### Archivos a Modificar
+### Archivos a modificar
 
 | Archivo | Cambio |
 |---------|--------|
-| src/components/SimplePrestadorAutorizacionForm.tsx | Detectar prestador restringido, bloquear tipo y prestacion a "consulta" / 420101 |
-| src/components/AutorizacionManagement.tsx | Pasar la restriccion al formulario cuando aplique |
+| `src/components/UserManagement.tsx` | Agregar Switch para toggle de is_active |
+| `src/pages/Index.tsx` | Agregar verificacion de is_active post-login, redirigir si inactivo |
+| `src/hooks/useAutorizaciones.tsx` | Agregar manejo de error mejorado para debug |
 
-### Resultado
-
-Cuando CEAC, CIMYN o Sanatorio de Mayo inicien sesion y creen una autorizacion:
-- El tipo sera siempre "consulta" sin opcion de cambiarlo
-- La prestacion sera siempre "420101 - consulta diurna" sin opcion de buscar otra
-- Solo deben completar: paciente, obra social, medico y observaciones
