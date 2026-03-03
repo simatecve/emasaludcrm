@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useToast } from '@/hooks/use-toast';
 import Sidebar from '@/components/Sidebar';
 import Dashboard from '@/components/Dashboard';
 import PatientManagement from '@/components/PatientManagement';
@@ -19,10 +20,23 @@ import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { data: currentUser } = useCurrentUser();
+  const { toast } = useToast();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Block inactive users
+  useEffect(() => {
+    if (currentUser && currentUser.is_active === false) {
+      toast({
+        title: "Cuenta desactivada",
+        description: "Su cuenta ha sido desactivada. Contacte al administrador.",
+        variant: "destructive",
+      });
+      signOut();
+    }
+  }, [currentUser, signOut, toast]);
 
   // Redirect prestador users to authorizations automatically
   useEffect(() => {

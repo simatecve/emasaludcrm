@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Shield, User, Building2 } from 'lucide-react';
-import { useUsers } from '@/hooks/useUsers';
+import { Switch } from '@/components/ui/switch';
+import { Plus, Edit, Shield, User, Building2, Loader2 } from 'lucide-react';
+import { useUsers, useUpdateUser } from '@/hooks/useUsers';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import UserForm from './UserForm';
@@ -16,6 +17,20 @@ const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState<any>(undefined);
   const { data: users, isLoading, error } = useUsers();
   const { data: currentUser } = useCurrentUser();
+  const updateUser = useUpdateUser();
+  const [togglingUserId, setTogglingUserId] = useState<string | null>(null);
+
+  const handleToggleActive = async (user: any) => {
+    setTogglingUserId(user.id);
+    try {
+      await updateUser.mutateAsync({ 
+        id: user.id, 
+        data: { is_active: !user.is_active } 
+      });
+    } finally {
+      setTogglingUserId(null);
+    }
+  };
 
   const openForm = (user?: any) => {
     setSelectedUser(user);
@@ -136,9 +151,20 @@ const UserManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={user.is_active ? 'default' : 'secondary'}>
-                        {user.is_active ? 'Activo' : 'Inactivo'}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        {togglingUserId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Switch
+                            checked={user.is_active}
+                            onCheckedChange={() => handleToggleActive(user)}
+                            disabled={user.id === currentUser?.id}
+                          />
+                        )}
+                        <span className={`text-sm ${user.is_active ? 'text-green-600' : 'text-muted-foreground'}`}>
+                          {user.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {new Date(user.created_at).toLocaleDateString()}
