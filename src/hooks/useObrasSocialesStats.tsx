@@ -15,42 +15,25 @@ export const useObrasSocialesStats = () => {
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
       const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-      console.log('Fetching obras sociales stats for month:', { startOfMonth, endOfMonth });
+      // Run both queries in parallel
+      const [obrasRes, consultasRes] = await Promise.all([
+        supabase
+          .from('obras_sociales')
+          .select('id, nombre, pacientes:pacientes(count)')
+          .eq('activa', true)
+          .eq('pacientes.activo', true),
+        supabase
+          .from('consultas')
+          .select('id, pacientes:paciente_id(obra_social_id)')
+          .gte('fecha_consulta', startOfMonth)
+          .lte('fecha_consulta', endOfMonth),
+      ]);
 
-      // Obtener obras sociales con conteo de pacientes
-      const { data: obrasSociales, error: obrasError } = await supabase
-        .from('obras_sociales')
-        .select(`
-          id,
-          nombre,
-          pacientes:pacientes(count)
-        `)
-        .eq('activa', true)
-        .eq('pacientes.activo', true);
+      if (obrasRes.error) throw obrasRes.error;
+      if (consultasRes.error) throw consultasRes.error;
 
-      if (obrasError) {
-        console.error('Error fetching obras sociales:', obrasError);
-        throw obrasError;
-      }
-
-      // Obtener consultas del mes por obra social
-      const { data: consultas, error: consultasError } = await supabase
-        .from('consultas')
-        .select(`
-          id,
-          pacientes:paciente_id(obra_social_id)
-        `)
-        .gte('fecha_consulta', startOfMonth)
-        .lte('fecha_consulta', endOfMonth);
-
-      if (consultasError) {
-        console.error('Error fetching consultas:', consultasError);
-        throw consultasError;
-      }
-
-      // Procesar datos - mostrar todas las obras sociales activas
-      const stats: ObraSocialStat[] = obrasSociales?.map(obra => {
-        const consultasCount = consultas?.filter(c => 
+      const stats: ObraSocialStat[] = obrasRes.data?.map(obra => {
+        const consultasCount = consultasRes.data?.filter(c => 
           c.pacientes?.obra_social_id === obra.id
         ).length || 0;
 
@@ -60,9 +43,8 @@ export const useObrasSocialesStats = () => {
           consultas: consultasCount
         };
       })
-      .sort((a, b) => b.consultas - a.consultas) || []; // Ordenar por número de consultas descendente
+      .sort((a, b) => b.consultas - a.consultas) || [];
 
-      console.log('Obras sociales stats (all active):', stats);
       return stats;
     },
   });

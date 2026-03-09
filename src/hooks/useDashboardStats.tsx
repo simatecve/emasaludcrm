@@ -18,43 +18,28 @@ export const useDashboardStats = () => {
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
       const endOfMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-      console.log('Fetching dashboard stats for:', { today, startOfMonth, endOfMonth });
+      // Run all queries in parallel
+      const [pacientesRes, turnosHoyRes, consultasRes, autorizacionesRes] = await Promise.all([
+        // Total pacientes - count only
+        supabase.from('pacientes').select('*', { count: 'exact', head: true }),
+        // Turnos de hoy
+        supabase.from('turnos').select('id, estado').eq('fecha', today),
+        // Consultas del mes
+        supabase.from('autorizaciones')
+          .select('id, tipo_autorizacion, autorizacion_prestaciones(prestacion_descripcion)')
+          .gte('fecha_solicitud', startOfMonth)
+          .lte('fecha_solicitud', endOfMonth),
+        // Autorizaciones pendientes - count only
+        supabase.from('autorizaciones').select('*', { count: 'exact', head: true })
+          .eq('estado', 'pendiente').eq('activa', true),
+      ]);
 
-      // Total pacientes (incluyendo activos e inactivos)
-      const { data: pacientes, error: pacientesError } = await supabase
-        .from('pacientes')
-        .select('id', { count: 'exact' });
+      if (pacientesRes.error) throw pacientesRes.error;
+      if (turnosHoyRes.error) throw turnosHoyRes.error;
+      if (consultasRes.error) throw consultasRes.error;
+      if (autorizacionesRes.error) throw autorizacionesRes.error;
 
-      if (pacientesError) {
-        console.error('Error fetching pacientes:', pacientesError);
-        throw pacientesError;
-      }
-
-      // Turnos de hoy
-      const { data: turnosHoy, error: turnosHoyError } = await supabase
-        .from('turnos')
-        .select('id, estado')
-        .eq('fecha', today);
-
-      if (turnosHoyError) {
-        console.error('Error fetching turnos hoy:', turnosHoyError);
-        throw turnosHoyError;
-      }
-
-      // Consultas del mes (autorizaciones con tipo "consulta" o prestación "Consulta")
-      const { data: autorizacionesConsulta, error: consultasMesError } = await supabase
-        .from('autorizaciones')
-        .select('id, tipo_autorizacion, autorizacion_prestaciones(prestacion_descripcion)')
-        .gte('fecha_solicitud', startOfMonth)
-        .lte('fecha_solicitud', endOfMonth);
-
-      if (consultasMesError) {
-        console.error('Error fetching consultas mes:', consultasMesError);
-        throw consultasMesError;
-      }
-
-      // Filtrar autorizaciones que son de tipo "consulta" o tienen prestaciones de consulta
-      const consultasMes = autorizacionesConsulta?.filter(auth => {
+      const consultasMes = consultasRes.data?.filter(auth => {
         if (auth.tipo_autorizacion?.toLowerCase() === 'consulta') return true;
         if (Array.isArray(auth.autorizacion_prestaciones)) {
           return auth.autorizacion_prestaciones.some(
@@ -64,30 +49,15 @@ export const useDashboardStats = () => {
         return false;
       }) || [];
 
-      // Autorizaciones pendientes
-      const { data: autorizaciones, error: autorizacionesError } = await supabase
-        .from('autorizaciones')
-        .select('id')
-        .eq('estado', 'pendiente')
-        .eq('activa', true);
+      const turnosPendientesHoy = turnosHoyRes.data?.filter(t => t.estado === 'programado').length || 0;
 
-      if (autorizacionesError) {
-        console.error('Error fetching autorizaciones:', autorizacionesError);
-        throw autorizacionesError;
-      }
-
-      const turnosPendientesHoy = turnosHoy?.filter(t => t.estado === 'programado').length || 0;
-
-      const stats: DashboardStats = {
-        totalPacientes: pacientes?.length || 0,
-        turnosHoy: turnosHoy?.length || 0,
-        consultasMes: consultasMes?.length || 0,
-        autorizacionesPendientes: autorizaciones?.length || 0,
+      return {
+        totalPacientes: pacientesRes.count || 0,
+        turnosHoy: turnosHoyRes.data?.length || 0,
+        consultasMes: consultasMes.length,
+        autorizacionesPendientes: autorizacionesRes.count || 0,
         turnosPendientesHoy
-      };
-
-      console.log('Dashboard stats:', stats);
-      return stats;
+      } as DashboardStats;
     },
   });
 };

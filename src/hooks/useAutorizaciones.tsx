@@ -71,23 +71,30 @@ export const useAutorizaciones = () => {
 
       if (error) throw error;
 
-      // Obtener prestaciones para cada autorización
-      const autorizacionesConPrestaciones = await Promise.all(
-        (autorizaciones || []).map(async (autorizacion) => {
-          const { data: prestaciones } = await supabase
-            .from('autorizacion_prestaciones')
-            .select('id, prestacion_codigo, prestacion_descripcion, cantidad, observaciones')
-            .eq('autorizacion_id', autorizacion.id)
-            .order('created_at', { ascending: true });
+      if (!autorizaciones || autorizaciones.length === 0) return [] as Autorizacion[];
 
-          return {
-            ...autorizacion,
-            prestaciones: prestaciones || []
-          };
-        })
-      );
+      // Batch query: get ALL prestaciones in one query instead of N+1
+      const ids = autorizaciones.map(a => a.id);
+      const { data: allPrestaciones, error: prestError } = await supabase
+        .from('autorizacion_prestaciones')
+        .select('id, autorizacion_id, prestacion_codigo, prestacion_descripcion, cantidad, observaciones')
+        .in('autorizacion_id', ids)
+        .order('created_at', { ascending: true });
 
-      return autorizacionesConPrestaciones as Autorizacion[];
+      if (prestError) throw prestError;
+
+      // Map prestaciones to each autorización in memory
+      const prestacionesMap = new Map<number, typeof allPrestaciones>();
+      for (const p of (allPrestaciones || [])) {
+        const list = prestacionesMap.get(p.autorizacion_id) || [];
+        list.push(p);
+        prestacionesMap.set(p.autorizacion_id, list);
+      }
+
+      return autorizaciones.map(a => ({
+        ...a,
+        prestaciones: prestacionesMap.get(a.id) || []
+      })) as Autorizacion[];
     },
   });
 };
@@ -102,39 +109,25 @@ export const useCreateAutorizacion = () => {
       
       let documento_url = null;
 
-      // Subir documento si existe
       if (autorizacionData.documento) {
         const fileExt = autorizacionData.documento.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        console.log('Uploading document:', fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('autorizaciones')
           .upload(fileName, autorizacionData.documento);
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
-        // Obtener URL pública del documento
         const { data: { publicUrl } } = supabase.storage
           .from('autorizaciones')
           .getPublicUrl(fileName);
 
         documento_url = publicUrl;
-        console.log('Document uploaded successfully:', documento_url);
       }
 
-      // Crear la autorización (sin prestaciones)
       const { documento, prestaciones, ...dataToInsert } = autorizacionData;
-      const insertData = {
-        ...dataToInsert,
-        documento_url
-      };
-
-      console.log('Inserting authorization data:', insertData);
+      const insertData = { ...dataToInsert, documento_url };
 
       const { data: autorizacion, error } = await supabase
         .from('autorizaciones')
@@ -142,14 +135,8 @@ export const useCreateAutorizacion = () => {
         .select()
         .single();
 
-      if (error) {
-        console.error('Insert error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Authorization created successfully:', autorizacion);
-
-      // Agregar prestaciones si existen
       if (prestaciones && prestaciones.length > 0) {
         const prestacionesData = prestaciones.map(prestacion => ({
           autorizacion_id: autorizacion.id,
@@ -160,12 +147,7 @@ export const useCreateAutorizacion = () => {
           .from('autorizacion_prestaciones')
           .insert(prestacionesData);
 
-        if (prestacionesError) {
-          console.error('Prestaciones insert error:', prestacionesError);
-          throw prestacionesError;
-        }
-
-        console.log('Prestaciones added successfully');
+        if (prestacionesError) throw prestacionesError;
       }
 
       return autorizacion;
@@ -179,7 +161,6 @@ export const useCreateAutorizacion = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Mutation error:', error);
       toast({
         title: "Error",
         description: `Error al crear autorización: ${error.message}`,
@@ -195,68 +176,43 @@ export const useUpdateAutorizacion = () => {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<AutorizacionFormData> }) => {
-      console.log('Updating authorization:', id, data);
-      
       let documento_url = undefined;
 
-      // Subir nuevo documento si existe
       if (data.documento) {
         const fileExt = data.documento.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        console.log('Uploading new document:', fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('autorizaciones')
           .upload(fileName, data.documento);
 
-        if (uploadError) {
-          console.error('Upload error:', uploadError);
-          throw uploadError;
-        }
+        if (uploadError) throw uploadError;
 
-        // Obtener URL pública del documento
         const { data: { publicUrl } } = supabase.storage
           .from('autorizaciones')
           .getPublicUrl(fileName);
 
         documento_url = publicUrl;
-        console.log('New document uploaded successfully:', documento_url);
       }
 
-      // Actualizar la autorización (sin prestaciones)
       const { documento, prestaciones, ...dataToUpdate } = data;
-      const updateData = {
-        ...dataToUpdate,
-        ...(documento_url && { documento_url })
-      };
-
-      console.log('Updating authorization with data:', updateData);
+      const updateData = { ...dataToUpdate, ...(documento_url && { documento_url }) };
 
       const { error } = await supabase
         .from('autorizaciones')
         .update(updateData)
         .eq('id', id);
 
-      if (error) {
-        console.error('Update error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Actualizar prestaciones si se proporcionaron
       if (prestaciones !== undefined) {
-        // Eliminar prestaciones existentes
         const { error: deleteError } = await supabase
           .from('autorizacion_prestaciones')
           .delete()
           .eq('autorizacion_id', id);
 
-        if (deleteError) {
-          console.error('Delete prestaciones error:', deleteError);
-          throw deleteError;
-        }
+        if (deleteError) throw deleteError;
 
-        // Insertar nuevas prestaciones
         if (prestaciones.length > 0) {
           const prestacionesData = prestaciones.map(prestacion => ({
             autorizacion_id: id,
@@ -267,16 +223,9 @@ export const useUpdateAutorizacion = () => {
             .from('autorizacion_prestaciones')
             .insert(prestacionesData);
 
-          if (prestacionesError) {
-            console.error('Insert prestaciones error:', prestacionesError);
-            throw prestacionesError;
-          }
-
-          console.log('Prestaciones updated successfully');
+          if (prestacionesError) throw prestacionesError;
         }
       }
-
-      console.log('Authorization updated successfully');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizaciones'] });
@@ -287,7 +236,6 @@ export const useUpdateAutorizacion = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Update mutation error:', error);
       toast({
         title: "Error",
         description: `Error al actualizar autorización: ${error.message}`,
@@ -304,24 +252,16 @@ export const useDeleteAutorizacion = () => {
 
   return useMutation({
     mutationFn: async (autorizacionId: number) => {
-      // Verificar permisos
       if (currentUser?.role !== 'admin') {
         throw new Error('No tiene permisos para eliminar registros');
       }
 
-      console.log('Deleting authorization:', autorizacionId);
-      
       const { error } = await supabase
         .from('autorizaciones')
         .update({ activa: false })
         .eq('id', autorizacionId);
 
-      if (error) {
-        console.error('Delete error:', error);
-        throw error;
-      }
-
-      console.log('Authorization deleted successfully');
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['autorizaciones'] });
@@ -331,7 +271,6 @@ export const useDeleteAutorizacion = () => {
       });
     },
     onError: (error: any) => {
-      console.error('Delete mutation error:', error);
       toast({
         title: "Error",
         description: `Error al eliminar autorización: ${error.message}`,
