@@ -128,7 +128,8 @@ export const useAutorizacionesParticularesPendientes = () => {
         .from('autorizaciones')
         .select(`
           id, paciente_id, obra_social_id, medico_id, tipo_autorizacion,
-          fecha_solicitud, estado, estado_facturacion, numero_autorizacion,
+          fecha_solicitud, fecha_vencimiento, estado, estado_facturacion,
+          numero_autorizacion, lote_facturacion_id,
           pacientes (nombre, apellido, dni, numero_afiliado),
           medicos (nombre, apellido, matricula)
         `)

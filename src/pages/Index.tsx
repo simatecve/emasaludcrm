@@ -78,6 +78,8 @@ const Index = () => {
         return <CredencialGenerator />;
       case 'recetarios':
         return <RecetarioManagement />;
+      case 'facturacion':
+        return <FacturacionManagement />;
       case 'reports':
         return <ReportsManagement />;
       case 'users':

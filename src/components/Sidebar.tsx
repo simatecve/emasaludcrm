@@ -78,6 +78,7 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'authorizations', label: 'Autorizaciones', icon: Shield },
         { id: 'credenciales', label: 'Credenciales', icon: CreditCard },
         { id: 'recetarios', label: 'Recetarios', icon: Pill },
+        { id: 'facturacion', label: 'Facturación', icon: FileText },
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
       ];
     } else if (currentUser.role === 'prestador') {
