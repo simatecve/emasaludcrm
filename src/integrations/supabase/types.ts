@@ -57,6 +57,7 @@ export type Database = {
           created_at: string | null
           id: number
           observaciones: string | null
+          precio: number
           prestacion_codigo: string
           prestacion_descripcion: string
           updated_at: string | null
@@ -67,6 +68,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           observaciones?: string | null
+          precio?: number
           prestacion_codigo: string
           prestacion_descripcion: string
           updated_at?: string | null
@@ -77,6 +79,7 @@ export type Database = {
           created_at?: string | null
           id?: number
           observaciones?: string | null
+          precio?: number
           prestacion_codigo?: string
           prestacion_descripcion?: string
           updated_at?: string | null
@@ -100,9 +103,11 @@ export type Database = {
           descripcion: string | null
           documento_url: string | null
           estado: string | null
+          estado_facturacion: string
           fecha_solicitud: string | null
           fecha_vencimiento: string | null
           id: number
+          lote_facturacion_id: number | null
           medico_id: number | null
           numero_autorizacion: string | null
           numero_credencial: string | null
@@ -127,9 +132,11 @@ export type Database = {
           descripcion?: string | null
           documento_url?: string | null
           estado?: string | null
+          estado_facturacion?: string
           fecha_solicitud?: string | null
           fecha_vencimiento?: string | null
           id?: number
+          lote_facturacion_id?: number | null
           medico_id?: number | null
           numero_autorizacion?: string | null
           numero_credencial?: string | null
@@ -154,9 +161,11 @@ export type Database = {
           descripcion?: string | null
           documento_url?: string | null
           estado?: string | null
+          estado_facturacion?: string
           fecha_solicitud?: string | null
           fecha_vencimiento?: string | null
           id?: number
+          lote_facturacion_id?: number | null
           medico_id?: number | null
           numero_autorizacion?: string | null
           numero_credencial?: string | null
@@ -174,6 +183,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "autorizaciones_lote_facturacion_id_fkey"
+            columns: ["lote_facturacion_id"]
+            isOneToOne: false
+            referencedRelation: "lotes_facturacion"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "autorizaciones_medico_id_fkey"
             columns: ["medico_id"]
@@ -214,6 +230,66 @@ export type Database = {
           stop?: boolean | null
         }
         Relationships: []
+      }
+      comprobantes_particulares: {
+        Row: {
+          autorizacion_id: number
+          created_at: string | null
+          estado: string
+          fecha_emision: string
+          fecha_pago: string | null
+          id: number
+          metodo_pago: string | null
+          monto: number
+          numero_comprobante: string
+          observaciones: string | null
+          paciente_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          autorizacion_id: number
+          created_at?: string | null
+          estado?: string
+          fecha_emision?: string
+          fecha_pago?: string | null
+          id?: number
+          metodo_pago?: string | null
+          monto: number
+          numero_comprobante: string
+          observaciones?: string | null
+          paciente_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          autorizacion_id?: number
+          created_at?: string | null
+          estado?: string
+          fecha_emision?: string
+          fecha_pago?: string | null
+          id?: number
+          metodo_pago?: string | null
+          monto?: number
+          numero_comprobante?: string
+          observaciones?: string | null
+          paciente_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comprobantes_particulares_autorizacion_id_fkey"
+            columns: ["autorizacion_id"]
+            isOneToOne: false
+            referencedRelation: "autorizaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comprobantes_particulares_paciente_id_fkey"
+            columns: ["paciente_id"]
+            isOneToOne: false
+            referencedRelation: "pacientes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultas: {
         Row: {
@@ -371,6 +447,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      lotes_facturacion: {
+        Row: {
+          cantidad_estudios: number
+          created_at: string | null
+          estado: string
+          fecha_desde: string
+          fecha_hasta: string
+          id: number
+          numero_lote: string
+          obra_social_id: number | null
+          observaciones: string | null
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          cantidad_estudios?: number
+          created_at?: string | null
+          estado?: string
+          fecha_desde: string
+          fecha_hasta: string
+          id?: number
+          numero_lote: string
+          obra_social_id?: number | null
+          observaciones?: string | null
+          total?: number
+          updated_at?: string | null
+        }
+        Update: {
+          cantidad_estudios?: number
+          created_at?: string | null
+          estado?: string
+          fecha_desde?: string
+          fecha_hasta?: string
+          id?: number
+          numero_lote?: string
+          obra_social_id?: number | null
+          observaciones?: string | null
+          total?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lotes_facturacion_obra_social_id_fkey"
+            columns: ["obra_social_id"]
+            isOneToOne: false
+            referencedRelation: "obras_sociales"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       medicos: {
         Row: {
