@@ -1,90 +1,35 @@
 
 
-## Plan: Módulo de Facturación basado en Autorizaciones
+## Plan: Switch de activar/desactivar usuarios + Fix visibilidad admin en autorizaciones
 
-El sistema de facturación se construye sobre la tabla `autorizaciones` existente, sin crear tablas de estudios nuevas. Las autorizaciones aprobadas son la base para facturar.
+### Problema 1: Falta switch de activar/desactivar en la tabla de usuarios
+Actualmente la tabla de usuarios muestra un Badge de estado pero no permite cambiar el estado directamente. Se necesita un Switch inline.
 
-### 1. Cambios en base de datos
-
-**Agregar columnas a `autorizaciones`:**
-- `estado_facturacion` text DEFAULT 'pendiente' (pendiente | facturado)
-- `lote_facturacion_id` integer nullable
-
-**Agregar columna a `autorizacion_prestaciones`:**
-- `precio` numeric DEFAULT 0 (precio unitario de cada prestación)
-
-**Nueva tabla `lotes_facturacion`:**
-```text
-id                  serial PK
-obra_social_id      integer (ref obras_sociales, nullable)
-fecha_desde         date NOT NULL
-fecha_hasta         date NOT NULL
-total               numeric NOT NULL DEFAULT 0
-cantidad_estudios   integer NOT NULL DEFAULT 0
-numero_lote         text NOT NULL
-estado              text DEFAULT 'generado' (generado | enviado | cobrado)
-observaciones       text
-created_at          timestamptz DEFAULT now()
-updated_at          timestamptz DEFAULT now()
-```
-
-**Nueva tabla `comprobantes_particulares`:**
-```text
-id                  serial PK
-autorizacion_id     integer NOT NULL (ref autorizaciones)
-paciente_id         integer NOT NULL (ref pacientes)
-monto               numeric NOT NULL
-fecha_emision       date DEFAULT CURRENT_DATE
-fecha_pago          date nullable
-estado              text DEFAULT 'pendiente' (pendiente | pagado)
-metodo_pago         text nullable
-numero_comprobante  text NOT NULL
-observaciones       text
-created_at          timestamptz DEFAULT now()
-updated_at          timestamptz DEFAULT now()
-```
-
-RLS: admin y usuario_normal CRUD completo en ambas tablas nuevas. Lectura autenticada.
+### Problema 2: Admin no ve autorizaciones
+La politica RLS y el rol admin estan correctamente configurados en la base de datos (verificado: `has_role` retorna `true` para el admin). El problema puede ser de sesion o cache del cliente. Agregaremos un mecanismo de verificacion y nos aseguraremos de que el flujo de autenticacion bloquee usuarios inactivos.
 
 ---
 
-### 2. Nuevos archivos
+### Cambios a realizar
 
-| Archivo | Propósito |
-|---------|-----------|
-| `src/hooks/useFacturacion.tsx` | Queries para autorizaciones con filtros de facturación, mutaciones para marcar facturado, CRUD lotes y comprobantes |
-| `src/components/FacturacionManagement.tsx` | Componente principal con 4 tabs |
-| `src/components/facturacion/FacturacionObraSocial.tsx` | Filtrar autorizaciones aprobadas pendientes de facturar por OS/fechas, seleccionar, generar lote, exportar Excel/PDF |
-| `src/components/facturacion/FacturacionParticular.tsx` | Autorizaciones sin OS, generar comprobante, registrar pago |
-| `src/components/facturacion/LotesHistorial.tsx` | Historial de lotes generados con estado y export |
-| `src/components/facturacion/FacturacionReports.tsx` | Reportes: total por mes, por OS, por tipo, pendientes (recharts) |
+#### 1. Agregar Switch de activar/desactivar en UserManagement.tsx
+- Reemplazar el Badge de estado por un componente `Switch` de Radix UI
+- Al togglear, llamar a `useUpdateUser` para cambiar `is_active`
+- Mostrar feedback visual inmediato
 
----
+#### 2. Bloquear login de usuarios inactivos
+- En `Login.tsx` o `Index.tsx`, despues de autenticarse, verificar si `is_active === false` en la tabla `users`
+- Si esta inactivo, cerrar sesion automaticamente y mostrar mensaje "Su cuenta ha sido desactivada"
 
-### 3. Flujo UI
+#### 3. Verificar visibilidad admin en autorizaciones
+- Agregar log de debug temporal en `useAutorizaciones` para verificar que la query no tenga errores silenciosos
+- Asegurar que el hook no filtre datos del lado del cliente innecesariamente
 
-**Tab "Facturación OS"**: Filtra autorizaciones aprobadas con `estado_facturacion = 'pendiente'` por obra social y rango de fechas. Checkboxes para seleccionar. Botón "Generar Lote" que:
-- Crea registro en `lotes_facturacion`
-- Actualiza `estado_facturacion = 'facturado'` y `lote_facturacion_id` en autorizaciones seleccionadas
-- Calcula total sumando precios de prestaciones
-- Permite exportar a Excel (xlsx) y PDF (jspdf-autotable)
+### Archivos a modificar
 
-**Tab "Particulares"**: Autorizaciones donde `obra_social_id IS NULL`. Generar comprobante, registrar pago con método y fecha.
-
-**Tab "Lotes"**: Historial de lotes con filtros, detalle expandible, cambio de estado (generado → enviado → cobrado).
-
-**Tab "Reportes"**: Gráficos con recharts — total facturado por mes (bar), por OS (pie), pendientes.
-
----
-
-### 4. Archivos a modificar
-
-- **`src/pages/Index.tsx`**: Agregar case `'facturacion'` → `<FacturacionManagement />`
-- **`src/components/Sidebar.tsx`**: Agregar `{ id: 'facturacion', label: 'Facturación', icon: FileText }` en menús admin y usuario_normal
-
----
-
-### 5. Resumen
-
-Se reutilizan las autorizaciones existentes como base de facturación. Solo se agregan 2 columnas a tablas existentes y 2 tablas nuevas (lotes + comprobantes). El precio se registra en cada prestación de la autorización. La UI permite todo el flujo de facturación sin salir del sistema.
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/UserManagement.tsx` | Agregar Switch para toggle de is_active |
+| `src/pages/Index.tsx` | Agregar verificacion de is_active post-login, redirigir si inactivo |
+| `src/hooks/useAutorizaciones.tsx` | Agregar manejo de error mejorado para debug |
 

@@ -16,6 +16,7 @@ import UserManagement from '@/components/UserManagement';
 import AuditLogs from '@/components/AuditLogs';
 import ReportsManagement from '@/components/ReportsManagement';
 import { RecetarioManagement } from '@/components/RecetarioManagement';
+import FacturacionManagement from '@/components/FacturacionManagement';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -77,6 +78,8 @@ const Index = () => {
         return <CredencialGenerator />;
       case 'recetarios':
         return <RecetarioManagement />;
+      case 'facturacion':
+        return <FacturacionManagement />;
       case 'reports':
         return <ReportsManagement />;
       case 'users':
