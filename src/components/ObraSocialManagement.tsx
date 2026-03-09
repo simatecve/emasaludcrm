@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useObrasSociales, useDeleteObraSocial, useUpdateObraSocial } from '@/hooks/useObrasSociales';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
 import ObraSocialForm from './ObraSocialForm';
 
 const ObraSocialManagement = () => {
@@ -14,6 +17,8 @@ const ObraSocialManagement = () => {
   const { data: obrasSociales, isLoading } = useObrasSociales();
   const { mutate: deleteObraSocial } = useDeleteObraSocial();
   const { mutate: updateObraSocial } = useUpdateObraSocial();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const handleEdit = (obraSocial) => {
     setEditingObraSocial(obraSocial);
@@ -26,14 +31,46 @@ const ObraSocialManagement = () => {
     }
   };
 
-  const handleToggleActive = (obraSocial) => {
-    const action = obraSocial.activa ? 'desactivar' : 'activar';
-    if (window.confirm(`¿Está seguro que desea ${action} esta obra social?`)) {
-      updateObraSocial({ 
-        id: obraSocial.id, 
-        data: { activa: !obraSocial.activa } 
+  const handleToggleActive = async (obraSocial) => {
+    const newActive = !obraSocial.activa;
+    const action = newActive ? 'activar' : 'desactivar';
+    const pacientesAction = newActive ? 'reactivarán' : 'desactivarán';
+    
+    if (!window.confirm(`¿Está seguro que desea ${action} esta obra social?\nTodos los pacientes asociados se ${pacientesAction} automáticamente.`)) {
+      return;
+    }
+
+    // Update obra social
+    updateObraSocial({ 
+      id: obraSocial.id, 
+      data: { activa: newActive } 
+    });
+
+    // Update all associated patients
+    const { data: affected, error } = await supabase
+      .from('pacientes')
+      .update({ activo: newActive })
+      .eq('obra_social_id', obraSocial.id)
+      .select('id');
+
+    if (error) {
+      console.error('Error updating patients:', error);
+      toast({
+        title: "Error",
+        description: "Error al actualizar pacientes asociados.",
+        variant: "destructive",
+      });
+    } else {
+      const count = affected?.length || 0;
+      toast({
+        title: `Obra social ${newActive ? 'activada' : 'desactivada'}`,
+        description: `Se ${newActive ? 'reactivaron' : 'desactivaron'} ${count} pacientes asociados.`,
       });
     }
+
+    queryClient.invalidateQueries({ queryKey: ['patients'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['obras-sociales-stats'] });
   };
 
   const handleCloseForm = () => {
@@ -41,7 +78,6 @@ const ObraSocialManagement = () => {
     setEditingObraSocial(null);
   };
 
-  // Filtrar obras sociales según el estado que se quiere mostrar
   const filteredObrasSociales = obrasSociales?.filter(obraSocial => 
     showInactive ? !obraSocial.activa : obraSocial.activa
   );

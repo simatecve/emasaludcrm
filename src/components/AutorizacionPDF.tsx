@@ -19,10 +19,9 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 12; // Márgenes reducidos
+    const margin = 12;
     const marginBottom = 15;
     
-    // Función para agregar header y logo (reutilizable para nuevas páginas)
     const addPageHeader = async (isFirstPage = false) => {
       try {
         const logoImg = new Image();
@@ -35,7 +34,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         });
         
         if (isFirstPage) {
-          // Add watermark logo in the center of the page (semi-transparent)
           const watermarkSize = 100;
           const centerX = pageWidth / 2;
           const centerY = pageHeight / 2;
@@ -46,12 +44,10 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
           pdf.restoreGraphicsState();
         }
         
-        // Add logo to PDF (upper left corner) - más pequeño
         const logoWidth = 28;
         const logoHeight = 18;
         pdf.addImage(logoImg, 'PNG', margin, 6, logoWidth, logoHeight);
         
-        // Header with company info - comprimido en una línea
         pdf.setFontSize(14);
         pdf.setFont('helvetica', 'bold');
         pdf.text('EMA SALUD', margin + logoWidth + 4, 12);
@@ -59,7 +55,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         pdf.setFont('helvetica', 'normal');
         pdf.text('San Luis 713 este, esquina calle Guemes - CAPITAL', margin + logoWidth + 4, 18);
         
-        // Authorization title and number - comprimido
         pdf.setFontSize(12);
         pdf.setFont('helvetica', 'bold');
         pdf.text('Autorización', pageWidth - margin, 10, { align: 'right' });
@@ -67,29 +62,48 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         pdf.setFont('helvetica', 'normal');
         pdf.text(`No: ${autorizacion.numero_autorizacion || autorizacion.id}`, pageWidth - margin, 17, { align: 'right' });
         
-        // Horizontal line - más arriba
         pdf.line(margin, 24, pageWidth - margin, 24);
       } catch (error) {
         console.error('Error loading logo:', error);
       }
     };
     
-    // Agregar header en la primera página
     await addPageHeader(true);
     
     let yPos = 28;
     
-    // Patient information - 3 columnas para máxima compresión
     pdf.setFontSize(7);
     pdf.setFont('helvetica', 'normal');
     
     const paciente = autorizacion.pacientes;
+    const medico = autorizacion.medicos;
     const col1 = margin;
     const col2 = margin + 60;
     const col3 = margin + 130;
     const lineHeight = 3.5;
     
-    // Fila 1
+    // Fila 1 - Fechas de solicitud y vencimiento
+    if (autorizacion.fecha_solicitud) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('F. Solicitud:', col1, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(format(new Date(autorizacion.fecha_solicitud + 'T00:00:00'), 'dd/MM/yyyy', { locale: es }), col1 + 22, yPos);
+    }
+    if (autorizacion.fecha_vencimiento) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('F. Vencimiento:', col2, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(format(new Date(autorizacion.fecha_vencimiento + 'T00:00:00'), 'dd/MM/yyyy', { locale: es }), col2 + 26, yPos);
+    }
+    if (autorizacion.obras_sociales) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('OS:', col3, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(autorizacion.obras_sociales.nombre.substring(0, 25), col3 + 8, yPos);
+    }
+    yPos += lineHeight;
+    
+    // Fila 2 - Prestador, DNI
     if (autorizacion.prestador) {
       pdf.setFont('helvetica', 'bold');
       pdf.text('Prestador:', col1, yPos);
@@ -102,15 +116,9 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       pdf.setFont('helvetica', 'normal');
       pdf.text(paciente.dni, col2 + 10, yPos);
     }
-    if (autorizacion.obras_sociales) {
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('OS:', col3, yPos);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(autorizacion.obras_sociales.nombre.substring(0, 25), col3 + 8, yPos);
-    }
     yPos += lineHeight;
     
-    // Fila 2
+    // Fila 3 - Paciente, Credencial, Parentesco
     if (paciente) {
       pdf.setFont('helvetica', 'bold');
       pdf.text('Paciente:', col1, yPos);
@@ -131,22 +139,35 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     }
     yPos += lineHeight;
     
-    // Fila 3 - Observaciones y profesional
+    // Fila 4 - Médico que realiza la práctica
+    if (medico) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Médico:', col1, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${medico.apellido.toUpperCase()} ${medico.nombre.toUpperCase()}`, col1 + 14, yPos);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Mat:', col2, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(medico.matricula, col2 + 10, yPos);
+    }
     if (autorizacion.profesional_solicitante) {
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Profesional:', col1, yPos);
+      pdf.text('Prof. Solic.:', col3, yPos);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(autorizacion.profesional_solicitante.substring(0, 30), col1 + 20, yPos);
-    }
-    if (autorizacion.observaciones) {
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Obs:', col2, yPos);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(autorizacion.observaciones.substring(0, 40), col2 + 10, yPos);
+      pdf.text(autorizacion.profesional_solicitante.substring(0, 20), col3 + 22, yPos);
     }
     yPos += lineHeight;
     
-    // Descripción si existe (en una línea)
+    // Fila 5 - Observaciones
+    if (autorizacion.observaciones) {
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Obs:', col1, yPos);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(autorizacion.observaciones.substring(0, 80), col1 + 10, yPos);
+      yPos += lineHeight;
+    }
+    
+    // Descripción
     if (autorizacion.descripcion) {
       pdf.setFont('helvetica', 'bold');
       pdf.text('Descripción:', col1, yPos);
@@ -157,7 +178,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 2;
     
-    // Función para dibujar el header de la tabla - más compacto
     const drawTableHeader = (startY: number) => {
       pdf.setFillColor(52, 85, 139);
       pdf.rect(margin, startY, pageWidth - (margin * 2), 6, 'F');
@@ -166,13 +186,12 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(7);
       pdf.text('Cant', margin + 3, startY + 4);
-      pdf.text('Cod', margin + 20, startY + 4);
-      pdf.text('Descripcion', margin + 50, startY + 4);
+      pdf.text('Código', margin + 20, startY + 4);
+      pdf.text('Descripción', margin + 50, startY + 4);
       
       return startY + 6;
     };
     
-    // Función para verificar si necesitamos nueva página
     const checkAndAddNewPage = async (requiredSpace: number, currentY: number) => {
       if (currentY + requiredSpace > pageHeight - marginBottom) {
         pdf.addPage();
@@ -182,40 +201,33 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       return currentY;
     };
     
-    // Prestaciones table - título más pequeño
     pdf.setTextColor(0, 0, 0);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(8);
     pdf.text('Prestaciones', margin, yPos);
     yPos += 3;
     
-    // Table header positions - ajustados a márgenes reducidos
     const colPositions = [margin, margin + 18, margin + 48];
     let tableStartY = yPos;
     yPos = drawTableHeader(yPos);
     
-    // Table content
     pdf.setTextColor(0, 0, 0);
     pdf.setFont('helvetica', 'normal');
     
-    // Preparar datos de prestaciones
     const prestaciones = autorizacion.prestaciones && autorizacion.prestaciones.length > 0
       ? autorizacion.prestaciones
       : [{ cantidad: 1, prestacion_codigo: 'N/A', prestacion_descripcion: 'Sin prestaciones especificadas' }];
     
-    // Renderizar cada fila de prestación
     for (let index = 0; index < prestaciones.length; index++) {
       const prestacion = prestaciones[index];
       const cantidad = prestacion.cantidad || 1;
       const codigo = prestacion.prestacion_codigo || '';
       const descripcion = prestacion.prestacion_descripcion || '';
       
-      // Calcular altura de la fila - más compacta
       const maxWidth = pageWidth - margin - colPositions[2] - 5;
       const descLines = pdf.splitTextToSize(descripcion, maxWidth);
       const rowHeight = Math.max(5, (descLines.length * 3) + 2);
       
-      // Verificar si necesitamos nueva página
       const newY = await checkAndAddNewPage(rowHeight + 3, yPos);
       
       if (newY !== yPos) {
@@ -224,13 +236,11 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         yPos = drawTableHeader(yPos);
       }
       
-      // Fondo alternado
       if (index % 2 === 1) {
         pdf.setFillColor(248, 249, 250);
         pdf.rect(margin, yPos, pageWidth - (margin * 2), rowHeight, 'F');
       }
       
-      // Contenido
       pdf.setTextColor(0, 0, 0);
       pdf.setFontSize(7);
       
@@ -242,7 +252,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
         pdf.text(line, colPositions[2] + 2, yPos + 3 + (lineIndex * 3));
       });
       
-      // Bordes
       pdf.setDrawColor(200, 200, 200);
       pdf.line(margin, yPos + rowHeight, pageWidth - margin, yPos + rowHeight);
       pdf.line(colPositions[1], yPos, colPositions[1], yPos + rowHeight);
@@ -251,7 +260,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
       yPos += rowHeight;
     }
     
-    // Bordes exteriores
     pdf.setDrawColor(0, 0, 0);
     pdf.line(margin, tableStartY, margin, yPos);
     pdf.line(pageWidth - margin, tableStartY, pageWidth - margin, yPos);
@@ -260,7 +268,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 4;
     
-    // Copago - más compacto, en línea
+    // Copago
     yPos = await checkAndAddNewPage(10, yPos);
     const formattedCopago = (autorizacion.copago !== null && autorizacion.copago !== undefined)
       ? new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(autorizacion.copago)
@@ -279,7 +287,7 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += 6;
     
-    // Diagnóstico - caja más pequeña
+    // Diagnóstico
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Diagnóstico', margin, yPos);
@@ -296,14 +304,13 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     
     yPos += diagnosticoBoxHeight + 4;
     
-    // Verificar espacio para firmas
     if (yPos + 28 > pageHeight - marginBottom) {
       pdf.addPage();
       await addPageHeader(false);
       yPos = 28;
     }
     
-    // Firmas - ultra compactas en dos columnas
+    // Firmas
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'bold');
     pdf.text('Firmas', margin, yPos);
@@ -316,7 +323,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.setFont('helvetica', 'normal');
     pdf.setFontSize(6);
     
-    // Especialista
     pdf.text('Firma Especialista:', signCol1, yPos);
     pdf.line(signCol1, yPos + 8, signCol1 + signWidth, yPos + 8);
     pdf.text('Aclaración:', signCol1, yPos + 12);
@@ -324,7 +330,6 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.text('Matrícula:', signCol1, yPos + 20);
     pdf.line(signCol1, yPos + 24, signCol1 + signWidth, yPos + 24);
     
-    // Paciente
     pdf.text('Firma Paciente:', signCol2, yPos);
     pdf.line(signCol2, yPos + 8, signCol2 + signWidth, yPos + 8);
     pdf.text('Aclaración:', signCol2, yPos + 12);
@@ -332,12 +337,10 @@ const AutorizacionPDF = ({ autorizacion }: AutorizacionPDFProps) => {
     pdf.text('DNI:', signCol2, yPos + 20);
     pdf.line(signCol2, yPos + 24, signCol2 + signWidth, yPos + 24);
     
-    // Footer - más compacto
     const footerY = pdf.internal.pageSize.getHeight() - 8;
     pdf.setFontSize(6);
     pdf.text(`Generado: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: es })}`, margin, footerY);
     
-    // Save PDF
     const fileName = `autorizacion_${autorizacion.numero_autorizacion || autorizacion.id}_${format(new Date(), 'yyyyMMdd')}.pdf`;
     pdf.save(fileName);
   };
