@@ -19,30 +19,30 @@ function parseDateMDY(dateStr: string): string | null {
   let m: number, d: number;
   if (p0 > 12) { d = p0; m = p1; }
   else if (p1 > 12) { m = p0; d = p1; }
-  else { m = p0; d = p1; } // default M/D/Y
+  else { m = p0; d = p1; }
   
   if (m < 1 || m > 12 || d < 1 || d > 31) return null;
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
 function processRow(cols: string[], obra_social_id: number) {
-  const dni = cols[9]?.trim();
+  const dni = String(cols[9] ?? "").trim();
   if (!dni || dni === "Nro. Doc." || !dni.match(/^\d+$/)) return null;
 
-  const apellido = cols[2]?.trim() || "";
-  const nombre = cols[3]?.trim() || "";
-  const sexo = cols[4]?.trim() || "";
-  const fechaNac = parseDateMDY(cols[5]?.trim() || "");
-  const estadoCivil = cols[7]?.trim() || "";
-  const cuil = cols[10]?.trim() || "";
-  const nacionalidad = cols[11]?.trim() || "";
-  const direccion = cols[12]?.trim() || "";
-  const localidad = cols[13]?.trim() || "";
-  const provincia = cols[14]?.trim() || "";
-  const parentesco = cols[16]?.trim() || "";
-  const cuitTitular = cols[17]?.trim() || "";
-  const numeroAfiliado = cols[0]?.trim() || "";
-  const plan = cols[21]?.trim() || "";
+  const apellido = String(cols[2] ?? "").trim();
+  const nombre = String(cols[3] ?? "").trim();
+  const sexo = String(cols[4] ?? "").trim();
+  const fechaNac = parseDateMDY(String(cols[5] ?? "").trim());
+  const estadoCivil = String(cols[7] ?? "").trim();
+  const cuil = String(cols[10] ?? "").trim();
+  const nacionalidad = String(cols[11] ?? "").trim();
+  const direccion = String(cols[12] ?? "").trim();
+  const localidad = String(cols[13] ?? "").trim();
+  const provincia = String(cols[14] ?? "").trim();
+  const parentesco = String(cols[16] ?? "").trim();
+  const cuitTitular = String(cols[17] ?? "").trim();
+  const numeroAfiliado = String(cols[0] ?? "").trim();
+  const plan = String(cols[21] ?? "").trim();
 
   let planNorm = plan;
   if (plan) {
@@ -92,24 +92,32 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const obra_social_id = body.obra_social_id || 7;
     
-    let rows: string[][] = [];
+    let rows: any[][] = [];
 
-    if (body.file_base64) {
-      // Parse XLS from base64
+    if (body.file_url) {
+      // Fetch XLS from URL
+      const resp = await fetch(body.file_url);
+      if (!resp.ok) throw new Error(`Failed to fetch file: ${resp.status}`);
+      const arrayBuffer = await resp.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(bytes, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as any[][];
+      rows = data.slice(1); // skip header
+    } else if (body.file_base64) {
       const binary = atob(body.file_base64);
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const workbook = XLSX.read(bytes, { type: "array" });
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as string[][];
-      rows = data.slice(1); // skip header
+      const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as any[][];
+      rows = data.slice(1);
     } else if (body.lines && Array.isArray(body.lines)) {
-      // Parse pipe-delimited lines
       rows = body.lines.map((line: string) => 
         line.replace(/^\|/, "").replace(/\|$/, "").split("|").map((c: string) => c.trim())
       );
     } else {
-      return new Response(JSON.stringify({ error: "file_base64 or lines required" }), {
+      return new Response(JSON.stringify({ error: "file_url, file_base64 or lines required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
