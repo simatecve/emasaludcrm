@@ -167,17 +167,29 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       return str;
     }
     
-    // 3. Formato DD/MM/YYYY o DD/MM/YY (común en OSCERA)
+    // 3. Formato DD/MM/YYYY, DD/MM/YY, o M/D/YY (xlsx a veces usa formato US)
     const partsSlash = str.split('/');
     if (partsSlash.length === 3) {
-      const dia = partsSlash[0].padStart(2, '0');
-      const mes = partsSlash[1].padStart(2, '0');
+      let p0 = parseInt(partsSlash[0]);
+      let p1 = parseInt(partsSlash[1]);
       let año = parseInt(partsSlash[2]);
-      if (!isNaN(año)) {
+      if (!isNaN(p0) && !isNaN(p1) && !isNaN(año)) {
         if (año < 100) {
           año = año <= 30 ? 2000 + año : 1900 + año;
         }
-        return `${año}-${mes}-${dia}`;
+        // Si p0 > 12, es DD/MM/YYYY (día primero, imposible que sea mes)
+        // Si p1 > 12, es M/D/YYYY (mes primero, día segundo)
+        // Si ambos <= 12, asumir M/D/YYYY (formato xlsx por defecto)
+        let dia: number, mes: number;
+        if (p0 > 12) {
+          dia = p0; mes = p1;
+        } else if (p1 > 12) {
+          mes = p0; dia = p1;
+        } else {
+          // Ambos <= 12: xlsx usa M/D/Y por defecto
+          mes = p0; dia = p1;
+        }
+        return `${año}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
       }
     }
     
@@ -237,7 +249,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       { field: 'direccion', patterns: ['Direccion', 'Domicilio', 'Calle', 'Dirección', 'Dir'] },
       // Afiliación
       { field: 'numero_afiliado', patterns: ['NUM_FAM', 'Nro Afiliado', 'Nº Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'] },
-      { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'] },
+      { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular', 'CUIT Titular', 'CUITTitular'] },
       { field: 'cuil_beneficiario', patterns: ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'] },
       { field: 'cuil', patterns: ['CUIL'] },  // OSCERA usa solo "CUIL"
       { field: 'tipo_doc', patterns: ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'] },
