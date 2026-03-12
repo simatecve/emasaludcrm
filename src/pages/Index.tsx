@@ -87,6 +87,8 @@ const Index = () => {
         return <UserManagement />;
       case 'audit-logs':
         return <AuditLogs />;
+      case 'import-padron':
+        return <AutoImportPadron onDone={() => setActiveSection('patients')} />;
       default:
         return <Dashboard />;
     }
