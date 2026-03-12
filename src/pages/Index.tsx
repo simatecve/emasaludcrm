@@ -17,6 +17,7 @@ import AuditLogs from '@/components/AuditLogs';
 import ReportsManagement from '@/components/ReportsManagement';
 import { RecetarioManagement } from '@/components/RecetarioManagement';
 import FacturacionManagement from '@/components/FacturacionManagement';
+import AutoImportPadron from '@/components/AutoImportPadron';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
