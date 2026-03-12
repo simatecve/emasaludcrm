@@ -41,7 +41,6 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
-        { id: 'import-padron', label: '📥 Importar Padrón', icon: Users },
       ];
     }
 
@@ -66,7 +65,6 @@ const Sidebar = ({ activeSection, onSectionChange, isCollapsed, onToggleCollapse
         { id: 'reports', label: 'Reportes', icon: TrendingUp },
         { id: 'users', label: 'Usuarios', icon: UsersIcon },
         { id: 'audit-logs', label: 'Logs de Auditoría', icon: ClipboardList },
-        { id: 'import-padron', label: '📥 Importar Padrón', icon: Users },
       ];
     } else if (currentUser.role === 'usuario_normal') {
       // Usuario normal: no puede ver usuarios ni logs de auditoría
