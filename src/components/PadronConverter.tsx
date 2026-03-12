@@ -237,7 +237,7 @@ const PadronConverter: React.FC<PadronConverterProps> = ({ onClose }) => {
       { field: 'direccion', patterns: ['Direccion', 'Domicilio', 'Calle', 'Dirección', 'Dir'] },
       // Afiliación
       { field: 'numero_afiliado', patterns: ['NUM_FAM', 'Nro Afiliado', 'Nº Afiliado', 'Numero Afiliado', 'NumAfiliado', 'Afiliado', 'NroAfiliado', 'NumeroAfiliado'] },
-      { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular'] },
+      { field: 'cuil_titular', patterns: ['CUIL_FAM', 'CUIL Titular', 'CuilTitular', 'Cuil_Titular', 'CUIT Titular', 'CUITTitular'] },
       { field: 'cuil_beneficiario', patterns: ['CUIL', 'CUIL Beneficiario', 'CuilBeneficiario', 'Cuil_Beneficiario', 'CuilBenef'] },
       { field: 'cuil', patterns: ['CUIL'] },  // OSCERA usa solo "CUIL"
       { field: 'tipo_doc', patterns: ['TD', 'Tipo Doc', 'TipoDoc', 'Tipo Documento', 'TipoDocumento'] },
