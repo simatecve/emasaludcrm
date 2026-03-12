@@ -17,6 +17,7 @@ import AuditLogs from '@/components/AuditLogs';
 import ReportsManagement from '@/components/ReportsManagement';
 import { RecetarioManagement } from '@/components/RecetarioManagement';
 import FacturacionManagement from '@/components/FacturacionManagement';
+import AutoImportPadron from '@/components/AutoImportPadron';
 import Login from './Login';
 import { Loader2 } from 'lucide-react';
 
@@ -86,6 +87,8 @@ const Index = () => {
         return <UserManagement />;
       case 'audit-logs':
         return <AuditLogs />;
+      case 'import-padron':
+        return <AutoImportPadron onDone={() => setActiveSection('patients')} />;
       default:
         return <Dashboard />;
     }
