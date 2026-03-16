@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import PublicCredencial from "./pages/PublicCredencial";
 
 // Create QueryClient instance outside component to avoid re-creation on each render
 const queryClient = new QueryClient({

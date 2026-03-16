@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.update-consultas-maximas]
 verify_jwt = true
+
+[functions.public-credencial]
+verify_jwt = false
