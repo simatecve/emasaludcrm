@@ -1,53 +1,35 @@
 
 
-## Public Credential Page (No Login Required)
+## Plan: Switch de activar/desactivar usuarios + Fix visibilidad admin en autorizaciones
 
-### Problem
-The `pacientes` and `credenciales` tables have RLS policies that require authentication. A public page cannot query them directly with the anon key.
+### Problema 1: Falta switch de activar/desactivar en la tabla de usuarios
+Actualmente la tabla de usuarios muestra un Badge de estado pero no permite cambiar el estado directamente. Se necesita un Switch inline.
 
-### Solution
-Create an edge function that uses the service role key to look up patient and credential data by DNI, and a new public route `/credencial` with a standalone page.
+### Problema 2: Admin no ve autorizaciones
+La politica RLS y el rol admin estan correctamente configurados en la base de datos (verificado: `has_role` retorna `true` para el admin). El problema puede ser de sesion o cache del cliente. Agregaremos un mecanismo de verificacion y nos aseguraremos de que el flujo de autenticacion bloquee usuarios inactivos.
 
-### Architecture
+---
 
-```text
-/credencial (public route, no auth)
-    └── PublicCredencial.tsx
-            ├── DNI input form
-            ├── Calls edge function "public-credencial"
-            ├── Renders CredencialCard (reused from existing)
-            └── Download as PNG (html2canvas)
+### Cambios a realizar
 
-Edge Function: public-credencial
-    ├── Receives { dni: string }
-    ├── Queries pacientes by DNI (service role, bypasses RLS)
-    ├── Queries credenciales for that patient
-    ├── Queries system_config for logo/name
-    └── Returns patient + credential + config data
-```
+#### 1. Agregar Switch de activar/desactivar en UserManagement.tsx
+- Reemplazar el Badge de estado por un componente `Switch` de Radix UI
+- Al togglear, llamar a `useUpdateUser` para cambiar `is_active`
+- Mostrar feedback visual inmediato
 
-### Changes
+#### 2. Bloquear login de usuarios inactivos
+- En `Login.tsx` o `Index.tsx`, despues de autenticarse, verificar si `is_active === false` en la tabla `users`
+- Si esta inactivo, cerrar sesion automaticamente y mostrar mensaje "Su cuenta ha sido desactivada"
 
-1. **New edge function** `supabase/functions/public-credencial/index.ts`
-   - Accepts POST with `{ dni }`, validates input
-   - Uses service role key to query `pacientes` (where `dni = input AND activo = true`), joining `obras_sociales`
-   - Queries `credenciales` for that patient (active, ordered by created_at desc, limit 1)
-   - If no credential exists, generates one on the fly (same logic: expiry = last day of current month)
-   - Returns patient info, credential, and system_config data
-   - Rate limiting: basic DNI format validation only (no sensitive data exposed beyond credential card info)
+#### 3. Verificar visibilidad admin en autorizaciones
+- Agregar log de debug temporal en `useAutorizaciones` para verificar que la query no tenga errores silenciosos
+- Asegurar que el hook no filtre datos del lado del cliente innecesariamente
 
-2. **New page** `src/pages/PublicCredencial.tsx`
-   - Standalone page with DNI input, no sidebar/auth
-   - Shows system logo/name from the response
-   - Reuses the `CredencialCard` visual component (extracted or duplicated inline)
-   - Download button using html2canvas
+### Archivos a modificar
 
-3. **Route addition** in `src/App.tsx`
-   - Add `/credencial` route pointing to `PublicCredencial`
-   - No auth wrapper needed
-
-### Security Considerations
-- The edge function only returns limited patient data (name, DNI, affiliate number, obra social name) — same info that appears on a physical credential card
-- No sensitive medical data exposed
-- DNI format validation to prevent abuse
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/UserManagement.tsx` | Agregar Switch para toggle de is_active |
+| `src/pages/Index.tsx` | Agregar verificacion de is_active post-login, redirigir si inactivo |
+| `src/hooks/useAutorizaciones.tsx` | Agregar manejo de error mejorado para debug |
 
