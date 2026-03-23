@@ -1,35 +1,47 @@
 
 
-## Plan: Switch de activar/desactivar usuarios + Fix visibilidad admin en autorizaciones
+## Plan: Recetario PDF — Formato institucional para todas las obras sociales
 
-### Problema 1: Falta switch de activar/desactivar en la tabla de usuarios
-Actualmente la tabla de usuarios muestra un Badge de estado pero no permite cambiar el estado directamente. Se necesita un Switch inline.
+### Resumen
+Reemplazar el template genérico (`generarRecetarioGenerico`) en `RecetarioPDF.tsx` para que **todas las obras sociales** usen el mismo formato institucional tipo formulario administrativo A4 que se muestra en la imagen de referencia (actualmente solo OSPSIP lo usa). Se mantendrá un único formato universal.
 
-### Problema 2: Admin no ve autorizaciones
-La politica RLS y el rol admin estan correctamente configurados en la base de datos (verificado: `has_role` retorna `true` para el admin). El problema puede ser de sesion o cache del cliente. Agregaremos un mecanismo de verificacion y nos aseguraremos de que el flujo de autenticacion bloquee usuarios inactivos.
+### Cambios
 
----
+**1. Modificar `src/components/RecetarioPDF.tsx`**
 
-### Cambios a realizar
+- Eliminar `generarRecetarioGenerico` y `generarRecetarioOSPSIP` como funciones separadas.
+- Crear una única función `generarRecetarioPDF` que genere el formulario institucional idéntico a la imagen para **todas** las obras sociales.
+- Los datos dinámicos del paciente (nombre, apellido, DNI, número afiliado) y obra social se inyectan desde la BD.
+- Los demás campos (diagnóstico, síntomas, medicamentos, dosis, descuentos, etc.) quedan vacíos para ser completados a mano tras imprimir.
+- El header institucional adapta el nombre de la obra social dinámicamente (no solo "OSPSIP").
+- La fecha de emisión se auto-completa con la fecha actual.
+- El DNI del titular se auto-completa.
 
-#### 1. Agregar Switch de activar/desactivar en UserManagement.tsx
-- Reemplazar el Badge de estado por un componente `Switch` de Radix UI
-- Al togglear, llamar a `useUpdateUser` para cambiar `is_active`
-- Mostrar feedback visual inmediato
+**Estructura del PDF (jsPDF):**
+1. Encabezado centrado con nombre de obra social + "HISTORIA CLINICA" + subtítulos
+2. Bloque derecho: RNOS, direcciones, teléfono (datos fijos institucionales)
+3. Datos del beneficiario: nombre, diagnóstico, fecha emisión, N° obra social, N° sindical, edad, síntomas
+4. Tabla de medicamentos (6 columnas, 2 filas genéricos)
+5. Dosis diaria genérico 1 y 2
+6. Sección "COMPLETAR LO QUE CORRESPONDA" con tabla diagnóstico/embarazo/firma
+7. Fecha de venta / Farmacia
+8. Tabla de descuentos (OSPSIP/UPSRA)
+9. DNI titular, DNI quien retira, domicilio, teléfono, firma
+10. Footer con nombre de obra social
 
-#### 2. Bloquear login de usuarios inactivos
-- En `Login.tsx` o `Index.tsx`, despues de autenticarse, verificar si `is_active === false` en la tabla `users`
-- Si esta inactivo, cerrar sesion automaticamente y mostrar mensaje "Su cuenta ha sido desactivada"
+**2. Ajustar `RecetarioManagement.tsx`** — Sin cambios necesarios, ya llama `generarRecetarioPDF` que será la función actualizada.
 
-#### 3. Verificar visibilidad admin en autorizaciones
-- Agregar log de debug temporal en `useAutorizaciones` para verificar que la query no tenga errores silenciosos
-- Asegurar que el hook no filtre datos del lado del cliente innecesariamente
+### Datos desde BD vs datos manuales
 
-### Archivos a modificar
+| Campo | Fuente |
+|-------|--------|
+| Nombre y apellido beneficiario | BD (paciente) |
+| DNI del titular | BD (paciente) |
+| Fecha de emisión | Auto (fecha actual) |
+| Obra social (header/footer) | BD (obra social) |
+| N° afiliado | BD (paciente) |
+| Diagnóstico, síntomas, medicamentos, dosis, descuentos, firma | Vacíos (llenar a mano) |
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/UserManagement.tsx` | Agregar Switch para toggle de is_active |
-| `src/pages/Index.tsx` | Agregar verificacion de is_active post-login, redirigir si inactivo |
-| `src/hooks/useAutorizaciones.tsx` | Agregar manejo de error mejorado para debug |
+### Archivos afectados
+- `src/components/RecetarioPDF.tsx` — reescribir con formato único institucional
 
