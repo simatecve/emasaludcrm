@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
 
-interface RecetarioPDFData {
+export interface RecetarioPDFData {
   paciente: {
     nombre: string;
     apellido: string;
@@ -14,16 +14,25 @@ interface RecetarioPDFData {
   tipoRecetario: number;
   fecha: string;
   observaciones?: string;
+  // Campos adicionales del formulario
+  diagnostico?: string;
+  sintomas?: string;
+  edad?: string;
+  nroSindical?: string;
+  generico1?: string;
+  generico2?: string;
+  dosisGenerico1?: string;
+  dosisGenerico2?: string;
 }
 
 export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   const doc = new jsPDF();
   const pw = doc.internal.pageSize.getWidth();
   const ph = doc.internal.pageSize.getHeight();
-  const m = 15; // left margin
+  const m = 15;
   const contentW = pw - m * 2;
 
-  const obraSocialName = data.obraSocial.nombre.toUpperCase();
+  const obraSocialName = (data.obraSocial.nombre || 'OBRA SOCIAL').toUpperCase();
   let y = 12;
 
   // ─── HEADER ───
@@ -58,48 +67,42 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   doc.text('TUCUMÁN 3685/89 C.A.B.A.', rx, 22);
   doc.text('Tel.: 0800-333-6777', rx, 26);
 
+  // ─── HELPER FUNCTIONS ───
+  const drawCell = (label: string, value: string, yp: number, xStart: number, w: number, h: number = 7) => {
+    doc.rect(xStart, yp, w, h);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, xStart + 2, yp + 5);
+    if (value) {
+      doc.setFont('helvetica', 'normal');
+      const lw = doc.getTextWidth(label + ' ');
+      doc.text(value, xStart + 2 + lw, yp + 5);
+    }
+  };
+
   // ─── BENEFICIARY DATA ───
   y += 6;
   doc.setDrawColor(0);
   doc.setLineWidth(0.3);
 
-  const drawLabelRow = (label: string, value: string, yp: number, w: number = contentW) => {
-    doc.rect(m, yp, w, 7);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text(label, m + 2, yp + 5);
-    doc.setFont('helvetica', 'normal');
-    const labelW = doc.getTextWidth(label + ' ');
-    doc.text(value, m + 2 + labelW, yp + 5);
-  };
-
-  const drawLabelRowAt = (label: string, value: string, yp: number, xStart: number, w: number) => {
-    doc.rect(xStart, yp, w, 7);
-    doc.setFontSize(7);
-    doc.setFont('helvetica', 'bold');
-    doc.text(label, xStart + 2, yp + 5);
-    doc.setFont('helvetica', 'normal');
-    const labelW = doc.getTextWidth(label + ' ');
-    doc.text(value, xStart + 2 + labelW, yp + 5);
-  };
-
-  const pacienteNombre = `${data.paciente.apellido}, ${data.paciente.nombre}`;
-  drawLabelRow('NOMBRE Y APELLIDO BENEFICIARIO:', pacienteNombre, y);
-
-  y += 7;
-  drawLabelRow('DIAGNOSTICO:', '', y);
-
-  y += 7;
   const halfW = contentW / 2;
-  drawLabelRowAt('FECHA DE EMISION:', format(new Date(data.fecha), 'dd/MM/yyyy'), y, m, halfW);
-  drawLabelRowAt('N° DE OBRA SOCIAL:', data.paciente.numero_afiliado || '', y, m + halfW, halfW);
+  const pacienteNombre = `${data.paciente.apellido}, ${data.paciente.nombre}`;
+
+  drawCell('NOMBRE Y APELLIDO BENEFICIARIO:', pacienteNombre, y, m, contentW);
 
   y += 7;
-  drawLabelRowAt('N° SINDICAL:', '', y, m, halfW);
-  drawLabelRowAt('EDAD:', '', y, m + halfW, halfW);
+  drawCell('DIAGNOSTICO:', data.diagnostico || '', y, m, contentW);
 
   y += 7;
-  drawLabelRow('SINTOMAS Y/O SIGNOS PRINCIPALES:', '', y);
+  drawCell('FECHA DE EMISION:', format(new Date(data.fecha), 'dd/MM/yyyy'), y, m, halfW);
+  drawCell('N° DE OBRA SOCIAL:', data.paciente.numero_afiliado || '', y, m + halfW, halfW);
+
+  y += 7;
+  drawCell('N° SINDICAL:', data.nroSindical || '', y, m, halfW);
+  drawCell('EDAD:', data.edad || '', y, m + halfW, halfW);
+
+  y += 7;
+  drawCell('SINTOMAS Y/O SIGNOS PRINCIPALES:', data.sintomas || '', y, m, contentW);
 
   // ─── MEDICATION TABLE ───
   y += 10;
@@ -115,15 +118,15 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
     cx += cols[i];
   });
 
-  // Rows Rp/1 and Rp/2
   for (let r = 0; r < 2; r++) {
     y += 8;
     cx = m;
     doc.setFont('helvetica', 'normal');
+    const genName = r === 0 ? (data.generico1 || `GENERICO Rp/${r + 1}`) : (data.generico2 || `GENERICO Rp/${r + 1}`);
     cols.forEach((w, i) => {
       doc.rect(cx, y, w, 8);
       if (i === 0) {
-        doc.text(`GENERICO Rp/${r + 1}`, cx + 1.5, y + 5);
+        doc.text(genName, cx + 1.5, y + 5);
       }
       cx += w;
     });
@@ -133,9 +136,9 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   y += 12;
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.text('DOSIS DIARIA GENERICO 1: _______________________________________________', m, y);
+  doc.text(`DOSIS DIARIA GENERICO 1: ${data.dosisGenerico1 || '_______________________________________________'}`, m, y);
   y += 6;
-  doc.text('DOSIS DIARIA GENERICO 2: _______________________________________________', m, y);
+  doc.text(`DOSIS DIARIA GENERICO 2: ${data.dosisGenerico2 || '_______________________________________________'}`, m, y);
 
   // ─── COMPLETAR LO QUE CORRESPONDA ───
   y += 10;
@@ -149,33 +152,34 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   const c3w = contentW - c1w - c2w;
   const blockH = 30;
 
+  doc.setFontSize(7);
+
   // Col 1 - DIAGNOSTICO
   doc.rect(m, y, c1w, blockH);
-  doc.setFontSize(7);
   doc.text('DIAGNOSTICO:', m + 2, y + 5);
 
-  // Col 2 - EMBARAZO/PARTO top
+  // Col 2 top
   doc.rect(m + c1w, y, c2w, blockH / 2);
   doc.text('EMBARAZO:', m + c1w + 2, y + 5);
   doc.text('PARTO CESAREA:', m + c1w + 2, y + 10);
 
-  // Col 2 - R.N. bottom
+  // Col 2 bottom
   doc.rect(m + c1w, y + blockH / 2, c2w, blockH / 2);
   doc.text('R.N.:', m + c1w + 2, y + blockH / 2 + 5);
   doc.text('DIAS:        SEMANAS:', m + c1w + 2, y + blockH / 2 + 10);
 
-  // Col 3 - FIRMA top
+  // Col 3 top
   doc.rect(m + c1w + c2w, y, c3w, blockH / 2);
   doc.setFontSize(6);
   doc.text('FIRMA Y SELLO DEL', m + c1w + c2w + 2, y + 6);
   doc.text('PROFESIONAL:', m + c1w + c2w + 2, y + 10);
 
-  // Col 3 - FIRMA bottom
+  // Col 3 bottom
   doc.rect(m + c1w + c2w, y + blockH / 2, c3w, blockH / 2);
   doc.text('FIRMA Y SELLO DEL', m + c1w + c2w + 2, y + blockH / 2 + 6);
   doc.text('PROFESIONAL:', m + c1w + c2w + 2, y + blockH / 2 + 10);
 
-  // NIÑO/A row
+  // NIÑO/A
   y += blockH;
   doc.setFontSize(7);
   doc.rect(m, y, c1w + c2w, 7);
@@ -184,8 +188,8 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
 
   // ─── FECHA DE VENTA / FARMACIA ───
   y += 10;
-  drawLabelRowAt('FECHA DE VENTA:', '', y, m, c1w + c2w);
-  drawLabelRowAt('FARMACIA:', '', y, m + c1w + c2w, c3w);
+  drawCell('FECHA DE VENTA:', '', y, m, c1w + c2w);
+  drawCell('FARMACIA:', '', y, m + c1w + c2w, c3w);
 
   // ─── DISCOUNT TABLE ───
   y += 10;
@@ -195,13 +199,11 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
 
-  // Headers
   doc.rect(m, y, dHalf, dh);
   doc.text('DESCUENTO OSPSIP', m + 2, y + 4);
   doc.rect(m + dHalf, y, dHalf, dh);
   doc.text('DESCUENTO UPSRA', m + dHalf + 2, y + 4);
 
-  // Row 1
   y += dh;
   doc.setFont('helvetica', 'normal');
   doc.rect(m, y, dHalf, dh);
@@ -209,14 +211,12 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   doc.rect(m + dHalf, y, dHalf, dh);
   doc.text('60% AMBULATORIO', m + dHalf + 2, y + 4);
 
-  // Row 2
   y += dh;
   doc.rect(m, y, dHalf, dh);
   doc.text('70% AMBULATORIO', m + 2, y + 4);
   doc.rect(m + dHalf, y, dHalf, dh);
   doc.text('90% AMBULATORIO', m + dHalf + 2, y + 4);
 
-  // Row 3
   y += dh;
   doc.rect(m, y, dHalf * 2, dh);
   doc.text('100% PMI Y ESPECIFICOS', m + 2, y + 4);
@@ -244,7 +244,6 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   doc.setFont('helvetica', 'bold');
   doc.text(obraSocialName, pw / 2, ph - 10, { align: 'center' });
 
-  // Save
   const nombreArchivo = `Recetario_${data.paciente.apellido}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   doc.save(nombreArchivo);
 };
