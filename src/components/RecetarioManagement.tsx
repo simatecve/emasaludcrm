@@ -3,9 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
-  useRecetarioConfig, 
   useRecetariosDelMes, 
   useEmitirRecetario,
   useRecetarios,
@@ -49,6 +49,14 @@ const LIMITE_RECETARIOS_MENSUAL = 2;
 export const RecetarioManagement = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [observaciones, setObservaciones] = useState('');
+  const [diagnostico, setDiagnostico] = useState('');
+  const [sintomas, setSintomas] = useState('');
+  const [edad, setEdad] = useState('');
+  const [nroSindical, setNroSindical] = useState('');
+  const [generico1, setGenerico1] = useState('');
+  const [generico2, setGenerico2] = useState('');
+  const [dosisGenerico1, setDosisGenerico1] = useState('');
+  const [dosisGenerico2, setDosisGenerico2] = useState('');
   const [showHistorial, setShowHistorial] = useState(false);
 
   const { data: patients } = usePatients();
@@ -58,27 +66,25 @@ export const RecetarioManagement = () => {
   const deleteRecetario = useDeleteRecetario();
 
   const selectedPatient = patients?.find(p => p.id === selectedPatientId);
-  const { data: recetarioConfig } = useRecetarioConfig(selectedPatient?.obra_social_id || null);
 
   const recetariosUsados = recetariosDelMes?.length || 0;
   const puedeEmitir = recetariosUsados < LIMITE_RECETARIOS_MENSUAL;
 
+  const tieneObraSocial = !!selectedPatient?.obra_social_id;
+
   const handleEmitirRecetario = async () => {
-    if (!selectedPatient || !recetarioConfig) return;
+    if (!selectedPatient || !selectedPatient.obra_social_id) return;
 
     await emitirRecetario.mutateAsync({
       paciente_id: selectedPatient.id,
-      obra_social_id: selectedPatient.obra_social_id!,
-      tipo_recetario: recetarioConfig.tipo_recetario,
+      obra_social_id: selectedPatient.obra_social_id,
+      tipo_recetario: 1,
       observaciones: observaciones || undefined,
     });
-
-    // Limpiar observaciones después de emitir
-    setObservaciones('');
   };
 
   const handleImprimirRecetario = () => {
-    if (!selectedPatient || !recetarioConfig) return;
+    if (!selectedPatient) return;
 
     generarRecetarioPDF({
       paciente: {
@@ -88,17 +94,39 @@ export const RecetarioManagement = () => {
         numero_afiliado: selectedPatient.numero_afiliado || undefined,
       },
       obraSocial: {
-        nombre: selectedPatient.obra_social?.nombre || '',
+        nombre: selectedPatient.obra_social?.nombre || 'PARTICULAR',
       },
-      tipoRecetario: recetarioConfig.tipo_recetario,
+      tipoRecetario: 1,
       fecha: new Date().toISOString(),
       observaciones: observaciones || undefined,
+      diagnostico,
+      sintomas,
+      edad,
+      nroSindical,
+      generico1,
+      generico2,
+      dosisGenerico1,
+      dosisGenerico2,
     });
   };
 
   const handleEmitirYImprimir = async () => {
-    await handleEmitirRecetario();
+    if (tieneObraSocial) {
+      await handleEmitirRecetario();
+    }
     handleImprimirRecetario();
+  };
+
+  const limpiarFormulario = () => {
+    setObservaciones('');
+    setDiagnostico('');
+    setSintomas('');
+    setEdad('');
+    setNroSindical('');
+    setGenerico1('');
+    setGenerico2('');
+    setDosisGenerico1('');
+    setDosisGenerico2('');
   };
 
   const handleDelete = async (recetarioId: string) => {
@@ -189,7 +217,7 @@ export const RecetarioManagement = () => {
         <div>
           <h2 className="text-3xl font-bold">Gestión de Recetarios</h2>
           <p className="text-muted-foreground mt-1">
-            Emite recetarios médicos según la obra social del paciente
+            Emite recetarios médicos para cualquier paciente
           </p>
         </div>
         <Button onClick={() => setShowHistorial(true)} variant="outline">
@@ -205,7 +233,7 @@ export const RecetarioManagement = () => {
             Emisión de Recetario
           </CardTitle>
           <CardDescription>
-            Selecciona un paciente para emitir su recetario médico
+            Selecciona un paciente y completa los datos del recetario
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -215,38 +243,39 @@ export const RecetarioManagement = () => {
             <PatientSelector
               patients={patients || []}
               selectedPatientId={selectedPatientId || undefined}
-              onSelect={setSelectedPatientId}
+              onSelect={(id) => {
+                setSelectedPatientId(id);
+                limpiarFormulario();
+              }}
             />
           </div>
 
           {selectedPatient && (
             <>
-              {/* Información del Paciente y Obra Social */}
+              {/* Información del Paciente */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Paciente</p>
                   <p className="text-lg font-semibold">
-                    {selectedPatient.nombre} {selectedPatient.apellido}
+                    {selectedPatient.apellido}, {selectedPatient.nombre}
                   </p>
                   <p className="text-sm text-muted-foreground">DNI: {selectedPatient.dni}</p>
+                  {selectedPatient.numero_afiliado && (
+                    <p className="text-sm text-muted-foreground">N° Afiliado: {selectedPatient.numero_afiliado}</p>
+                  )}
                 </div>
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Obra Social</p>
                   <p className="text-lg font-semibold">
-                    {selectedPatient.obra_social?.nombre || 'Sin obra social'}
+                    {selectedPatient.obra_social?.nombre || 'PARTICULAR'}
                   </p>
-                  {recetarioConfig && (
-                    <p className="text-sm text-muted-foreground">
-                      Tipo de recetario: {recetarioConfig.tipo_recetario}
-                    </p>
-                  )}
                 </div>
               </div>
 
-              {/* Contador de Recetarios del Mes */}
-              <Card className={puedeEmitir ? 'border-green-500' : 'border-red-500'}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
+              {/* Contador de Recetarios del Mes (solo si tiene obra social) */}
+              {tieneObraSocial && (
+                <Card className={puedeEmitir ? 'border-green-500' : 'border-red-500'}>
+                  <CardContent className="pt-6">
                     <div className="flex items-center gap-3">
                       {puedeEmitir ? (
                         <CheckCircle2 className="h-8 w-8 text-green-500" />
@@ -262,12 +291,11 @@ export const RecetarioManagement = () => {
                         </p>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
 
-              {/* Alert si no puede emitir */}
-              {!puedeEmitir && (
+              {!puedeEmitir && tieneObraSocial && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
@@ -276,39 +304,137 @@ export const RecetarioManagement = () => {
                 </Alert>
               )}
 
-              {/* Alert si no tiene configuración de recetario */}
-              {!recetarioConfig && selectedPatient.obra_social_id && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    La obra social de este paciente no tiene un tipo de recetario configurado.
-                    Contacte al administrador.
-                  </AlertDescription>
-                </Alert>
-              )}
+              {/* ─── FORMULARIO DEL RECETARIO ─── */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Datos del Recetario</CardTitle>
+                  <CardDescription>
+                    Complete los datos que se incluirán en el recetario impreso
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="diagnostico">Diagnóstico</Label>
+                      <Input
+                        id="diagnostico"
+                        placeholder="Ingrese el diagnóstico"
+                        value={diagnostico}
+                        onChange={(e) => setDiagnostico(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="edad">Edad</Label>
+                      <Input
+                        id="edad"
+                        placeholder="Ej: 45 años"
+                        value={edad}
+                        onChange={(e) => setEdad(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-              {/* Observaciones */}
-              <div>
-                <Label htmlFor="observaciones">Observaciones (opcional)</Label>
-                <Textarea
-                  id="observaciones"
-                  placeholder="Ingrese observaciones sobre este recetario..."
-                  value={observaciones}
-                  onChange={(e) => setObservaciones(e.target.value)}
-                  rows={3}
-                />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="nroSindical">N° Sindical</Label>
+                      <Input
+                        id="nroSindical"
+                        placeholder="Número sindical"
+                        value={nroSindical}
+                        onChange={(e) => setNroSindical(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="sintomas">Síntomas y/o Signos Principales</Label>
+                      <Input
+                        id="sintomas"
+                        placeholder="Ingrese los síntomas"
+                        value={sintomas}
+                        onChange={(e) => setSintomas(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Medicamentos */}
+                  <div className="border-t pt-4">
+                    <h4 className="font-semibold mb-3">Medicamentos</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="generico1">Genérico Rp/1</Label>
+                        <Input
+                          id="generico1"
+                          placeholder="Nombre del medicamento"
+                          value={generico1}
+                          onChange={(e) => setGenerico1(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dosisGenerico1">Dosis Diaria Genérico 1</Label>
+                        <Input
+                          id="dosisGenerico1"
+                          placeholder="Ej: 1 comp. cada 8 hs"
+                          value={dosisGenerico1}
+                          onChange={(e) => setDosisGenerico1(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                      <div>
+                        <Label htmlFor="generico2">Genérico Rp/2</Label>
+                        <Input
+                          id="generico2"
+                          placeholder="Nombre del medicamento"
+                          value={generico2}
+                          onChange={(e) => setGenerico2(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="dosisGenerico2">Dosis Diaria Genérico 2</Label>
+                        <Input
+                          id="dosisGenerico2"
+                          placeholder="Ej: 1 comp. cada 12 hs"
+                          value={dosisGenerico2}
+                          onChange={(e) => setDosisGenerico2(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Observaciones */}
+                  <div>
+                    <Label htmlFor="observaciones">Observaciones (opcional)</Label>
+                    <Textarea
+                      id="observaciones"
+                      placeholder="Ingrese observaciones sobre este recetario..."
+                      value={observaciones}
+                      onChange={(e) => setObservaciones(e.target.value)}
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Botones de acción */}
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleImprimirRecetario}
+                  variant="outline"
+                  className="flex-1"
+                  size="lg"
+                >
+                  <Printer className="h-5 w-5 mr-2" />
+                  Solo Imprimir
+                </Button>
+                <Button
+                  onClick={handleEmitirYImprimir}
+                  disabled={tieneObraSocial && (!puedeEmitir || emitirRecetario.isPending)}
+                  className="flex-1"
+                  size="lg"
+                >
+                  <FileText className="h-5 w-5 mr-2" />
+                  {emitirRecetario.isPending ? 'Emitiendo...' : tieneObraSocial ? 'Emitir y Imprimir' : 'Imprimir Recetario'}
+                </Button>
               </div>
-
-              {/* Botón de Imprimir */}
-              <Button
-                onClick={handleEmitirYImprimir}
-                disabled={!puedeEmitir || !recetarioConfig || emitirRecetario.isPending}
-                className="w-full"
-                size="lg"
-              >
-                <Printer className="h-5 w-5 mr-2" />
-                {emitirRecetario.isPending ? 'Emitiendo...' : 'Emitir y Imprimir Recetario'}
-              </Button>
             </>
           )}
         </CardContent>
