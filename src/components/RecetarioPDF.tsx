@@ -1,6 +1,5 @@
 import jsPDF from 'jspdf';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 interface RecetarioPDFData {
   paciente: {
@@ -17,314 +16,235 @@ interface RecetarioPDFData {
   observaciones?: string;
 }
 
-const generarRecetarioOSPSIP = (data: RecetarioPDFData) => {
+export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const m = 15; // left margin
+  const contentW = pw - m * 2;
 
-  // Header - OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, 15, { align: 'center' });
-  
-  // HISTORIA CLINICA title
-  doc.setFontSize(16);
-  doc.text('HISTORIA CLINICA', pageWidth / 2, 25, { align: 'center' });
-  
-  // Second header line
-  doc.setFontSize(10);
-  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, 32, { align: 'center' });
-  
-  // Subtitle
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text('(DATOS A COMPLETAR POR EL PROFESIONAL EN PATOLOGIAS CRONICAS)', pageWidth / 2, 38, { align: 'center' });
-  
-  // INDUSTRIAL E INVESTIGACIONES PRIVADAS
+  const obraSocialName = data.obraSocial.nombre.toUpperCase();
+  let y = 12;
+
+  // ─── HEADER ───
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
-  doc.text('INDUSTRIAL E INVESTIGACIONES PRIVADAS', pageWidth / 2, 44, { align: 'center' });
+  doc.text(obraSocialName, pw / 2, y, { align: 'center' });
 
-  // NOMBRE Y APELLIDO BENEFICIARIO section with patient name inline
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`NOMBRE Y APELLIDO BENEFICIARIO: ${data.paciente.nombre} ${data.paciente.apellido}`, 20, 52);
-  
-  // Right side info
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('RNOS: 1-1970-8', pageWidth - 60, 52);
-  doc.text('PARANÁ 717 . CABA.', pageWidth - 60, 57);
-  doc.text('TUCUMÁN 3685/89 C.A. DE BUENOS AIRES', pageWidth - 60, 62);
-  doc.text('Tel.: 0800-333-6777', pageWidth - 60, 67);
+  y += 8;
+  doc.setFontSize(14);
+  doc.text('HISTORIA CLINICA', pw / 2, y, { align: 'center' });
 
-  // Main table
-  let yPos = 65;
-  
-  // DIAGNOSTICO section
+  y += 6;
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DIAGNOSTICO:', 20, yPos);
-  
-  // First row of info without boxes
-  yPos += 5;
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`FECHA DE EMISION: ${format(new Date(data.fecha), 'dd/MM/yyyy')}`, 20, yPos);
-  
-  yPos += 5;
-  doc.text('N° DE OBRA SOCIAL:', 20, yPos);
-  
-  yPos += 5;
-  doc.text('N° SINDICAL:', 20, yPos);
-  
-  yPos += 5;
-  doc.text('EDAD:', 20, yPos);
-  
-  yPos += 5;
-  doc.text('SINTOMAS Y/O SIGNOS PRINCIPALES:', 20, yPos);
-  
-  // Medication table
-  yPos += 10;
-  const colWidths = [40, 20, 30, 35, 20, 25];
-  let xPos = 20;
-  
-  // Table headers
+  doc.text(obraSocialName, pw / 2, y, { align: 'center' });
+
+  y += 5;
   doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('(DATOS A COMPLETAR POR EL PROFESIONAL EN PATOLOGIAS CRONICAS)', pw / 2, y, { align: 'center' });
+
+  y += 5;
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  const headers = ['NOMBRE Y APELLIDO', 'SEXO', 'CANTIDAD RECETADA', 'TIEMPO DE EVOLUCION', 'TAMAÑO', 'NRO LETRAS'];
-  
-  headers.forEach((header, i) => {
-    doc.rect(xPos, yPos, colWidths[i], 8);
-    doc.text(header, xPos + 2, yPos + 5);
-    xPos += colWidths[i];
-  });
-  
-  // Medication rows
-  for (let row = 0; row < 2; row++) {
-    yPos += 8;
-    xPos = 20;
-    
+  doc.text('INDUSTRIAL E INVESTIGACIONES PRIVADAS', pw / 2, y, { align: 'center' });
+
+  // Right block - RNOS info
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'normal');
+  const rx = pw - 55;
+  doc.text('RNOS: 1-1970-8', rx, 14);
+  doc.text('PARANÁ 717 . CABA.', rx, 18);
+  doc.text('TUCUMÁN 3685/89 C.A.B.A.', rx, 22);
+  doc.text('Tel.: 0800-333-6777', rx, 26);
+
+  // ─── BENEFICIARY DATA ───
+  y += 6;
+  doc.setDrawColor(0);
+  doc.setLineWidth(0.3);
+
+  const drawLabelRow = (label: string, value: string, yp: number, w: number = contentW) => {
+    doc.rect(m, yp, w, 7);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, m + 2, yp + 5);
     doc.setFont('helvetica', 'normal');
-    doc.rect(xPos, yPos, colWidths[0], 8);
-    doc.text(`GENERICO Rp/${row + 1}`, xPos + 2, yPos + 5);
-    xPos += colWidths[0];
-    
-    doc.rect(xPos, yPos, colWidths[1], 8);
-    if (row === 1) {
-      doc.text('RA', xPos + 2, yPos + 5);
-    }
-    xPos += colWidths[1];
-    
-    for (let i = 2; i < colWidths.length; i++) {
-      doc.rect(xPos, yPos, colWidths[i], 8);
-      xPos += colWidths[i];
-    }
+    const labelW = doc.getTextWidth(label + ' ');
+    doc.text(value, m + 2 + labelW, yp + 5);
+  };
+
+  const drawLabelRowAt = (label: string, value: string, yp: number, xStart: number, w: number) => {
+    doc.rect(xStart, yp, w, 7);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, xStart + 2, yp + 5);
+    doc.setFont('helvetica', 'normal');
+    const labelW = doc.getTextWidth(label + ' ');
+    doc.text(value, xStart + 2 + labelW, yp + 5);
+  };
+
+  const pacienteNombre = `${data.paciente.apellido}, ${data.paciente.nombre}`;
+  drawLabelRow('NOMBRE Y APELLIDO BENEFICIARIO:', pacienteNombre, y);
+
+  y += 7;
+  drawLabelRow('DIAGNOSTICO:', '', y);
+
+  y += 7;
+  const halfW = contentW / 2;
+  drawLabelRowAt('FECHA DE EMISION:', format(new Date(data.fecha), 'dd/MM/yyyy'), y, m, halfW);
+  drawLabelRowAt('N° DE OBRA SOCIAL:', data.paciente.numero_afiliado || '', y, m + halfW, halfW);
+
+  y += 7;
+  drawLabelRowAt('N° SINDICAL:', '', y, m, halfW);
+  drawLabelRowAt('EDAD:', '', y, m + halfW, halfW);
+
+  y += 7;
+  drawLabelRow('SINTOMAS Y/O SIGNOS PRINCIPALES:', '', y);
+
+  // ─── MEDICATION TABLE ───
+  y += 10;
+  const cols = [45, 20, 30, 35, 20, contentW - 150];
+  const headers = ['NOMBRE Y APELLIDO', 'SEXO', 'CANTIDAD RECETADA', 'TIEMPO DE EVOLUCION', 'TAMAÑO', 'NRO LETRAS'];
+
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'bold');
+  let cx = m;
+  headers.forEach((h, i) => {
+    doc.rect(cx, y, cols[i], 8);
+    doc.text(h, cx + 1.5, y + 5);
+    cx += cols[i];
+  });
+
+  // Rows Rp/1 and Rp/2
+  for (let r = 0; r < 2; r++) {
+    y += 8;
+    cx = m;
+    doc.setFont('helvetica', 'normal');
+    cols.forEach((w, i) => {
+      doc.rect(cx, y, w, 8);
+      if (i === 0) {
+        doc.text(`GENERICO Rp/${r + 1}`, cx + 1.5, y + 5);
+      }
+      cx += w;
+    });
   }
-  
-  // Dosis diaria lines
-  yPos += 10;
+
+  // Dosis diaria
+  y += 12;
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DOSIS DIARIA GENERICO 1: _______________________________________________', m, y);
+  y += 6;
+  doc.text('DOSIS DIARIA GENERICO 2: _______________________________________________', m, y);
+
+  // ─── COMPLETAR LO QUE CORRESPONDA ───
+  y += 10;
   doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text('DOSIS DIARIA GENERICO 1:', 20, yPos);
-  
-  yPos += 5;
-  doc.text('DOSIS DIARIA GENERICO 2:', 20, yPos);
+  doc.text('COMPLETAR LO QUE CORRESPONDA', m, y);
 
-  // COMPLETAR LO QUE CORRESPONDA section
-  yPos += 10;
+  y += 3;
+  const c1w = 60;
+  const c2w = 55;
+  const c3w = contentW - c1w - c2w;
+  const blockH = 30;
+
+  // Col 1 - DIAGNOSTICO
+  doc.rect(m, y, c1w, blockH);
+  doc.setFontSize(7);
+  doc.text('DIAGNOSTICO:', m + 2, y + 5);
+
+  // Col 2 - EMBARAZO/PARTO top
+  doc.rect(m + c1w, y, c2w, blockH / 2);
+  doc.text('EMBARAZO:', m + c1w + 2, y + 5);
+  doc.text('PARTO CESAREA:', m + c1w + 2, y + 10);
+
+  // Col 2 - R.N. bottom
+  doc.rect(m + c1w, y + blockH / 2, c2w, blockH / 2);
+  doc.text('R.N.:', m + c1w + 2, y + blockH / 2 + 5);
+  doc.text('DIAS:        SEMANAS:', m + c1w + 2, y + blockH / 2 + 10);
+
+  // Col 3 - FIRMA top
+  doc.rect(m + c1w + c2w, y, c3w, blockH / 2);
+  doc.setFontSize(6);
+  doc.text('FIRMA Y SELLO DEL', m + c1w + c2w + 2, y + 6);
+  doc.text('PROFESIONAL:', m + c1w + c2w + 2, y + 10);
+
+  // Col 3 - FIRMA bottom
+  doc.rect(m + c1w + c2w, y + blockH / 2, c3w, blockH / 2);
+  doc.text('FIRMA Y SELLO DEL', m + c1w + c2w + 2, y + blockH / 2 + 6);
+  doc.text('PROFESIONAL:', m + c1w + c2w + 2, y + blockH / 2 + 10);
+
+  // NIÑO/A row
+  y += blockH;
+  doc.setFontSize(7);
+  doc.rect(m, y, c1w + c2w, 7);
+  doc.text('NIÑO/A:                    MESES:', m + 2, y + 5);
+  doc.rect(m + c1w + c2w, y, c3w, 7);
+
+  // ─── FECHA DE VENTA / FARMACIA ───
+  y += 10;
+  drawLabelRowAt('FECHA DE VENTA:', '', y, m, c1w + c2w);
+  drawLabelRowAt('FARMACIA:', '', y, m + c1w + c2w, c3w);
+
+  // ─── DISCOUNT TABLE ───
+  y += 10;
+  const dHalf = (c1w + c2w) / 2;
+  const dh = 6;
+
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('COMPLETAR LO QUE CORRESPONDA', 20, yPos);
-  
-  // Three columns section
-  yPos += 5;
-  const col1Width = 60;
-  const col2Width = 60;
-  const col3Width = pageWidth - 40 - col1Width - col2Width;
-  
-  // Column 1 - DIAGNOSTICO
-  doc.rect(20, yPos, col1Width, 30);
-  doc.setFontSize(8);
-  doc.text('DIAGNOSTICO:', 22, yPos + 5);
-  
-  // Column 2 - EMBARAZO/PARTO
-  doc.rect(20 + col1Width, yPos, col2Width, 15);
-  doc.text('EMBARAZO:', 22 + col1Width, yPos + 5);
-  doc.text('PARTO CESAREA:', 22 + col1Width, yPos + 10);
-  
-  doc.rect(20 + col1Width, yPos + 15, col2Width, 15);
-  doc.text('R.N:', 22 + col1Width, yPos + 20);
-  doc.text('DIAS:         SEMANAS:', 22 + col1Width, yPos + 25);
-  
-  // Column 3 - Firma profesional
-  doc.rect(20 + col1Width + col2Width, yPos, col3Width, 15);
-  doc.text('FIRMA Y SELLO DEL PROFESIONAL:', 22 + col1Width + col2Width, yPos + 8);
-  
-  doc.rect(20 + col1Width + col2Width, yPos + 15, col3Width, 15);
-  doc.text('FIRMA Y SELLO DEL PROFESIONAL:', 22 + col1Width + col2Width, yPos + 23);
-  
-  // NIÑO/A MESES
-  yPos += 30;
-  doc.rect(20, yPos, col1Width, 8);
-  doc.text('NIÑO/A:                 MESES:', 22, yPos + 5);
 
-  // FECHA DE VENTA / FARMACIA section
-  yPos += 12;
-  doc.rect(20, yPos, col1Width + col2Width, 8);
-  doc.text('FECHA DE VENTA:', 22, yPos + 5);
-  doc.rect(20 + col1Width + col2Width, yPos, col3Width, 8);
-  doc.text('FARMACIA:', 22 + col1Width + col2Width, yPos + 5);
-  
-  // Discount table
-  yPos += 8;
-  const halfWidth = (col1Width + col2Width) / 2;
-  
-  doc.rect(20, yPos, halfWidth, 6);
-  doc.text('DESCUENTO OSPSIP', 22, yPos + 4);
-  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
-  doc.text('DESCUENTO UPSRA', 22 + halfWidth, yPos + 4);
-  
-  yPos += 6;
-  doc.rect(20, yPos, halfWidth, 6);
-  doc.text('40% AMBULATORIO', 22, yPos + 4);
-  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
-  doc.text('60% AMBULATORIO', 22 + halfWidth, yPos + 4);
-  
-  yPos += 6;
-  doc.rect(20, yPos, halfWidth, 6);
-  doc.text('70% AMBULATORIO', 22, yPos + 4);
-  doc.rect(20 + halfWidth, yPos, halfWidth, 6);
-  doc.text('90% AMBULATORIO', 22 + halfWidth, yPos + 4);
-  
-  yPos += 6;
-  doc.rect(20, yPos, col1Width + col2Width, 6);
-  doc.text('100% PMI Y ESPECIFICOS', 22, yPos + 4);
+  // Headers
+  doc.rect(m, y, dHalf, dh);
+  doc.text('DESCUENTO OSPSIP', m + 2, y + 4);
+  doc.rect(m + dHalf, y, dHalf, dh);
+  doc.text('DESCUENTO UPSRA', m + dHalf + 2, y + 4);
 
-  // Bottom section - DNI and contact info
-  yPos += 10;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.text(`DNI DEL TITULAR: ${data.paciente.dni}`, 20, yPos);
-  
-  yPos += 6;
-  doc.text('DN.I DE QUIEN RETIRA:', 20, yPos);
-  
-  yPos += 6;
-  doc.text('DOMICILIO:', 20, yPos);
-  
-  yPos += 6;
-  doc.text('TELEFONO:', 20, yPos);
-  
-  yPos += 6;
-  doc.text('FIRMA Y ACLARACION:', 20, yPos);
-
-  // Footer
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.text('OBRA SOCIAL DEL PERSONAL DE SEGURIDAD COMERCIAL', pageWidth / 2, pageHeight - 10, { align: 'center' });
-
-  // Generate filename and save
-  const nombreArchivo = `Recetario_OSPSIP_${data.paciente.apellido}_${format(new Date(), 'yyyyMMdd')}.pdf`;
-  doc.save(nombreArchivo);
-};
-
-const generarRecetarioGenerico = (data: RecetarioPDFData) => {
-  const doc = new jsPDF();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  // Título del recetario según tipo
-  const tituloRecetario = `Recetario Tipo ${data.tipoRecetario}`;
-  
-  // Header
-  doc.setFillColor(59, 130, 246);
-  doc.rect(0, 0, pageWidth, 30, 'F');
-  
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text(tituloRecetario, pageWidth / 2, 20, { align: 'center' });
-
-  // Fecha de emisión
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  const fechaFormateada = format(new Date(data.fecha), "dd 'de' MMMM 'de' yyyy", { locale: es });
-  doc.text(`Fecha de emisión: ${fechaFormateada}`, 20, 45);
-
-  // Datos del paciente
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Datos del Paciente', 20, 60);
-  
-  doc.setFontSize(11);
+  // Row 1
+  y += dh;
   doc.setFont('helvetica', 'normal');
-  doc.text(`Paciente: ${data.paciente.nombre} ${data.paciente.apellido}`, 20, 70);
-  doc.text(`DNI: ${data.paciente.dni}`, 20, 78);
-  
-  if (data.paciente.numero_afiliado) {
-    doc.text(`Nº Afiliado: ${data.paciente.numero_afiliado}`, 20, 86);
-  }
+  doc.rect(m, y, dHalf, dh);
+  doc.text('40% AMBULATORIO', m + 2, y + 4);
+  doc.rect(m + dHalf, y, dHalf, dh);
+  doc.text('60% AMBULATORIO', m + dHalf + 2, y + 4);
 
-  // Obra Social
-  doc.setFontSize(14);
+  // Row 2
+  y += dh;
+  doc.rect(m, y, dHalf, dh);
+  doc.text('70% AMBULATORIO', m + 2, y + 4);
+  doc.rect(m + dHalf, y, dHalf, dh);
+  doc.text('90% AMBULATORIO', m + dHalf + 2, y + 4);
+
+  // Row 3
+  y += dh;
+  doc.rect(m, y, dHalf * 2, dh);
+  doc.text('100% PMI Y ESPECIFICOS', m + 2, y + 4);
+
+  // ─── BOTTOM SECTION ───
+  y += 10;
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.text('Obra Social', 20, 100);
-  
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text(data.obraSocial.nombre, 20, 110);
+  doc.text(`DNI DEL TITULAR: ${data.paciente.dni}`, m, y);
 
-  // Área de prescripción (grande)
-  doc.setFontSize(14);
+  y += 6;
+  doc.text('DNI DE QUIEN RETIRA: ___________________________', m, y);
+
+  y += 6;
+  doc.text('DOMICILIO: ______________________________________', m, y);
+
+  y += 6;
+  doc.text('TELEFONO: _______________________________________', m, y);
+
+  y += 6;
+  doc.text('FIRMA Y ACLARACION: ____________________________', m, y);
+
+  // ─── FOOTER ───
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'bold');
-  doc.text('Prescripción Médica', 20, 130);
-  
-  // Recuadro para escribir la prescripción
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.5);
-  doc.rect(20, 135, pageWidth - 40, 90);
+  doc.text(obraSocialName, pw / 2, ph - 10, { align: 'center' });
 
-  // Observaciones si hay
-  if (data.observaciones) {
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    doc.text(`Observaciones: ${data.observaciones}`, 20, 235);
-  }
-
-  // Footer con información adicional según tipo
-  const yFooter = pageHeight - 30;
-  doc.setFontSize(9);
-  doc.setTextColor(100, 100, 100);
-  
-  switch(data.tipoRecetario) {
-    case 1:
-      doc.text('Recetario estándar - Medicamentos de uso general', 20, yFooter);
-      break;
-    case 2:
-      doc.text('Recetario con autorización - Requiere validación de obra social', 20, yFooter);
-      break;
-    case 3:
-      doc.text('Recetario especial - Medicamentos controlados', 20, yFooter);
-      break;
-  }
-
-  // Línea para firma
-  doc.setDrawColor(0, 0, 0);
-  doc.line(pageWidth - 100, pageHeight - 50, pageWidth - 30, pageHeight - 50);
-  doc.setFontSize(9);
-  doc.text('Firma y sello del médico', pageWidth - 65, pageHeight - 44, { align: 'center' });
-
-  // Generar y descargar el PDF
+  // Save
   const nombreArchivo = `Recetario_${data.paciente.apellido}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   doc.save(nombreArchivo);
-};
-
-export const generarRecetarioPDF = (data: RecetarioPDFData) => {
-  // Si la obra social es OSPSIP, usar formato específico
-  if (data.obraSocial.nombre.toUpperCase().includes('OSPSIP')) {
-    return generarRecetarioOSPSIP(data);
-  }
-  
-  // Para otras obras sociales, usar formato genérico
-  return generarRecetarioGenerico(data);
 };
