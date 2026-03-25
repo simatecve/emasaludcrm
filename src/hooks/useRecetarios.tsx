@@ -11,6 +11,7 @@ export interface RecetarioEmitido {
   fecha_emision: string;
   mes_control: string;
   observaciones: string | null;
+  numero_recetario: number;
   created_at: string;
   pacientes?: {
     nombre: string;
