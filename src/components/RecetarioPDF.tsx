@@ -14,6 +14,7 @@ export interface RecetarioPDFData {
   tipoRecetario: number;
   fecha: string;
   observaciones?: string;
+  numeroRecetario?: number;
   // Campos adicionales del formulario
   diagnostico?: string;
   sintomas?: string;
@@ -48,23 +49,20 @@ export const generarRecetarioPDF = (data: RecetarioPDFData) => {
   doc.setFontSize(9);
   doc.text(obraSocialName, pw / 2, y, { align: 'center' });
 
-  y += 5;
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('(DATOS A COMPLETAR POR EL PROFESIONAL EN PATOLOGIAS CRONICAS)', pw / 2, y, { align: 'center' });
-
-  y += 5;
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text('INDUSTRIAL E INVESTIGACIONES PRIVADAS', pw / 2, y, { align: 'center' });
+  // Numero de recetario correlativo
+  if (data.numeroRecetario) {
+    y += 6;
+    doc.setFontSize(8);
+    doc.text(`RECETARIO N°: ${String(data.numeroRecetario).padStart(6, '0')}`, pw / 2, y, { align: 'center' });
+  }
 
   // Right block - RNOS info
   doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
   const rx = pw - 55;
   doc.text('RNOS: 1-1970-8', rx, 14);
-  doc.text('PARANÁ 717 . CABA.', rx, 18);
-  doc.text('TUCUMÁN 3685/89 C.A.B.A.', rx, 22);
+  doc.text('San Luis 713 este, esquina', rx, 18);
+  doc.text('calle Guemes', rx, 22);
   doc.text('Tel.: 0800-333-6777', rx, 26);
 
   // ─── HELPER FUNCTIONS ───

@@ -75,15 +75,17 @@ export const RecetarioManagement = () => {
   const handleEmitirRecetario = async () => {
     if (!selectedPatient || !selectedPatient.obra_social_id) return;
 
-    await emitirRecetario.mutateAsync({
+    const result = await emitirRecetario.mutateAsync({
       paciente_id: selectedPatient.id,
       obra_social_id: selectedPatient.obra_social_id,
       tipo_recetario: 1,
       observaciones: observaciones || undefined,
     });
+
+    return result;
   };
 
-  const handleImprimirRecetario = () => {
+  const handleImprimirRecetario = (numeroRecetario?: number) => {
     if (!selectedPatient) return;
 
     generarRecetarioPDF({
@@ -99,6 +101,7 @@ export const RecetarioManagement = () => {
       tipoRecetario: 1,
       fecha: new Date().toISOString(),
       observaciones: observaciones || undefined,
+      numeroRecetario,
       diagnostico,
       sintomas,
       edad,
@@ -112,9 +115,11 @@ export const RecetarioManagement = () => {
 
   const handleEmitirYImprimir = async () => {
     if (tieneObraSocial) {
-      await handleEmitirRecetario();
+      const result = await handleEmitirRecetario();
+      handleImprimirRecetario(result?.numero_recetario);
+    } else {
+      handleImprimirRecetario();
     }
-    handleImprimirRecetario();
   };
 
   const limpiarFormulario = () => {
@@ -154,6 +159,7 @@ export const RecetarioManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>N°</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>DNI</TableHead>
@@ -166,6 +172,9 @@ export const RecetarioManagement = () => {
               <TableBody>
                 {todosRecetarios?.map((recetario) => (
                   <TableRow key={recetario.id}>
+                    <TableCell className="font-mono font-bold">
+                      {String(recetario.numero_recetario || 0).padStart(6, '0')}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(recetario.fecha_emision), "dd/MM/yyyy", { locale: es })}
                     </TableCell>
@@ -417,7 +426,7 @@ export const RecetarioManagement = () => {
               {/* Botones de acción */}
               <div className="flex gap-3">
                 <Button
-                  onClick={handleImprimirRecetario}
+                  onClick={() => handleImprimirRecetario()}
                   variant="outline"
                   className="flex-1"
                   size="lg"
