@@ -869,6 +869,7 @@ export type Database = {
           fecha_emision: string
           id: string
           mes_control: string
+          numero_recetario: number
           obra_social_id: number
           observaciones: string | null
           paciente_id: number
@@ -880,6 +881,7 @@ export type Database = {
           fecha_emision?: string
           id?: string
           mes_control: string
+          numero_recetario?: number
           obra_social_id: number
           observaciones?: string | null
           paciente_id: number
@@ -891,6 +893,7 @@ export type Database = {
           fecha_emision?: string
           id?: string
           mes_control?: string
+          numero_recetario?: number
           obra_social_id?: number
           observaciones?: string | null
           paciente_id?: number
@@ -1152,6 +1155,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_next_recetario_number: { Args: never; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
