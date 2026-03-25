@@ -159,6 +159,7 @@ export const RecetarioManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>N°</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead>Paciente</TableHead>
                   <TableHead>DNI</TableHead>
@@ -171,6 +172,9 @@ export const RecetarioManagement = () => {
               <TableBody>
                 {todosRecetarios?.map((recetario) => (
                   <TableRow key={recetario.id}>
+                    <TableCell className="font-mono font-bold">
+                      {String(recetario.numero_recetario || 0).padStart(6, '0')}
+                    </TableCell>
                     <TableCell>
                       {format(new Date(recetario.fecha_emision), "dd/MM/yyyy", { locale: es })}
                     </TableCell>
