@@ -312,6 +312,9 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
           prestacion_descripcion,
           profesional_solicitante,
           numero_credencial,
+          descripcion,
+          observaciones,
+          parentesco_beneficiario,
           pacientes:paciente_id(nombre, apellido, dni, obras_sociales:obra_social_id(nombre)),
           autorizacion_prestaciones(prestacion_codigo, prestacion_descripcion)
         `)
@@ -364,9 +367,9 @@ export const useAutorizacionesReport = (filters: ReportFilters) => {
         prestacion_codigo: autorizacion.prestacion_codigo || '',
         prestacion_descripcion: autorizacion.prestacion_descripcion || '',
         profesional_solicitante: autorizacion.profesional_solicitante || '',
-        descripcion: '',
-        observaciones: '',
-        parentesco_beneficiario: '',
+        descripcion: (autorizacion as any).descripcion || '',
+        observaciones: (autorizacion as any).observaciones || '',
+        parentesco_beneficiario: (autorizacion as any).parentesco_beneficiario || '',
         numero_credencial: autorizacion.numero_credencial || '',
         paciente: {
           nombre: autorizacion.pacientes?.nombre || '',
