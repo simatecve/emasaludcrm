@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useLotesFacturacion, useUpdateLoteEstado } from '@/hooks/useFacturacion';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 
 const estadoColors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
   generado: 'secondary',
@@ -45,7 +46,7 @@ export const LotesHistorial = () => {
                   <TableCell className="font-mono text-sm">{l.numero_lote}</TableCell>
                   <TableCell>{l.obras_sociales?.nombre || 'Particular'}</TableCell>
                   <TableCell>
-                    {format(new Date(l.fecha_desde), 'dd/MM/yyyy')} - {format(new Date(l.fecha_hasta), 'dd/MM/yyyy')}
+                    {format(parseLocalDate(l.fecha_desde), 'dd/MM/yyyy')} - {format(parseLocalDate(l.fecha_hasta), 'dd/MM/yyyy')}
                   </TableCell>
                   <TableCell>{l.cantidad_estudios}</TableCell>
                   <TableCell className="text-right font-medium">${Number(l.total).toFixed(2)}</TableCell>

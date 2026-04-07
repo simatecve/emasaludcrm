@@ -246,7 +246,7 @@ export const FacturacionObraSocial = () => {
                       ))}
                     </TableCell>
                     <TableCell>{a.medicos ? `${a.medicos.apellido} ${a.medicos.nombre}` : '-'}</TableCell>
-                    <TableCell>{a.fecha_solicitud ? format(new Date(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
+                    <TableCell>{a.fecha_solicitud ? format(parseLocalDate(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="text-right font-medium">${getPrecioTotal(a).toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
