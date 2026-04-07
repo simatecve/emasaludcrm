@@ -19,6 +19,7 @@ import MultiplePrestacionesSelector from './MultiplePrestacionesSelector';
 
 interface AutorizacionFormProps {
   autorizacion?: Autorizacion;
+  preselectedPatientId?: number;
   onSubmit: (data: AutorizacionFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
@@ -99,6 +100,7 @@ const MedicoSearchInput = ({ onSelect, selectedMedicoId, medicos }: MedicoSearch
 
 const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
   autorizacion,
+  preselectedPatientId,
   onSubmit,
   onCancel,
   isLoading = false
@@ -110,7 +112,7 @@ const AutorizacionForm: React.FC<AutorizacionFormProps> = ({
   
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<Omit<AutorizacionFormData, 'prestaciones'>>({
     defaultValues: {
-      paciente_id: autorizacion?.paciente_id || 0,
+      paciente_id: autorizacion?.paciente_id || preselectedPatientId || 0,
       medico_id: autorizacion?.medico_id || undefined,
       obra_social_id: autorizacion?.obra_social_id || undefined,
       tipo_autorizacion: autorizacion?.tipo_autorizacion || '',
