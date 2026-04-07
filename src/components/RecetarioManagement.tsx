@@ -288,10 +288,6 @@ export const RecetarioManagement = () => {
                     </p>
                   )}
                 </div>
-                  <p className="text-lg font-semibold">
-                    {selectedPatient.obra_social?.nombre || 'PARTICULAR'}
-                  </p>
-                </div>
               </div>
 
               {/* Contador de Recetarios del Mes (solo si tiene obra social) */}
