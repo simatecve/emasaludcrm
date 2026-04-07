@@ -452,7 +452,6 @@ export const RecetarioManagement = () => {
                   <FileText className="h-5 w-5 mr-2" />
                   {emitirRecetario.isPending ? 'Emitiendo...' : esObraSocialPermitida ? 'Emitir y Imprimir' : 'No disponible para esta OS'}
                 </Button>
-                </Button>
               </div>
             </>
           )}
