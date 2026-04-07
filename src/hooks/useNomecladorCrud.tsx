@@ -37,30 +37,14 @@ export const useCreateNomeclador = () => {
         .single();
 
       if (error) throw error;
-
-      // Crear log de auditoría
-      await (supabase as any).rpc('create_audit_log', {
-        p_action: 'INSERT',
-        p_table_name: 'nomeclador',
-        p_record_id: result.id.toString(),
-        p_new_values: data
-      });
-
       return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
-      toast({
-        title: "Éxito",
-        description: "Nomenclador creado correctamente",
-      });
+      toast({ title: "Éxito", description: "Nomenclador creado correctamente" });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Error al crear el nomenclador: " + error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Error al crear el nomenclador: " + error.message, variant: "destructive" });
     },
   });
 };
@@ -75,30 +59,14 @@ export const useUpdateNomeclador = () => {
         .from('nomeclador')
         .update(data as any)
         .eq('id', id);
-
       if (error) throw error;
-
-      // Crear log de auditoría
-      await (supabase as any).rpc('create_audit_log', {
-        p_action: 'UPDATE',
-        p_table_name: 'nomeclador',
-        p_record_id: id.toString(),
-        p_new_values: data
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
-      toast({
-        title: "Éxito",
-        description: "Nomenclador actualizado correctamente",
-      });
+      toast({ title: "Éxito", description: "Nomenclador actualizado correctamente" });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Error al actualizar el nomenclador: " + error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Error al actualizar el nomenclador: " + error.message, variant: "destructive" });
     },
   });
 };
@@ -113,29 +81,65 @@ export const useDeleteNomeclador = () => {
         .from('nomeclador')
         .delete()
         .eq('id', id);
-
       if (error) throw error;
-
-      // Crear log de auditoría
-      await (supabase as any).rpc('create_audit_log', {
-        p_action: 'DELETE',
-        p_table_name: 'nomeclador',
-        p_record_id: id.toString()
-      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
-      toast({
-        title: "Éxito",
-        description: "Nomenclador eliminado correctamente",
-      });
+      toast({ title: "Éxito", description: "Nomenclador eliminado correctamente" });
     },
     onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Error al eliminar el nomenclador: " + error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Error al eliminar el nomenclador: " + error.message, variant: "destructive" });
+    },
+  });
+};
+
+export const useDeleteAllNomeclador = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('nomeclador')
+        .delete()
+        .neq('id', 0); // delete all rows
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
+      toast({ title: "Éxito", description: "Todos los registros del nomenclador han sido eliminados" });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: "Error al eliminar el nomenclador: " + error.message, variant: "destructive" });
+    },
+  });
+};
+
+export const useBulkCreateNomeclador = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (items: NomecladorFormData[]) => {
+      // Insert in batches of 100
+      const BATCH = 100;
+      let total = 0;
+      for (let i = 0; i < items.length; i += BATCH) {
+        const batch = items.slice(i, i + BATCH);
+        const { error } = await supabase
+          .from('nomeclador')
+          .insert(batch as any[]);
+        if (error) throw error;
+        total += batch.length;
+      }
+      return total;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['nomeclador'] });
+      toast({ title: "Éxito", description: `${count} registros importados correctamente` });
+    },
+    onError: (error) => {
+      toast({ title: "Error", description: "Error al importar nomenclador: " + error.message, variant: "destructive" });
     },
   });
 };
