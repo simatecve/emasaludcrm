@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PatientSelector from '@/components/PatientSelector';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConsultasReport, useTurnosReport, useRevenueReport, useAutorizacionesReport, useMedicosReport, useObrasSocialesReport, type ReportFilters } from '@/hooks/useReports';
@@ -153,19 +154,17 @@ const ReportsManagement = () => {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Paciente</label>
-              <Select value={filters.pacienteId?.toString() || 'all'} onValueChange={(value) => updateFilter('pacienteId', value === 'all' ? undefined : parseInt(value))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar paciente" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los pacientes</SelectItem>
-                  {pacientes?.map((paciente) => (
-                    <SelectItem key={paciente.id} value={paciente.id.toString()}>
-                      {paciente.nombre} {paciente.apellido} - {paciente.dni}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <PatientSelector
+                patients={pacientes || []}
+                selectedPatientId={filters.pacienteId}
+                onSelect={(id) => updateFilter('pacienteId', id)}
+                placeholder="Buscar paciente por nombre o DNI..."
+              />
+              {filters.pacienteId && (
+                <Button variant="ghost" size="sm" className="mt-1 text-xs" onClick={() => updateFilter('pacienteId', undefined)}>
+                  Limpiar selección
+                </Button>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">Médico</label>
@@ -575,10 +574,23 @@ const ReportsManagement = () => {
                           <TableCell>{autorizacion.obra_social}</TableCell>
                           <TableCell>{autorizacion.numero_credencial}</TableCell>
                           <TableCell className="capitalize">{autorizacion.parentesco_beneficiario}</TableCell>
-                          <TableCell>
+                        <TableCell>
                             <div className="max-w-xs">
-                              <div className="font-medium">{autorizacion.prestacion_codigo}</div>
-                              <div className="text-sm text-gray-500">{autorizacion.prestacion_descripcion}</div>
+                              {autorizacion.prestacion_codigo ? (
+                                <>
+                                  <div className="font-medium">{autorizacion.prestacion_codigo}</div>
+                                  <div className="text-sm text-muted-foreground">{autorizacion.prestacion_descripcion}</div>
+                                </>
+                              ) : autorizacion.autorizacion_prestaciones?.length ? (
+                                autorizacion.autorizacion_prestaciones.map((p: any, i: number) => (
+                                  <div key={i} className={i > 0 ? 'mt-1 pt-1 border-t' : ''}>
+                                    <div className="font-medium">{p.prestacion_codigo}</div>
+                                    <div className="text-sm text-muted-foreground">{p.prestacion_descripcion}</div>
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="text-muted-foreground">-</span>
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>{autorizacion.prestador}</TableCell>
