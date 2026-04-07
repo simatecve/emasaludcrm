@@ -65,38 +65,58 @@ const ReportsManagement = () => {
   const exportToPDF = (data: any[], filename: string, title: string, columns: string[]) => {
     if (!data || data.length === 0) return;
     
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(16);
-    doc.text(title, 20, 20);
-    
-    // Add date range
-    doc.setFontSize(10);
-    doc.text(`Período: ${filters.fechaInicio || 'Inicio'} - ${filters.fechaFin || 'Fin'}`, 20, 30);
-    doc.text(`Generado: ${new Date().toLocaleDateString('es-AR')}`, 20, 35);
-    
-    // Prepare table data
-    const tableData = data.map(row => 
-      columns.map(col => {
-        const value = row[col];
-        if (typeof value === 'object' && value !== null) {
-          return Object.values(value).join(' ');
-        }
-        return value || '';
-      })
-    );
-    
-    // Add table
-    (doc as any).autoTable({
-      head: [columns],
-      body: tableData,
-      startY: 45,
-      styles: { fontSize: 8 },
-      headStyles: { fillColor: [59, 130, 246] },
-    });
-    
-    doc.save(`${filename}.pdf`);
+    try {
+      const doc = new jsPDF();
+      
+      // Add title
+      doc.setFontSize(16);
+      doc.text(title, 20, 20);
+      
+      // Add date range
+      doc.setFontSize(10);
+      doc.text(`Período: ${filters.fechaInicio || 'Inicio'} - ${filters.fechaFin || 'Fin'}`, 20, 30);
+      doc.text(`Generado: ${new Date().toLocaleDateString('es-AR')}`, 20, 35);
+      
+      // Prepare table data - handle nested objects
+      const tableData = data.map(row => 
+        columns.map(col => {
+          const value = row[col];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'object') {
+            if (value.nombre && value.apellido) return `${value.nombre} ${value.apellido}`;
+            return Object.values(value).filter(v => v != null).join(' ');
+          }
+          return String(value);
+        })
+      );
+
+      // Column headers in Spanish
+      const headerMap: Record<string, string> = {
+        fecha_consulta: 'Fecha', paciente: 'Paciente', medico: 'Médico',
+        motivo: 'Motivo', diagnostico: 'Diagnóstico', obra_social: 'Obra Social',
+        precio: 'Precio', fecha: 'Fecha', hora: 'Hora', especialidad: 'Especialidad',
+        estado: 'Estado', tipo_autorizacion: 'Tipo', numero_autorizacion: 'N° Aut.',
+        nombre: 'Nombre', apellido: 'Apellido', matricula: 'Matrícula',
+        total_consultas: 'Total Consultas', total_turnos: 'Total Turnos',
+        total_autorizaciones: 'Total Aut.', total_pacientes: 'Total Pac.',
+        totalRevenue: 'Ingresos'
+      };
+      const headers = columns.map(c => headerMap[c] || c);
+      
+      // Add table using autoTable
+      (doc as any).autoTable({
+        head: [headers],
+        body: tableData,
+        startY: 45,
+        styles: { fontSize: 7, cellPadding: 2 },
+        headStyles: { fillColor: [59, 130, 246], textColor: 255 },
+        alternateRowStyles: { fillColor: [245, 247, 250] },
+      });
+      
+      doc.save(`${filename}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+    }
   };
 
   return (

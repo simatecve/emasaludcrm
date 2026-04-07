@@ -71,6 +71,10 @@ export const RecetarioManagement = () => {
   const puedeEmitir = recetariosUsados < LIMITE_RECETARIOS_MENSUAL;
 
   const tieneObraSocial = !!selectedPatient?.obra_social_id;
+  
+  // Solo OSCE (id=9) y OSCEARA (id=8) pueden emitir recetarios
+  const OBRAS_SOCIALES_RECETARIO = [8, 9];
+  const esObraSocialPermitida = selectedPatient?.obra_social_id ? OBRAS_SOCIALES_RECETARIO.includes(selectedPatient.obra_social_id) : false;
 
   const handleEmitirRecetario = async () => {
     if (!selectedPatient || !selectedPatient.obra_social_id) return;
@@ -273,11 +277,16 @@ export const RecetarioManagement = () => {
                     <p className="text-sm text-muted-foreground">N° Afiliado: {selectedPatient.numero_afiliado}</p>
                   )}
                 </div>
-                <div>
+               <div>
                   <p className="text-sm font-medium text-muted-foreground">Obra Social</p>
                   <p className="text-lg font-semibold">
                     {selectedPatient.obra_social?.nombre || 'PARTICULAR'}
                   </p>
+                  {!esObraSocialPermitida && tieneObraSocial && (
+                    <p className="text-sm text-destructive font-medium mt-1">
+                      Solo OSCE y OSCEARA pueden emitir recetarios
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -436,12 +445,12 @@ export const RecetarioManagement = () => {
                 </Button>
                 <Button
                   onClick={handleEmitirYImprimir}
-                  disabled={tieneObraSocial && (!puedeEmitir || emitirRecetario.isPending)}
+                  disabled={!esObraSocialPermitida || (tieneObraSocial && (!puedeEmitir || emitirRecetario.isPending))}
                   className="flex-1"
                   size="lg"
                 >
                   <FileText className="h-5 w-5 mr-2" />
-                  {emitirRecetario.isPending ? 'Emitiendo...' : tieneObraSocial ? 'Emitir y Imprimir' : 'Imprimir Recetario'}
+                  {emitirRecetario.isPending ? 'Emitiendo...' : esObraSocialPermitida ? 'Emitir y Imprimir' : 'No disponible para esta OS'}
                 </Button>
               </div>
             </>
