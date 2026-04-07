@@ -12,6 +12,7 @@ import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { useMedicos } from '@/hooks/useMedicos';
 import { Loader2, FileSpreadsheet, FileText, Package } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -246,7 +247,7 @@ export const FacturacionObraSocial = () => {
                       ))}
                     </TableCell>
                     <TableCell>{a.medicos ? `${a.medicos.apellido} ${a.medicos.nombre}` : '-'}</TableCell>
-                    <TableCell>{a.fecha_solicitud ? format(new Date(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
+                    <TableCell>{a.fecha_solicitud ? format(parseLocalDate(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell className="text-right font-medium">${getPrecioTotal(a).toFixed(2)}</TableCell>
                   </TableRow>
                 ))}

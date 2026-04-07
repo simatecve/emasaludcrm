@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useFacturacion';
 import { Loader2, Receipt, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 
 export const FacturacionParticular = () => {
   const { data: pendientes, isLoading: loadingPend } = useAutorizacionesParticularesPendientes();
@@ -83,7 +84,7 @@ export const FacturacionParticular = () => {
                         ))}
                       </TableCell>
                       <TableCell>{a.medicos ? `${a.medicos.apellido} ${a.medicos.nombre}` : '-'}</TableCell>
-                      <TableCell>{a.fecha_solicitud ? format(new Date(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
+                      <TableCell>{a.fecha_solicitud ? format(parseLocalDate(a.fecha_solicitud), 'dd/MM/yyyy') : '-'}</TableCell>
                       <TableCell className="text-right font-medium">${total.toFixed(2)}</TableCell>
                       <TableCell>
                         <Button size="sm" variant="outline" onClick={() => setComprobanteDialog(a)}>
@@ -127,13 +128,13 @@ export const FacturacionParticular = () => {
                     <TableCell className="font-mono text-sm">{c.numero_comprobante}</TableCell>
                     <TableCell>{c.pacientes?.apellido} {c.pacientes?.nombre}</TableCell>
                     <TableCell className="font-medium">${Number(c.monto).toFixed(2)}</TableCell>
-                    <TableCell>{format(new Date(c.fecha_emision), 'dd/MM/yyyy')}</TableCell>
+                    <TableCell>{format(parseLocalDate(c.fecha_emision), 'dd/MM/yyyy')}</TableCell>
                     <TableCell>
                       <Badge variant={c.estado === 'pagado' ? 'default' : 'secondary'}>
                         {c.estado === 'pagado' ? 'Pagado' : 'Pendiente'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{c.fecha_pago ? format(new Date(c.fecha_pago), 'dd/MM/yyyy') : '-'}</TableCell>
+                    <TableCell>{c.fecha_pago ? format(parseLocalDate(c.fecha_pago), 'dd/MM/yyyy') : '-'}</TableCell>
                     <TableCell>
                       {c.estado === 'pendiente' && (
                         <Button size="sm" variant="outline" onClick={() => setPagoDialog(c.id)}>
