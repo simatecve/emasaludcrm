@@ -12,6 +12,7 @@ import { useObrasSociales } from '@/hooks/useObrasSociales';
 import { useMedicos } from '@/hooks/useMedicos';
 import { Loader2, FileSpreadsheet, FileText, Package } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 import { es } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';

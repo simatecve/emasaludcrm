@@ -16,6 +16,7 @@ import {
 } from '@/hooks/useFacturacion';
 import { Loader2, Receipt, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
+import { parseLocalDate } from '@/lib/utils';
 
 export const FacturacionParticular = () => {
   const { data: pendientes, isLoading: loadingPend } = useAutorizacionesParticularesPendientes();
