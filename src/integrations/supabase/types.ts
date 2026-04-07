@@ -719,6 +719,7 @@ export type Database = {
           dni: string | null
           email: string | null
           estado_civil: string | null
+          estado_padron: string | null
           fecha_alta: string | null
           fecha_nac_adicional: string | null
           fecha_nacimiento: string | null
@@ -756,6 +757,7 @@ export type Database = {
           dni?: string | null
           email?: string | null
           estado_civil?: string | null
+          estado_padron?: string | null
           fecha_alta?: string | null
           fecha_nac_adicional?: string | null
           fecha_nacimiento?: string | null
@@ -793,6 +795,7 @@ export type Database = {
           dni?: string | null
           email?: string | null
           estado_civil?: string | null
+          estado_padron?: string | null
           fecha_alta?: string | null
           fecha_nac_adicional?: string | null
           fecha_nacimiento?: string | null
