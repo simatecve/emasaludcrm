@@ -21,7 +21,7 @@ export const useDashboardStats = () => {
       // Run all queries in parallel
       const [pacientesRes, turnosHoyRes, consultasRes, autorizacionesRes] = await Promise.all([
         // Total pacientes - count only
-        supabase.from('pacientes').select('*', { count: 'exact', head: true }),
+        supabase.from('pacientes').select('*', { count: 'exact', head: true }).eq('activo', true),
         // Turnos de hoy
         supabase.from('turnos').select('id, estado').eq('fecha', today),
         // Consultas del mes
