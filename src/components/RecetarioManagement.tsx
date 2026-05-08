@@ -98,6 +98,7 @@ export const RecetarioManagement = () => {
         apellido: selectedPatient.apellido || '',
         dni: selectedPatient.dni || '',
         numero_afiliado: selectedPatient.numero_afiliado || undefined,
+        fecha_nacimiento: selectedPatient.fecha_nacimiento || undefined,
       },
       obraSocial: {
         nombre: selectedPatient.obra_social?.nombre || 'PARTICULAR',
