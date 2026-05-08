@@ -433,6 +433,15 @@ export const RecetarioManagement = () => {
                 </CardContent>
               </Card>
 
+              {!esObraSocialPermitida && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Este recetario solo puede emitirse para pacientes de OSCE u OSCEARA.
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Botones de acción */}
               <div className="flex gap-3">
                 <Button
@@ -440,13 +449,14 @@ export const RecetarioManagement = () => {
                   variant="outline"
                   className="flex-1"
                   size="lg"
+                  disabled={!esObraSocialPermitida}
                 >
                   <Printer className="h-5 w-5 mr-2" />
                   Solo Imprimir
                 </Button>
                 <Button
                   onClick={handleEmitirYImprimir}
-                  disabled={!esObraSocialPermitida || (tieneObraSocial && (!puedeEmitir || emitirRecetario.isPending))}
+                  disabled={!esObraSocialPermitida || !puedeEmitir || emitirRecetario.isPending}
                   className="flex-1"
                   size="lg"
                 >
