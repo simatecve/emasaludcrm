@@ -281,17 +281,43 @@ const drawBlock = (doc: jsPDF, originY: number, data: RecetarioPDFData) => {
   }
 };
 
-export const generarRecetarioPDF = (data: RecetarioPDFData) => {
+const loadLogo = (): Promise<HTMLImageElement | null> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = '/lovable-uploads/198ebf3b-34e9-4a8e-8001-363ceb212fd8.png';
+  });
+};
+
+const drawLogo = (doc: jsPDF, logo: HTMLImageElement | null, originY: number) => {
+  if (!logo) return;
+  const pw = doc.internal.pageSize.getWidth();
+  const m = 8;
+  const W = pw - m * 2;
+  const lw = 22;
+  const lh = 16;
+  // Upper right inside the block
+  doc.addImage(logo, 'PNG', m + W - lw - 3, originY + 3, lw, lh);
+};
+
+export const generarRecetarioPDF = async (data: RecetarioPDFData) => {
   const doc = new jsPDF('p', 'mm', 'a4');
   const ph = doc.internal.pageSize.getHeight();
 
-  // Two identical blocks (original + duplicado)
   const topMargin = 8;
   const blockH = 130;
-  const gap = ph - topMargin * 2 - blockH * 2; // remaining space split
+  const gap = ph - topMargin * 2 - blockH * 2;
+
+  const logo = await loadLogo();
 
   drawBlock(doc, topMargin, data);
-  drawBlock(doc, topMargin + blockH + Math.max(gap, 4), data);
+  drawLogo(doc, logo, topMargin);
+
+  const y2 = topMargin + blockH + Math.max(gap, 4);
+  drawBlock(doc, y2, data);
+  drawLogo(doc, logo, y2);
 
   const nombreArchivo = `Recetario_${data.paciente.apellido || 'paciente'}_${format(new Date(), 'yyyyMMdd')}.pdf`;
   doc.save(nombreArchivo);
