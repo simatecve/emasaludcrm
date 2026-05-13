@@ -19,6 +19,7 @@ export interface Credencial {
     dni: string;
     numero_afiliado?: string;
     obra_social?: {
+      id: number;
       nombre: string;
     };
   };
