@@ -55,7 +55,7 @@ export const useCredenciales = () => {
             apellido,
             dni,
             numero_afiliado,
-            obra_social:obras_sociales(nombre)
+            obra_social:obras_sociales(id, nombre)
           )
         `)
         .eq('estado', 'activa')
@@ -83,7 +83,7 @@ export const useCredencialByPaciente = (pacienteId: number | null) => {
             apellido,
             dni,
             numero_afiliado,
-            obra_social:obras_sociales(nombre)
+            obra_social:obras_sociales(id, nombre)
           )
         `)
         .eq('paciente_id', pacienteId)
