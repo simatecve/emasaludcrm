@@ -66,7 +66,14 @@ const CredencialCard: React.FC<{
             {paciente.nombre} {paciente.apellido}
           </p>
         </div>
-        
+
+        {paciente.obra_social?.nombre && (
+          <div>
+            <p className="text-blue-100 text-sm">OBRA SOCIAL</p>
+            <p className="font-semibold">{paciente.obra_social.nombre}</p>
+          </div>
+        )}
+
         <div>
           <p className="text-blue-100 text-sm">AFILIADO</p>
           <p className="font-semibold">
