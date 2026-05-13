@@ -161,6 +161,7 @@ const CredencialManagement: React.FC = () => {
                     <TableHead>N° Credencial</TableHead>
                     <TableHead>Paciente</TableHead>
                     <TableHead>DNI</TableHead>
+                    <TableHead>ID O.S.</TableHead>
                     <TableHead>Obra Social</TableHead>
                     <TableHead>Fecha Emisión</TableHead>
                     <TableHead>Fecha Vencimiento</TableHead>
@@ -181,6 +182,9 @@ const CredencialManagement: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>{credencial.paciente?.dni}</TableCell>
+                      <TableCell>
+                        {credencial.paciente?.obra_social?.id ?? '—'}
+                      </TableCell>
                       <TableCell>
                         {credencial.paciente?.obra_social?.nombre || 'Sin obra social'}
                       </TableCell>
